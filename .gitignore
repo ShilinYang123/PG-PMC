@@ -1,0 +1,16 @@
+/project/
+/bak/
+/logs/
+/test_project_init_output/
+*.pyc
+__pycache__/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+node_modules/
+dist/
+build/
+.env
+*.log
