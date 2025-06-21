@@ -1,0 +1,106 @@
+app:
+  api_port: 8000
+  api_url: http://localhost:8000/api
+  name: 3AI
+  port: 3000
+  url: http://localhost:3000
+backup_dir: S:\3AI/bak
+created_at: '2025-06-19T17:15:34.936127'
+database:
+  dev_name: 3AI_dev_db
+  host: localhost
+  name: 3ai_db
+  password: password
+  port: 5432
+  test_name: 3AI_test_db
+  url_template: postgresql://{username}:{password}@{host}:{port}/{database_name}
+  username: postgres
+environment:
+  development:
+    debug: true
+    log_level: DEBUG
+  production:
+    debug: false
+    log_level: INFO
+  test:
+    debug: true
+    log_level: DEBUG
+git:
+  default_branch: main
+  ignore_patterns:
+  - __pycache__
+  - '*.pyc'
+  - .env
+  - node_modules
+  - dist
+  - build
+  repository_url: ''
+migration:
+  cleanup_dirs:
+  - __pycache__
+  - node_modules
+  - .git
+  - logs
+  - bak
+  reset_files:
+  - .env
+  - docs/02-开发/开发日志.md
+  - docs/02-开发/tasks.json
+  update_patterns:
+  - '*.md'
+  - '*.yaml'
+  - '*.yml'
+  - '*.json'
+  - '*.js'
+  - '*.py'
+  - '*.sh'
+  - .env*
+paths:
+  backup_dir: bak
+  docs_dir: docs
+  logs_dir: logs
+  project_dir: project
+  required_dirs:
+  - bak
+  - docs
+  - logs
+  - project
+  - tools
+  tools_dir: tools
+project:
+  created_at: '2025-06-20T00:11:18.534319'
+  name: 3AI
+  root: S:\3AI
+  updated_at: '2025-06-20T00:11:18.534332'
+project_description: 3AI项目
+project_name: 3AI
+project_root: ''
+project_version: 1.0.0
+structure_check:
+  report_dir: logs/检查报告/自检报告
+  report_name_format: 目录结构检查报告_{timestamp}.md
+  standard_list_file: docs/01-设计/目录结构标准清单.md
+template:
+  default_description: AI项目开发框架
+  default_project_name: 3AI
+  variables:
+  - PROJECT_NAME
+  - PROJECT_DESCRIPTION
+  - CREATED_AT
+  - UPDATED_AT
+updated_at: '2025-06-19T17:15:34.936137'
+structure:
+  required_dirs:
+  - bak
+  - docs
+  - logs
+  - project
+  - tools
+  disallowed_top_dirs: []
+mcp:
+  memory:
+    storage_path: "docs/02-开发/memory.json"  # 相对于项目根目录
+    isolation_mode: "project"  # project | global | custom
+  task_manager:
+    storage_path: "docs/02-开发/tasks.json"
+    isolation_mode: "project"

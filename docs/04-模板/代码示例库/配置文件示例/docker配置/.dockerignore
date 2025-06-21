@@ -1,0 +1,475 @@
+# .dockerignore 模板 - 3AI工作室
+# 排除不需要复制到 Docker 镜像中的文件和目录
+# 减小镜像大小，提高构建速度，增强安全性
+
+# ================================
+# 版本控制系统
+# ================================
+.git
+.gitignore
+.gitattributes
+.gitmodules
+.svn
+.hg
+.bzr
+CVS
+
+# ================================
+# 依赖目录
+# ================================
+# Node.js
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn
+.pnp
+.pnp.js
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+PIPFILE.lock
+
+# Java
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+
+# Go
+vendor/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+# Rust
+target/
+Cargo.lock
+
+# PHP
+vendor/
+composer.lock
+
+# Ruby
+.bundle
+vendor/bundle
+
+# .NET
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# ================================
+# 开发工具和IDE
+# ================================
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+.metadata
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+DerivedData/
+
+# Android Studio
+.gradle
+local.properties
+*.apk
+*.ap_
+*.dex
+
+# ================================
+# 操作系统文件
+# ================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ================================
+# 临时文件和缓存
+# ================================
+*.tmp
+*.temp
+*.log
+*.cache
+*.pid
+*.seed
+*.pid.lock
+.nyc_output
+.grunt
+bower_components
+.lock-wscript
+.wafpickle-*
+.node_repl_history
+*.tgz
+.yarn-integrity
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.cache
+.parcel-cache
+.next
+.nuxt
+dist
+.tmp
+.sass-cache
+
+# ================================
+# 测试和覆盖率报告
+# ================================
+coverage/
+*.lcov
+.nyc_output
+junit.xml
+test-results/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# ================================
+# 文档和说明
+# ================================
+README.md
+CHANGELOG.md
+LICENSE
+LICENSE.txt
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+*.md
+docs/
+doc/
+.github/
+
+# ================================
+# 配置文件（敏感信息）
+# ================================
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+config/secrets/
+.secrets
+
+# ================================
+# 数据库文件
+# ================================
+*.db
+*.sqlite
+*.sqlite3
+*.db3
+data/
+database/
+*.sql
+*.dump
+
+# ================================
+# 媒体文件
+# ================================
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.ico
+*.svg
+*.webp
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.flv
+*.mp3
+*.wav
+*.flac
+*.aac
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+
+# 但保留必要的静态资源
+!public/**
+!static/**
+!assets/**
+!src/assets/**
+
+# ================================
+# 构建产物
+# ================================
+build/
+dist/
+out/
+.output/
+.vercel/
+.netlify/
+.firebase/
+.surge/
+static/
+public/build/
+
+# ================================
+# 包管理器文件
+# ================================
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+composer.lock
+Gemfile.lock
+Pipfile.lock
+poetry.lock
+go.sum
+Cargo.lock
+
+# ================================
+# 容器相关
+# ================================
+Dockerfile.dev
+Dockerfile.test
+docker-compose.override.yml
+docker-compose.dev.yml
+docker-compose.test.yml
+.dockerignore
+
+# ================================
+# CI/CD 配置
+# ================================
+.travis.yml
+.circleci/
+.github/workflows/
+.gitlab-ci.yml
+Jenkinsfile
+.drone.yml
+azure-pipelines.yml
+bitbucket-pipelines.yml
+
+# ================================
+# 监控和分析
+# ================================
+.sonarqube/
+.scannerwork/
+coverage/
+reports/
+*.log
+
+# ================================
+# 开发服务器
+# ================================
+.webpack/
+.rollup.cache/
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# ================================
+# 特定框架文件
+# ================================
+# React
+.eslintcache
+
+# Vue
+.vuepress/dist
+
+# Nuxt.js
+.nuxt
+dist
+
+# Gatsby
+.cache/
+public
+
+# Next.js
+.next/
+out/
+
+# Angular
+.angular/
+
+# Svelte
+.svelte-kit/
+
+# ================================
+# 云服务配置
+# ================================
+.aws/
+.azure/
+.gcp/
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# ================================
+# 自定义排除
+# ================================
+# 根据项目需要添加特定的排除规则
+
+# 示例：排除特定的开发文件
+# dev/
+# scripts/dev/
+# tools/
+
+# 示例：排除大文件
+# *.zip
+# *.tar.gz
+# *.rar
+
+# 示例：排除备份文件
+# *.bak
+# *.backup
+# backup/
+
+# ================================
+# 使用说明
+# ================================
+
+# 1. 基本原则：
+#    - 只包含运行时必需的文件
+#    - 排除开发工具和配置
+#    - 排除敏感信息
+#    - 排除大文件和媒体文件
+
+# 2. 性能优化：
+#    - 减小镜像大小
+#    - 提高构建速度
+#    - 减少网络传输
+#    - 优化层缓存
+
+# 3. 安全考虑：
+#    - 排除密钥和证书
+#    - 排除配置文件
+#    - 排除源码控制信息
+#    - 排除开发工具
+
+# 4. 维护建议：
+#    - 定期审查排除规则
+#    - 根据项目调整
+#    - 测试构建结果
+#    - 监控镜像大小
+
+# 5. 调试技巧：
+#    - 使用 docker build --no-cache 测试
+#    - 检查 .dockerignore 语法
+#    - 使用 docker history 查看层
+#    - 比较镜像大小变化
+
+# ================================
+# 注意事项
+# ================================
+
+# 1. .dockerignore 文件必须放在构建上下文根目录
+# 2. 规则语法类似 .gitignore
+# 3. 使用 ! 前缀可以取消排除
+# 4. 路径相对于构建上下文
+# 5. 支持通配符和正则表达式
+# 6. 区分大小写（Linux/macOS）
+# 7. 空行和 # 开头的行被忽略
+# 8. 规则按顺序处理，后面的规则覆盖前面的

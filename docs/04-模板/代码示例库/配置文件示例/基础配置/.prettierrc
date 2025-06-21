@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json.schemastore.org/prettierrc",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": true,
+  "quoteProps": "as-needed",
+  "jsxSingleQuote": true,
+  "trailingComma": "es5",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "arrowParens": "avoid",
+  "rangeStart": 0,
+  "rangeEnd": null,
+  "requirePragma": false,
+  "insertPragma": false,
+  "proseWrap": "preserve",
+  "htmlWhitespaceSensitivity": "css",
+  "vueIndentScriptAndStyle": false,
+  "endOfLine": "lf",
+  "embeddedLanguageFormatting": "auto",
+  "singleAttributePerLine": false,
+  "overrides": [
+    {
+      "files": "*.md",
+      "options": {
+        "printWidth": 80,
+        "proseWrap": "always"
+      }
+    },
+    {
+      "files": "*.json",
+      "options": {
+        "printWidth": 120,
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": "*.yml",
+      "options": {
+        "tabWidth": 2,
+        "singleQuote": false
+      }
+    },
+    {
+      "files": "*.yaml",
+      "options": {
+        "tabWidth": 2,
+        "singleQuote": false
+      }
+    },
+    {
+      "files": "*.css",
+      "options": {
+        "singleQuote": false
+      }
+    },
+    {
+      "files": "*.scss",
+      "options": {
+        "singleQuote": false
+      }
+    },
+    {
+      "files": "*.less",
+      "options": {
+        "singleQuote": false
+      }
+    },
+    {
+      "files": "*.html",
+      "options": {
+        "printWidth": 120,
+        "htmlWhitespaceSensitivity": "ignore"
+      }
+    },
+    {
+      "files": "*.vue",
+      "options": {
+        "printWidth": 120,
+        "htmlWhitespaceSensitivity": "ignore"
+      }
+    },
+    {
+      "files": "*.py",
+      "options": {
+        "printWidth": 88,
+        "tabWidth": 4
+      }
+    },
+    {
+      "files": "*.go",
+      "options": {
+        "printWidth": 120,
+        "tabWidth": 4,
+        "useTabs": true
+      }
+    },
+    {
+      "files": "*.java",
+      "options": {
+        "printWidth": 120,
+        "tabWidth": 4
+      }
+    },
+    {
+      "files": "*.php",
+      "options": {
+        "printWidth": 120,
+        "tabWidth": 4
+      }
+    },
+    {
+      "files": "*.xml",
+      "options": {
+        "printWidth": 120,
+        "tabWidth": 2,
+        "htmlWhitespaceSensitivity": "ignore"
+      }
+    },
+    {
+      "files": "*.svg",
+      "options": {
+        "printWidth": 120,
+        "htmlWhitespaceSensitivity": "ignore"
+      }
+    },
+    {
+      "files": "package.json",
+      "options": {
+        "printWidth": 120,
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": "*.config.{js,ts}",
+      "options": {
+        "printWidth": 120
+      }
+    },
+    {
+      "files": ".*rc.{js,ts,json}",
+      "options": {
+        "printWidth": 120
+      }
+    }
+  ]
+}
+
+// ============================================================================
+// 3AI工作室 Prettier 配置说明
+// ============================================================================
+// 
+// 1. 基础配置：
+//    - printWidth: 100 (代码行宽度)
+//    - tabWidth: 2 (缩进宽度)
+//    - useTabs: false (使用空格而非制表符)
+//    - semi: true (语句末尾添加分号)
+//    - singleQuote: true (使用单引号)
+//    - trailingComma: "es5" (ES5兼容的尾随逗号)
+// 
+// 2. 特殊文件类型配置：
+//    - Markdown: 80字符宽度，自动换行
+//    - JSON: 120字符宽度
+//    - YAML: 2空格缩进，双引号
+//    - CSS/SCSS/Less: 双引号
+//    - HTML/Vue: 120字符宽度，忽略空白敏感性
+//    - Python: 88字符宽度（Black标准），4空格缩进
+//    - Go: 120字符宽度，4空格缩进，使用制表符
+//    - Java/PHP: 120字符宽度，4空格缩进
+//    - XML/SVG: 120字符宽度，忽略空白敏感性
+// 
+// 3. 配置文件特殊处理：
+//    - package.json: 120字符宽度
+//    - 各种配置文件: 120字符宽度
+// 
+// 4. 安装和使用：
+//    npm install -D prettier
+//    npx prettier --write .
+//    npx prettier --check .
+// 
+// 5. VS Code 集成：
+//    安装 Prettier 扩展
+//    设置为默认格式化工具
+//    启用保存时格式化
+// 
+// 6. Git Hooks 集成：
+//    使用 lint-staged 在提交前格式化
+//    使用 husky 设置 Git hooks
+// 
+// 7. 忽略文件：
+//    创建 .prettierignore 文件
+//    添加不需要格式化的文件和目录
+// 
+// ============================================================================

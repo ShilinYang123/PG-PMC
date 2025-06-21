@@ -1,0 +1,56 @@
+# structure_check_config.yaml
+structure_check:
+  # 基本配置
+  standard_list_file: docs/01-设计/目录结构标准清单.md
+  report_dir: logs/检查报告/自检报告
+  report_name_format: 目录结构检查报告_{timestamp}.md
+  
+  # 检查配置
+  excluded_dirs: [.git, node_modules, __pycache__, .pytest_cache]
+  excluded_dirs_for_redundancy: [bak, logs]
+  
+  # 默认规则（当标准文件解析失败时使用）
+  default_forbidden_patterns:
+    - "*.tmp"
+    - "*.bak"
+    - "*.swp"
+    - "*.log"
+    - "*~"
+    - "Thumbs.db"
+    - ".DS_Store"
+    - "Everything.db"
+    - "*.db"
+    - "*.sqlite"
+  
+  # 项目根目录严格检查
+  root_directory_rules:
+    # 只允许存在的标准目录
+    allowed_directories:
+      - "bak"
+      - "docs"
+      - "logs"
+      - "project"
+      - "tools"
+    
+    # 严格禁止的目录模式
+    forbidden_directory_patterns:
+      - "config*"
+      - "example*"
+      - "sample*"
+      - "temp*"
+      - "tmp*"
+      - "cache*"
+      - "test*"
+    
+    # 严格禁止的文件模式
+    forbidden_file_patterns:
+      - "*.db"
+      - "*.sqlite"
+      - "Everything.db"
+      - "*.log"
+      - "*.tmp"
+  
+  default_naming_rules:
+    docs: "^[\u4e00-\u9fa5a-zA-Z0-9_ -]+\\.(md|txt)$"
+    tools: "^[a-zA-Z0-9_-]+\\.(py|js|sh|bat|ps1)$"
+    config: "^[a-zA-Z0-9_-]+\\.(json|yaml|yml|ini|conf)$"

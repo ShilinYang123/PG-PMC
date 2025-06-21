@@ -1,0 +1,64 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": false,
+    "removeComments": true,
+    "noEmit": false,
+    "emitDeclarationOnly": false,
+    "stripInternal": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "types": []
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "tests",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/__tests__/**/*",
+    "**/*.stories.ts",
+    "**/*.stories.tsx",
+    "src/**/*.d.ts"
+  ]
+}
+
+// ============================================================================
+// 3AI工作室 TypeScript 构建配置说明
+// ============================================================================
+// 
+// 1. 配置说明：
+//    - 继承基础 tsconfig.json 配置
+//    - 专门用于生产环境构建
+//    - 优化构建性能和输出质量
+// 
+// 2. 构建特性：
+//    - 生成类型声明文件 (.d.ts)
+//    - 生成声明映射文件 (.d.ts.map)
+//    - 移除注释以减小文件大小
+//    - 严格检查未使用的变量和参数
+// 
+// 3. 使用方法：
+//    - 构建: npx tsc --project tsconfig.build.json
+//    - 监视: npx tsc --project tsconfig.build.json --watch
+//    - 清理: rm -rf dist
+// 
+// 4. 排除文件：
+//    - 测试文件和目录
+//    - 故事书文件 (Storybook)
+//    - 已有的类型声明文件
+// 
+// 5. 输出优化：
+//    - 不包含任何全局类型定义
+//    - 移除内部标记的代码
+//    - 生成完整的类型信息
+// 
+// ============================================================================
