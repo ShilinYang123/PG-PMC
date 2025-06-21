@@ -1,16 +1,87 @@
-/project/
-/bak/
-/logs/
-/test_project_init_output/
-*.pyc
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+PIPFILE.lock
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
 .vscode/
+.idea/
 *.swp
 *.swo
 *~
+
+# OS
 .DS_Store
-node_modules/
-dist/
-build/
-.env
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
 *.log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage reports
+coverage/
+*.lcov
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Special directories - exclude content but keep structure
+# bak directory: only keep structure, exclude all content files
+bak/*/*
+bak/*.*
+!bak/config/
+!bak/github_repo/
+!bak/专项备份/
+!bak/迁移备份/
+
+# logs directory: only keep structure, exclude all content files
+logs/*/*
+logs/*.*
+!logs/archive/
+!logs/其他日志/
+!logs/工作记录/
+!logs/检查报告/
