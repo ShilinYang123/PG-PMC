@@ -1,3 +1,4 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -68,21 +69,23 @@ coverage/
 .dmypy.json
 dmypy.json
 
-# Special directories - exclude content but keep structure
-# bak directory: only keep structure, exclude all content files
-bak/**/*
-!bak/
-!bak/config/
-!bak/github_repo/
-!bak/专项备份/
-!bak/迁移备份/
+# CRITICAL: Exclude bak and logs directories completely to prevent recursive backup
+# This prevents the circular directory structure issue
+bak/
+logs/
 
-# logs directory: only keep structure, exclude all content files
-logs/**/*
-!logs/
-!logs/archive/
-!logs/其他日志/
-!logs/工作记录/
-!logs/工作记录/archive/
-!logs/检查报告/
-!logs/检查报告/自检报告/
+# Runtime data
+*.pid
+*.seed
+*.pid.lock
+
+# Database
+*.sqlite3
+*.db
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
