@@ -394,6 +394,12 @@ BACKUP_RETENTION_COUNT = 60  # Keep last 60 backups
 issues_found = 0
 warnings_found = 0
 
+# Debug: Print directory paths
+print(f"DEBUG: PROJECT_ROOT = {PROJECT_ROOT}")
+print(f"DEBUG: STANDARD_LOGS_DIR = {STANDARD_LOGS_DIR}")
+print(f"DEBUG: LOG_DIR = {LOG_DIR}")
+print(f"DEBUG: REPORT_DIR = {REPORT_DIR}")
+
 # Ensure directories exist
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 REPORT_DIR.mkdir(parents=True, exist_ok=True)  # Ensure parent dirs exist too
@@ -525,9 +531,15 @@ def run_self_check():
     # 3. 代码质量检查 (Flake8, ESLint)
     logger.info("执行代码质量检查...")
     try:
-        # 运行flake8检查
+        # 运行flake8检查，使用配置文件排除.venv等目录
+        config_file = PROJECT_ROOT / "project" / "setup.cfg"
+        flake8_cmd = ["flake8", "--max-line-length=88"]
+        if config_file.exists():
+            flake8_cmd.extend(["--config", str(config_file)])
+        flake8_cmd.append(".")
+        
         flake8_result = subprocess.run(
-            ["flake8", "--max-line-length=88", "."],
+            flake8_cmd,
             capture_output=True, text=True, cwd=PROJECT_ROOT
         )
         if flake8_result.returncode != 0:
@@ -2508,27 +2520,15 @@ def invoke_eslint_check():
         f"test_eslint() returned: installed={eslint_installed}, version={eslint_version}")
 
     if not eslint_installed:
-        # Attempt to install eslint (consider adding a flag)
-        logger.info("ESLint not detected, attempting to install locally...")
-        # Run npm install in the project root
-        npm_install_cmd = ["npm", "install", "eslint", "--save-dev"]
-        stdout, stderr, code = run_command(
-            npm_install_cmd, check=False, cwd=str(PROJECT_ROOT)
+        # Skip auto-install to prevent unwanted npm package installations
+        logger.warning("ESLint not detected. Skipping JavaScript/TypeScript check.")
+        logger.info("To enable ESLint checks, please install ESLint manually: npm install eslint --save-dev")
+        return (
+            True,
+            "ESLint not installed - check skipped",
+            0,
+            None,
         )
-        if code != 0:
-            logger.error(
-                f"Failed to install ESLint automatically via npm. Please install it manually. Stderr: {stderr}")
-            return (
-                False,
-                "ESLint not installed and auto-install failed",
-                0,
-                None,
-            )
-        # Re-test after install attempt
-        eslint_installed, eslint_version = test_eslint()
-        if not eslint_installed:
-            logger.error("ESLint installation confirmed failed.")
-            return False, "ESLint installation failed", 0, None
 
     logger.info(f"ESLint detected: {eslint_version}")
 
