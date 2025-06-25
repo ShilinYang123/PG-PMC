@@ -1465,27 +1465,36 @@ def invoke_directory_check():
 
 
 def invoke_workdir_clean_check():
-    """Checks for scattered files/dirs in the working directory (parent of project root)."""
+    """Checks for scattered files/dirs in the project root directory."""
     global warnings_found
-    logger.info("Checking working directory cleanliness...")
-    working_directory = PROJECT_ROOT.parent
+    logger.info("Checking project directory cleanliness...")
+    working_directory = PROJECT_ROOT
 
-    # Define allowed top-level items in the working directory (names or
+    # Define allowed top-level items in the project directory (names or
     # patterns)
     allowed_items = {
-        ".cursor",  # Directory
-        ".git",  # Directory
-        "docs",  # Directory
-        "logs",  # Directory
-        ".trae",  # Directory
+        # Standard project directories
+        "docs",  # Documentation directory
+        "logs",  # Logs directory
+        "project",  # Main project directory
+        "tools",  # Tools directory
+        # Git and IDE directories
+        ".git",  # Git directory
+        ".cursor",  # Cursor IDE directory
+        ".trae",  # Trae IDE directory
         # Allowed files
         ".env",  # Environment file
         ".flake8",  # Flake8 configuration file
-        "README.md",
-        "LICENSE",
+        "README.md",  # Project README
+        "LICENSE",  # License file
+        "requirements.txt",  # Python requirements
         # Allowed patterns
         ".git*",  # Files like .gitignore, .gitattributes
         "*.lnk",  # Shortcut files
+        "*.md",  # Markdown files
+        "*.txt",  # Text files
+        "*.yaml",  # YAML configuration files
+        "*.yml",  # YAML configuration files
     }
 
     scattered_items_details = []
@@ -1535,7 +1544,7 @@ def invoke_workdir_clean_check():
                     }
                 )
                 logger.warning(
-                    f"Found scattered item in working directory: {item.name}"
+                    f"Found scattered item in project directory: {item.name}"
                 )
                 warnings_found += 1
 
@@ -1543,7 +1552,7 @@ def invoke_workdir_clean_check():
         report_content = ""
         if scattered_items_details:
             report_content += f"⚠️ Found {
-                len(scattered_items_details)} scattered items in the working directory ({working_directory}):{NL}{NL}"
+                len(scattered_items_details)} scattered items in the project directory ({working_directory}):{NL}{NL}"
             report_content += f"| Name | Type | Size (KB) | Last Modified |{NL}"
             report_content += f"|------|------|-----------|---------------|{NL}"
             for item in scattered_items_details:
@@ -1561,18 +1570,18 @@ def invoke_workdir_clean_check():
             report_content += f"- Temporary files should be moved to the 'temp/' directory or deleted{NL}"
         else:
             logger.info(
-                "Working directory is clean, no scattered files found.")
-            report_content = "✅ Working directory is clean, no scattered files found."
+                "Project directory is clean, no scattered files found.")
+            report_content = "✅ Project directory is clean, no scattered files found."
 
         update_report("Working Directory Cleanliness Check", report_content)
         # Return True if clean (no scattered items)
         return len(scattered_items_details) == 0
 
     except Exception as e:
-        logger.error(f"Error checking working directory cleanliness: {e}")
+        logger.error(f"Error checking project directory cleanliness: {e}")
         update_report(
             "Working Directory Cleanliness Check",
-            f"❌ Error occurred while checking working directory cleanliness: {e}",
+            f"❌ Error occurred while checking project directory cleanliness: {e}",
         )
         return False  # Treat error as failure
 
