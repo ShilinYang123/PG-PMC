@@ -112,32 +112,8 @@ setup_python_venv() {
 setup_env_file() {
     log_step "设置环境变量文件..."
     
-    if [ ! -f ".env" ]; then
-        # 从统一配置目录复制配置
-        local config_dir="$(dirname "$(dirname "$(dirname "$(realpath "$0")")")")/docs/03-管理"
-        
-        if [ -f "$config_dir/.env" ]; then
-            cp "$config_dir/.env" ".env"
-            log_info "✓ 从统一配置复制 .env 文件"
-        else
-            # 创建基础配置文件，引用统一配置
-            cat > .env << EOF
-# 3AI 工作室项目环境变量
-# 此文件从统一配置目录生成，请勿直接修改
-# 如需修改配置，请编辑 docs/03-管理/.env
-
-# 从统一配置加载
-source "$config_dir/.env"
-
-# 项目特定配置（如有需要）
-# NODE_ENV=development
-EOF
-            log_info "✓ 创建配置引用文件"
-        fi
-        log_warn "配置文件已创建，如需修改请编辑 docs/03-管理/.env"
-    else
-        log_info ".env 文件已存在"
-    fi
+    # 配置文件已整合到 project_config.yaml 中
+    log_info "✓ 配置文件使用统一的 project_config.yaml 管理"
 }
 
 # 创建必要的目录

@@ -1,0 +1,68 @@
+# 3AI 项目依赖包
+# 生成时间: 2025-06-25
+
+# 核心依赖
+psutil>=5.9.0          # 系统性能监控
+pyyaml>=6.0            # YAML配置文件解析
+requests>=2.28.0       # HTTP请求库
+
+# 代码质量工具
+flake8>=6.0.0          # 代码风格检查
+black>=23.0.0          # 代码格式化
+isort>=5.12.0          # 导入排序
+
+# 测试工具
+pytest>=7.0.0          # 测试框架
+pytest-cov>=4.0.0      # 测试覆盖率
+
+# 开发工具
+pre-commit>=3.0.0      # Git 钩子管理
+mypy>=1.0.0            # 静态类型检查
+
+# 数据处理
+pandas>=1.5.0          # 数据分析（可选）
+numpy>=1.24.0          # 数值计算（可选）
+
+# Web 开发（项目模块使用）
+fastapi>=0.100.0       # Web 框架
+uvicorn>=0.22.0        # ASGI 服务器
+
+# 数据库
+sqlalchemy>=2.0.0      # ORM 框架
+psycopg2-binary>=2.9.0 # PostgreSQL 驱动
+
+# 日志和监控
+loguru>=0.7.0          # 增强日志库
+rich>=13.0.0           # 终端美化输出
+
+# 文档生成
+mkdocs>=1.5.0          # 文档生成
+mkdocs-material>=9.0.0 # Material 主题
+
+# 配置管理
+python-dotenv>=1.0.0   # 环境变量管理
+click>=8.1.0           # 命令行工具
+
+# 时间处理
+python-dateutil>=2.8.0 # 日期时间工具
+
+# 文件处理
+watchdog>=3.0.0        # 文件监控
+pathlib2>=2.3.0        # 路径处理增强
+
+# 网络工具
+httpx>=0.24.0          # 异步HTTP客户端
+
+# 加密和安全
+cryptography>=41.0.0   # 加密库
+
+# 性能分析
+memory-profiler>=0.61.0 # 内存分析
+line-profiler>=4.0.0    # 行级性能分析
+
+# 并发处理
+concurrent-futures>=3.1.1  # 并发执行
+
+# 系统集成
+psutil>=5.9.0          # 系统信息
+platform>=1.0.8        # 平台信息

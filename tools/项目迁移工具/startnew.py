@@ -59,6 +59,42 @@ except ImportError:
     class ConfigLoader:
         def __init__(self, project_root):
             self.project_root = project_root
+            self.config = self._load_config()
+
+        def _load_config(self):
+            """加载项目配置"""
+            config_file = self.project_root / "docs" / "03-管理" / "project_config.yaml"
+            if config_file.exists():
+                try:
+                    with open(config_file, 'r', encoding='utf-8') as f:
+                        return yaml.safe_load(f)
+                except Exception as e:
+                    print(f"警告: 无法加载配置文件 {config_file}: {e}")
+            return self._get_default_config()
+
+        def _get_default_config(self):
+            """获取默认配置"""
+            return {
+                'paths': {
+                    'backup_dir': 'bak',
+                    'docs_dir': 'docs',
+                    'logs_dir': 'logs',
+                    'tools_dir': 'tools',
+                    'project_dir': 'project'
+                }
+            }
+
+        def get_path(self, path_key):
+            """获取配置化路径"""
+            paths = self.config.get('paths', {})
+            path_value = paths.get(path_key, path_key)
+            # 处理路径中的模板变量
+            if isinstance(path_value, str) and '{{' in path_value:
+                path_value = path_value.replace(
+                    '{{ PROJECT_ROOT }}', str(self.project_root))
+                path_value = path_value.replace(
+                    '{{PROJECT_ROOT}}', str(self.project_root))
+            return path_value
 
         def _process_template_variables(self, content, project_name=None):
             if isinstance(content, str):
@@ -99,13 +135,32 @@ class ProjectMigrator:
         self.project_root = project_root
         self.project_name = project_name or project_root.name
         self.verbose = verbose
-        self.backup_dir = project_root / "bak" / "迁移备份"
+
+        # 初始化配置加载器
+        self.config_loader = ConfigLoader(project_root)
+
+        # 使用配置化路径
+        backup_dir = self.config_loader.get_path('backup_dir')
+        self.backup_dir = project_root / backup_dir / "迁移备份"
+
+        logs_dir = self.config_loader.get_path('logs_dir')
+        self.logs_dir = project_root / logs_dir
+
+        docs_dir = self.config_loader.get_path('docs_dir')
+        self.docs_dir = project_root / docs_dir
+
+        tools_dir = self.config_loader.get_path('tools_dir')
+        self.tools_dir = project_root / tools_dir
+
+        project_dir = self.config_loader.get_path('project_dir')
+        self.project_dir = project_root / project_dir
 
         # 确保日志目录存在
-        ensure_dir_exists(project_root / "logs")
+        ensure_dir_exists(self.logs_dir)
 
         logger.info(f"初始化项目迁移器: {self.project_root}")
         logger.info(f"项目名称: {self.project_name}")
+        logger.info(f"使用配置化路径: backup_dir={backup_dir}, logs_dir={logs_dir}")
 
     def run_migration(self) -> bool:
         """执行完整的项目迁移流程"""
@@ -186,57 +241,57 @@ class ProjectMigrator:
 
         ensure_dir_exists(backup_path)
 
-        # 备份关键配置文件
+        # 备份关键配置文件（使用配置化路径）
         config_files = [
-            "docs/03-管理/project_config.yaml",
-            "docs/03-管理/.env",
-            "docs/02-开发/memory.json",
-            "docs/02-开发/tasks.json"
+            self.docs_dir / "03-管理" / "project_config.yaml",
+            self.docs_dir / "03-管理" / ".env",
+            self.docs_dir / "02-开发" / "memory.json",
+            self.docs_dir / "02-开发" / "tasks.json"
         ]
 
         for config_file in config_files:
-            source = self.project_root / config_file
-            if source.exists():
-                target = backup_path / config_file
+            if config_file.exists():
+                # 计算相对路径用于备份目录结构
+                rel_path = config_file.relative_to(self.project_root)
+                target = backup_path / rel_path
                 ensure_dir_exists(target.parent)
-                shutil.copy2(source, target)
-                logger.info(f"备份: {config_file}")
+                shutil.copy2(config_file, target)
+                logger.info(f"备份: {rel_path}")
 
     def _clean_runtime_data(self):
         """清理运行时数据"""
         logger.info("清理运行时数据...")
 
-        # 清理日志文件
-        logs_dir = self.project_root / "logs"
-        if logs_dir.exists():
-            for log_file in logs_dir.glob("*.log"):
+        # 清理日志文件（使用配置化路径）
+        if self.logs_dir.exists():
+            for log_file in self.logs_dir.glob("*.log"):
                 log_file.unlink()
                 logger.info(f"删除日志: {log_file.name}")
 
-            for json_file in logs_dir.glob("*.json"):
+            for json_file in self.logs_dir.glob("*.json"):
                 json_file.unlink()
                 logger.info(f"删除日志: {json_file.name}")
 
-            for txt_file in logs_dir.glob("*.txt"):
+            for txt_file in self.logs_dir.glob("*.txt"):
                 txt_file.unlink()
                 logger.info(f"删除日志: {txt_file.name}")
 
-        # 清理开发数据
+        # 清理开发数据（使用配置化路径）
         dev_files = [
-            "docs/02-开发/memory.json",
-            "docs/02-开发/tasks.json"
+            self.docs_dir / "02-开发" / "memory.json",
+            self.docs_dir / "02-开发" / "tasks.json"
         ]
 
         for dev_file in dev_files:
-            file_path = self.project_root / dev_file
-            if file_path.exists():
-                file_path.unlink()
-                logger.info(f"删除开发数据: {dev_file}")
+            if dev_file.exists():
+                rel_path = dev_file.relative_to(self.project_root)
+                dev_file.unlink()
+                logger.info(f"删除开发数据: {rel_path}")
 
-        # 清理历史备份（保留备份目录结构）
+        # 清理历史备份（保留备份目录结构，使用配置化路径）
         bak_dirs = ['专项备份', '日常备份', '待清理资料']
         for bak_dir in bak_dirs:
-            bak_path = self.project_root / "bak" / bak_dir
+            bak_path = self.backup_dir / bak_dir
             if bak_path.exists():
                 for item in bak_path.iterdir():
                     if item.is_file():
@@ -253,8 +308,8 @@ class ProjectMigrator:
         except BaseException:
             config_loader = None
 
-        # 更新project_config.yaml
-        config_file = self.project_root / "docs/03-管理/project_config.yaml"
+        # 更新project_config.yaml（使用配置化路径）
+        config_file = self.docs_dir / "03-管理" / "project_config.yaml"
         if config_file.exists():
             with open(config_file, 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -324,10 +379,10 @@ class ProjectMigrator:
 
             logger.info("更新package.json完成")
 
-        # 重置.env文件
-        env_file = self.project_root / "docs/03-管理/.env"
+        # 重置.env文件（使用配置化路径）
+        env_file = self.docs_dir / "03-管理" / ".env"
         if env_file.exists():
-            env_example = self.project_root / "docs/03-管理/.env.example"
+            env_example = self.docs_dir / "03-管理" / ".env.example"
             if env_example.exists():
                 shutil.copy2(env_example, env_file)
 
@@ -403,20 +458,19 @@ class ProjectMigrator:
         """重置文档模板"""
         logger.info("重置文档模板...")
 
-        # 处理所有文档文件
+        # 处理所有文档文件（使用配置化路径）
         doc_files = [
-            "docs/01-设计/开发任务书.md",
-            "docs/01-设计/技术路线.md",
-            "docs/01-设计/项目架构设计.md",
-            "docs/01-设计/目录结构标准清单.md",
-            "docs/03-管理/规范与流程.md",
-            "docs/03-管理/项目模板化标准.md"
+            self.docs_dir / "01-设计" / "开发任务书.md",
+            self.docs_dir / "01-设计" / "技术路线.md",
+            self.docs_dir / "01-设计" / "项目架构设计.md",
+            self.docs_dir / "01-设计" / "目录结构标准清单.md",
+            self.docs_dir / "03-管理" / "规范与流程.md",
+            self.docs_dir / "03-管理" / "项目模板化标准.md"
         ]
 
         for doc_file in doc_files:
-            file_path = self.project_root / doc_file
-            if file_path.exists():
-                content = file_path.read_text(encoding='utf-8')
+            if doc_file.exists():
+                content = doc_file.read_text(encoding='utf-8')
 
                 # 替换模板变量
                 content = content.replace(
@@ -457,8 +511,9 @@ class ProjectMigrator:
                             self.project_name}项目架构设计',
                         content)
 
-                file_path.write_text(content, encoding='utf-8')
-                logger.info(f"更新{doc_file}")
+                doc_file.write_text(content, encoding='utf-8')
+                rel_path = doc_file.relative_to(self.project_root)
+                logger.info(f"更新{rel_path}")
 
     def _clean_cache_files(self):
         """清理缓存文件"""
@@ -488,8 +543,8 @@ class ProjectMigrator:
         """更新工具脚本"""
         logger.info("更新工具脚本...")
 
-        # 更新工具目录下的Python脚本
-        tools_dir = self.project_root / "tools"
+        # 更新工具目录下的Python脚本（使用配置化路径）
+        tools_dir = self.tools_dir
         if tools_dir.exists():
             for py_file in tools_dir.rglob("*.py"):
                 if py_file.name == "startnew.py":  # 跳过当前脚本
@@ -529,10 +584,10 @@ class ProjectMigrator:
         """更新测试文件"""
         logger.info("更新测试文件...")
 
-        # 更新测试目录下的文件
+        # 更新测试目录下的文件（使用配置化路径）
         test_dirs = [
-            self.project_root / "tools" / "tests",
-            self.project_root / "project" / "tests",
+            self.tools_dir / "tests",
+            self.project_dir / "tests",
             self.project_root / "tests"
         ]
 
@@ -549,15 +604,21 @@ class ProjectMigrator:
                         content = content.replace(
                             '{{PROJECT_ROOT}}', str(self.project_root))
 
-                        # 更新测试路径
-                        content = re.sub(
-                            r's:\\3AI', str(
-                                self.project_root).replace(
-                                '\\', '\\\\'), content)
-                        content = re.sub(
-                            r'S:\\3AI', str(
-                                self.project_root).replace(
-                                '\\', '\\\\'), content)
+                        # 更新测试路径 - 替换旧的硬编码路径为新的项目根目录
+                        # 处理可能的旧路径格式
+                        old_path_patterns = [
+                            r's:\\3AI',
+                            r'S:\\3AI',
+                            r's:/3AI',
+                            r'S:/3AI'
+                        ]
+
+                        new_project_root = str(
+                            self.project_root).replace(
+                            '\\', '\\\\')
+                        for pattern in old_path_patterns:
+                            content = re.sub(
+                                pattern, new_project_root, content, flags=re.IGNORECASE)
 
                         if content != original_content:
                             test_file.write_text(content, encoding='utf-8')
@@ -575,8 +636,8 @@ class ProjectMigrator:
 
         validation_errors = []
 
-        # 验证配置文件
-        config_file = self.project_root / "docs/03-管理/project_config.yaml"
+        # 验证配置文件（使用配置化路径）
+        config_file = self.docs_dir / "03-管理" / "project_config.yaml"
         if config_file.exists():
             try:
                 with open(config_file, 'r', encoding='utf-8') as f:
@@ -594,20 +655,29 @@ class ProjectMigrator:
             except Exception as e:
                 validation_errors.append(f"配置文件验证失败: {e}")
 
-        # 验证关键目录存在
-        required_dirs = ['docs', 'tools', 'logs', 'bak']
-        for dir_name in required_dirs:
-            if not (self.project_root / dir_name).exists():
+        # 验证关键目录存在（使用配置化路径）
+        required_dirs = {
+            'docs': self.docs_dir,
+            'tools': self.tools_dir,
+            'logs': self.logs_dir,
+            'bak': self.backup_dir
+        }
+        for dir_name, dir_path in required_dirs.items():
+            if not dir_path.exists():
                 validation_errors.append(f"缺少必需目录: {dir_name}")
 
-        # 验证工具脚本
+        # 验证工具脚本（使用配置化路径）
         key_tools = [
-            "tools/config_loader.py",
-            "tools/项目迁移工具/startnew.py"
+            self.tools_dir / "config_loader.py",
+            self.tools_dir / "项目迁移工具" / "startnew.py"
         ]
         for tool in key_tools:
-            if not (self.project_root / tool).exists():
-                validation_errors.append(f"缺少关键工具: {tool}")
+            if not tool.exists():
+                try:
+                    rel_path = tool.relative_to(self.project_root)
+                    validation_errors.append(f"缺少关键工具: {rel_path}")
+                except ValueError:
+                    validation_errors.append(f"缺少关键工具: {tool}")
 
         if validation_errors:
             logger.warning("迁移验证发现问题:")
@@ -621,10 +691,13 @@ class ProjectMigrator:
         logger.info("生成迁移报告...")
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_file = self.project_root / "logs" / \
-            "检查报告" / f"项目迁移报告_{timestamp}.md"
+        # 从配置文件获取报告目录
+        report_dir = self.config_loader.config.get(
+            'structure_check', {}).get('report_dir', 'logs/检查报告')
+        report_dir_name = report_dir.split('/')[-1]  # 获取最后一级目录名
+        report_file = self.logs_dir / report_dir_name / f"项目迁移报告_{timestamp}.md"
 
-        report_content = """# {self.project_name}项目迁移报告
+        report_content = f"""# {self.project_name}项目迁移报告
 
 ## 基本信息
 
@@ -684,7 +757,7 @@ class ProjectMigrator:
 
 ## 备份位置
 
-迁移前的重要配置文件已备份到: `bak/迁移备份/`
+迁移前的重要配置文件已备份到: `{Path(self.backup_dir).relative_to(self.project_root) / '迁移备份'}/`
 
 ---
 
@@ -723,9 +796,10 @@ def main():
     project_root = Path.cwd()
 
     # 验证是否在正确的目录中运行
-    if not (project_root / "tools" / "项目迁移工具" / "startnew.py").exists():
+    script_path = project_root / "tools" / "项目迁移工具" / "startnew.py"
+    if not script_path.exists():
         print("错误: 请在项目根目录下运行此脚本")
-        print("正确的运行方式: python tools/项目迁移工具/startnew.py")
+        print(f"正确的运行方式: python {script_path.relative_to(project_root)}")
         sys.exit(1)
 
     # 自动使用根目录名称作为项目名称
@@ -745,9 +819,14 @@ def main():
         print("\n🎉 项目迁移成功完成！")
         print(f"新项目已准备就绪: {migrator.project_name}")
         print("\n建议下一步操作:")
-        print("1. 检查并完善 docs/01-设计/开发任务书.md")
-        print("2. 制定具体的 docs/01-设计/技术路线.md")
-        print("3. 配置 docs/03-管理/.env 环境变量")
+        docs_design = Path(migrator.docs_dir) / "01-设计"
+        docs_management = Path(migrator.docs_dir) / "03-管理"
+        print(f"1. 检查并完善 {docs_design.relative_to(project_root) / '开发任务书.md'}")
+        print(f"2. 制定具体的 {docs_design.relative_to(project_root) / '技术路线.md'}")
+        print(
+            f"3. 配置 {
+                docs_management.relative_to(project_root)
+                / '.env'} 环境变量")
         print("4. 开始项目开发工作")
         sys.exit(0)
     else:

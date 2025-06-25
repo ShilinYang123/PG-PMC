@@ -71,7 +71,7 @@
 
 1.  **确保环境**: Python 3.x 环境，并已安装 `PyYAML` 依赖 (通常在项目依赖中已包含)。
 2.  **运行脚本**:
-    在项目根目录 (`S:\3AI`)下执行以下命令：
+    在项目根目录 (`{{PROJECT_ROOT}}
 
     ```bash
     python -m tools.init_project --name <新项目名称>
@@ -80,7 +80,7 @@
     ```bash
     python -m tools.init_project --name my_new_app
     ```
-    新项目将在当前工作目录下创建 (例如 `S:\3AI/my_new_app`)。
+    新项目将在当前工作目录下创建 (例如 `{{ PROJECT_ROOT }}/my_new_app`)。
 
 3.  **自定义配置 (可选)**:
     如果您的项目配置文件不在默认位置，或者您想使用特定的配置文件，可以通过 `--config` 参数指定：
@@ -114,11 +114,8 @@
 
 2. **环境配置**
    ```bash
-   # 复制环境变量文件
-   cp .env.example .env
-   
-   # 编辑环境变量
-   nano .env
+   # 配置文件已整合到统一配置中
+   # 如需修改配置，请编辑 ../docs/03-管理/project_config.yaml
    ```
 
 3. **安装依赖**

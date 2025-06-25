@@ -12,6 +12,7 @@ import stat
 import shutil
 import datetime
 from pathlib import Path
+import yaml
 
 # 受保护的核心文件列表
 PROTECTED_FILES = [
@@ -21,8 +22,6 @@ PROTECTED_FILES = [
     "docs/01-设计/目录结构标准清单.md",
     "docs/03-管理/规范与流程.md",
     "docs/03-管理/project_config.yaml",
-    "docs/03-管理/.env",
-    "docs/03-管理/.env.example",
 
     "tools/finish.py",
     "tools/control.py",
@@ -31,15 +30,30 @@ PROTECTED_FILES = [
 ]
 
 
+def load_project_config():
+    """加载项目配置"""
+    config_path = Path(__file__).parent.parent / "docs" / "03-管理" / "project_config.yaml"
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        return config
+    except Exception as e:
+        print(f"加载配置文件失败: {e}")
+        return None
+
 def get_project_root():
     """获取项目根目录"""
+    config = load_project_config()
+    if config and config.get('paths', {}).get('root'):
+        return Path(config['paths']['root'])
+    
+    # 备用方案：向上查找包含docs目录的根目录
     current_dir = Path(__file__).parent
-    # 向上查找包含docs目录的根目录
     while current_dir.parent != current_dir:
         if (current_dir / "docs").exists():
             return current_dir
         current_dir = current_dir.parent
-    return Path("s:/3AI")  # 默认路径
+    return Path(__file__).parent.parent  # 默认为工具目录的上级
 
 
 def is_readonly(file_path):
@@ -104,8 +118,16 @@ def check_files_status(project_root):
 
 def backup_files(project_root, files_to_backup):
     """备份文件到专项备份目录"""
+    config = load_project_config()
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_dir = project_root / "bak" / "专项备份" / f"权限变更备份_{timestamp}"
+    
+    # 从配置获取备份目录
+    if config and config.get('paths', {}).get('backup_dir'):
+        backup_base = Path(config['paths']['backup_dir'])
+    else:
+        backup_base = project_root / "bak"
+    
+    backup_dir = backup_base / "专项备份" / f"权限变更备份_{timestamp}"
 
     try:
         backup_dir.mkdir(parents=True, exist_ok=True)
@@ -177,7 +199,14 @@ def main():
     print("3. 退出")
 
     while True:
-        choice = input("\n请输入选择 (1-3): ").strip()
+        try:
+            choice = input("\n请输入选择 (1-3): ").strip()
+        except KeyboardInterrupt:
+            print("\n\n用户中断操作，退出程序")
+            return
+        except EOFError:
+            print("\n\n输入结束，退出程序")
+            return
 
         if choice == "3":
             print("退出程序")

@@ -31,9 +31,31 @@ import yaml  # 用于加载目录规范配置
 
 # 导入错误处理机制
 from exceptions import ValidationError, ErrorHandler
+from config_loader import get_config
 
 # 初始化错误处理器
 error_handler = ErrorHandler()
+
+# --- Configuration Loading ---
+def load_project_config():
+    """加载项目配置"""
+    config_path = Path(__file__).parent.parent / "docs" / "03-管理" / "project_config.yaml"
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        return config
+    except Exception as e:
+        print(f"加载配置文件失败: {e}")
+        return None
+
+def get_project_root():
+    """获取项目根目录"""
+    config = load_project_config()
+    if config and config.get('paths', {}).get('root'):
+        return Path(config['paths']['root'])
+    
+    # 备用方案
+    return Path(__file__).resolve().parent.parent
 
 # --- MCP工具集成 ---
 
@@ -56,8 +78,7 @@ class MCPToolsManager:
             self.tasks_file = self.project_root / tasks_path
             self.memory_file = self.project_root / memory_path
 
-            logging.getLogger(__name__).info(
-                f"MCP配置加载成功 - Tasks: {self.tasks_file}, Memory: {self.memory_file}")
+            logging.getLogger(__name__).info(f"MCP配置加载成功 - Tasks: {self.tasks_file}, Memory: {self.memory_file}")
 
         except Exception as e:
             # 回退到默认路径
@@ -337,23 +358,31 @@ except (ValueError, FileNotFoundError) as e:
 
 # --- Constants and Global Setup ---
 NL = "\\n"  # Using literal newline for Markdown compatibility in Python strings
-PROJECT_ROOT = Path(__file__).resolve().parent.parent  # 3AI Project dir
+PROJECT_ROOT = get_project_root()
 
 # 初始化MCP工具管理器
 mcp_tools = MCPToolsManager(PROJECT_ROOT)
 
 # --- 统一路径配置变量 ---
 # 项目标准路径配置
-STANDARD_BACKUP_DIR = PROJECT_ROOT / "bak"  # 标准备份目录
-STANDARD_LOGS_DIR = PROJECT_ROOT / "logs"  # 标准日志目录
+config = load_project_config()
+if config and config.get('paths'):
+    STANDARD_BACKUP_DIR = Path(config['paths'].get('backup_dir', PROJECT_ROOT / "bak"))
+    STANDARD_LOGS_DIR = Path(config['paths'].get('logs_dir', PROJECT_ROOT / "logs"))
+else:
+    STANDARD_BACKUP_DIR = PROJECT_ROOT / "bak"  # 标准备份目录
+    STANDARD_LOGS_DIR = PROJECT_ROOT / "logs"  # 标准日志目录
 STANDARD_CLEANUP_DIR = STANDARD_BACKUP_DIR / "待清理资料"  # 标准清理目录
 
 # 基础目录配置
 LOG_DIR = STANDARD_LOGS_DIR / "工作记录"
-REPORT_DIR = STANDARD_LOGS_DIR / "检查报告" / "自检报告"  # Correct report directory
+# 从配置文件获取报告目录
+config = get_config()
+report_dir_config = config.get('structure_check', {}).get('report_dir', 'logs/检查报告')
+REPORT_DIR = PROJECT_ROOT / report_dir_config
 TIMESTAMP = datetime.now().strftime("%Y%m%d-%H%M%S")
 LOG_FILE = LOG_DIR / f"finish_py_{TIMESTAMP}.log"
-REPORT_FILE = LOG_DIR / f"finish_py_report_{TIMESTAMP}.md"
+REPORT_FILE = LOG_DIR / f"finish_report_py_{TIMESTAMP}.md"
 
 # BACKUP_DIR 先占位，随后根据规范配置动态定义
 BACKUP_DIR = None
@@ -395,23 +424,12 @@ logger.addHandler(console_handler)
 def get_daily_git_commits():
     """获取当天的 Git 提交记录"""
     try:
-        # 首先检查是否为Git仓库
-        check_git = subprocess.run(
-            ["git", "rev-parse", "--git-dir"],
-            capture_output=True,
-            text=True,
-            cwd=PROJECT_ROOT
-        )
-
-        if check_git.returncode != 0:
-            logger.info("当前目录不是Git仓库，跳过Git提交记录检查")
-            return "### 当日 Git 提交记录\n\n⚠️ 当前目录不是Git仓库\n"
-
         # 获取今天的日期，格式 YYYY-MM-DD
         today_date = datetime.now().strftime("%Y-%m-%d")
-        logger.info(f"检查 {today_date} 的Git提交记录...")
-
         # 构建 git log 命令，获取今天的提交记录，格式化输出
+        # --after 和 --before 用于指定日期范围，确保只获取当天的记录
+        # --pretty=format:'- %h %s (%an)' 指定输出格式：短哈希 作者 提交信息
+        # --no-merges 排除合并提交
         cmd = [
             "git", "log", f"--after={today_date} 00:00:00",
             f"--before={today_date} 23:59:59",
@@ -423,9 +441,7 @@ def get_daily_git_commits():
             text=True,
             check=True,
             encoding='utf-8',
-            cwd=PROJECT_ROOT,
-            timeout=10  # 添加超时
-        )
+            cwd=PROJECT_ROOT)
         commits = result.stdout.strip()
         if commits:
             logger.info("成功获取当日 Git 提交记录。")
@@ -433,11 +449,8 @@ def get_daily_git_commits():
         else:
             logger.info("当日无 Git 提交记录。")
             return "### 当日 Git 提交记录\n\n当日无提交记录。\n"
-    except subprocess.TimeoutExpired:
-        logger.warning("Git提交记录检查超时")
-        return "### 当日 Git 提交记录\n\n检查超时。\n"
     except subprocess.CalledProcessError as e:
-        logger.error(f"获取 Git 提交记录失败: {e.stderr if e.stderr else str(e)}")
+        logger.error(f"获取 Git 提交记录失败: {e.stderr}")
         return "### 当日 Git 提交记录\n\n获取提交记录失败。\n"
     except FileNotFoundError:
         logger.error("Git 命令未找到，请确保 Git 已安装并配置在系统路径中。")
@@ -451,7 +464,7 @@ if args.init_config:  # 新增初始化配置文件逻辑
     }
     # 使用用户指定的配置文件路径，如果提供了的话
     config_path = Path(args.config) if args.config else PROJECT_ROOT / \
-        "bak" / "config" / "directory_spec.yaml"
+        "docs" / "03-管理" / "project_config.yaml"
     # 获取用户指定的备份目录（如果存在）
     user_backup_dir = args.backup_dir or None
     if user_backup_dir:
@@ -473,7 +486,12 @@ try:
     config_path = Path(args.config) if args.config else \
         PROJECT_ROOT / "docs" / "03-管理" / "project_config.yaml"
     with open(config_path, "r", encoding="utf-8") as f:
-        dir_spec = yaml.safe_load(f)
+        full_config = yaml.safe_load(f)
+        # 从project_config.yaml的paths部分提取directory_spec格式的配置
+        dir_spec = {
+            "required_dirs": full_config.get('paths', {}).get('required_dirs', []),
+            "required_files": full_config.get('paths', {}).get('required_files', [])
+        }
     logger.info(f"成功加载配置文件：{config_path}")
 except FileNotFoundError:
     logger.error(
@@ -506,46 +524,22 @@ def run_self_check():
 
     # 3. 代码质量检查 (Flake8, ESLint)
     logger.info("执行代码质量检查...")
-    report_content += "\n### 代码质量检查\n\n"
-
     try:
-        # 限制检查范围，避免检查整个项目导致超时
-        check_dirs = ["tools", "project/src", "docs"]
-        existing_dirs = [d for d in check_dirs if (PROJECT_ROOT / d).exists()]
-
-        if existing_dirs:
-            logger.info(f"检查目录: {', '.join(existing_dirs)}")
-            # 运行flake8检查，添加超时和进度提示
-            flake8_cmd = ["flake8", "--max-line-length=88"] + existing_dirs
-            logger.info("正在执行Flake8代码质量检查，请稍候...")
-
-            flake8_result = subprocess.run(
-                flake8_cmd,
-                capture_output=True,
-                text=True,
-                cwd=PROJECT_ROOT,
-                timeout=60  # 60秒超时
-            )
-
-            if flake8_result.returncode != 0:
-                report_content += "**Flake8检查发现问题:**\n```\n"
-                report_content += flake8_result.stdout
-                report_content += "```\n"
-                critical_issues.append("代码质量问题")
-                logger.warning("Flake8检查发现代码质量问题")
-            else:
-                report_content += "✅ Flake8检查通过\n"
-                logger.info("Flake8检查通过")
+        # 运行flake8检查
+        flake8_result = subprocess.run(
+            ["flake8", "--max-line-length=88", "."],
+            capture_output=True, text=True, cwd=PROJECT_ROOT
+        )
+        if flake8_result.returncode != 0:
+            report_content += "\n### 代码质量检查\n\n"
+            report_content += "**Flake8检查发现问题:**\n```\n"
+            report_content += flake8_result.stdout
+            report_content += "```\n"
+            critical_issues.append("代码质量问题")
         else:
-            report_content += "⚠️ 未找到Python源代码目录，跳过Flake8检查\n"
-            logger.info("未找到Python源代码目录，跳过Flake8检查")
-
-    except subprocess.TimeoutExpired:
-        report_content += "⚠️ Flake8检查超时（60秒），可能文件过多\n"
-        logger.warning("Flake8检查超时")
+            report_content += "\n### 代码质量检查\n\n✅ Flake8检查通过\n"
     except FileNotFoundError:
-        report_content += "⚠️ Flake8未安装或不可用\n"
-        logger.warning("Flake8未安装或不可用")
+        report_content += "\n### 代码质量检查\n\n⚠️ Flake8未安装或不可用\n"
 
     # 4. 自动化测试检查
     logger.info("检查测试文件...")
@@ -675,7 +669,7 @@ def run_self_check():
 
     # 定义自检报告的目录和文件名
     # 使用常量中定义的 REPORT_DIR
-    # REPORT_DIR 已经在常量区定义为 PROJECT_ROOT / "logs" / "自检报告"
+    # REPORT_DIR 已经在常量区从配置文件动态获取
     os.makedirs(REPORT_DIR, exist_ok=True)  # 确保目录存在
     # TIMESTAMP 也已在常量区定义
     report_filename = f"每日自检报告_{TIMESTAMP}.md"
@@ -910,27 +904,17 @@ def invoke_autoformat():
     ])
     try:
         importlib.import_module("autopep8")
-        # 限制autopep8处理范围，避免超时
-        target_dirs = []
-        for subdir in ["tools", "project/src", "docs"]:
-            target_path = PROJECT_ROOT / subdir
-            if target_path.exists():
-                target_dirs.append(str(target_path))
-
-        if target_dirs:
-            cmd = [
-                sys.executable,
-                "-m",
-                "autopep8",
-                "--in-place",
-                "--recursive",
-                "--aggressive",
-                "--aggressive",
-            ] + target_dirs
-            out, err, code = run_command(cmd, timeout=60)  # 增加超时时间到60秒
-        else:
-            logger.info("No target directories found for autopep8")
-            code = 0
+        cmd = [
+            sys.executable,
+            "-m",
+            "autopep8",
+            "--in-place",
+            "--recursive",
+            "--aggressive",
+            "--aggressive",
+            str(PROJECT_ROOT),
+        ]
+        out, err, code = run_command(cmd)
         if code != 0:
             logger.warning(f"autopep8 issues (code {code}): {err}")
     except ModuleNotFoundError:
@@ -1584,13 +1568,11 @@ def invoke_workdir_clean_check():
 def load_whitelist_from_structure_file():
     """从配置文件中加载白名单
     """
-    # 优先从structure读取，如果没有再从paths读取
-    structure_config = dir_spec.get("structure", {})
-    allowed = set(structure_config.get("required_dirs", []))
-    if not allowed:
-        paths_config = dir_spec.get("paths", {})
-        allowed = set(paths_config.get("required_dirs", []))
-    disallowed = set(structure_config.get("disallowed_top_dirs", []))
+    # 直接从配置文件加载白名单
+    allowed = set(dir_spec.get("required_dirs", []))
+    # 添加required_files到白名单
+    allowed.update(dir_spec.get("required_files", []))
+    disallowed = set(dir_spec.get("disallowed_top_dirs", []))
 
     logger.info(f"从配置文件加载白名单: {sorted(allowed)}")
     return allowed, disallowed
@@ -1802,9 +1784,36 @@ def invoke_backup(skip_backup=False):
 
         # 确保Git仓库中存在符合GitHub仓库结构规范的文件夹
         git_repo_path = str(BACKUP_DIR / "github_repo")  # 使用正确的Git仓库路径
-
-        # 同步目录结构到GitHub仓库（特殊处理bak和logs目录）
-        sync_directory_structure_to_github(git_repo_path)
+        
+        # 清理并重新创建Git仓库目录（除了.git目录）
+        if os.path.exists(git_repo_path):
+            for item in os.listdir(git_repo_path):
+                if item != '.git':  # 保留.git目录
+                    item_path = os.path.join(git_repo_path, item)
+                    if os.path.isdir(item_path):
+                        shutil.rmtree(item_path)
+                    else:
+                        os.remove(item_path)
+        else:
+            os.makedirs(git_repo_path, exist_ok=True)
+        
+        # 同步项目文件到Git仓库（排除bak和logs目录）
+        github_dirs = ["docs", "project", "tools"]
+        for dir_name in github_dirs:
+            src_dir = os.path.join(PROJECT_ROOT, dir_name)
+            dst_dir = os.path.join(git_repo_path, dir_name)
+            if os.path.exists(src_dir):
+                shutil.copytree(src_dir, dst_dir, ignore=shutil.ignore_patterns('*.log', '*.tmp', '__pycache__'))
+                logger.info(f"已同步目录到Git仓库：{dir_name}")
+        
+        # 同步根目录的重要文件
+        root_files = ["README.md", "requirements.txt", ".gitignore", "pyproject.toml"]
+        for file_name in root_files:
+            src_file = os.path.join(PROJECT_ROOT, file_name)
+            dst_file = os.path.join(git_repo_path, file_name)
+            if os.path.exists(src_file):
+                shutil.copy2(src_file, dst_file)
+                logger.info(f"已同步文件到Git仓库：{file_name}")
 
         # 在Git仓库目录中执行Git命令
         stdout, stderr, code = run_command(
@@ -1866,196 +1875,98 @@ def invoke_backup(skip_backup=False):
         return False
 
     # Define exclusion patterns (optimized for performance)
-    # Use fnmatch patterns
-    exclude_patterns = [
-        "node_modules/*",
-        ".vscode/*",
-        ".idea/*",
-        ".git/*",
-        "*.log",
-        "venv/*",
-        "env/*",
-        "__pycache__/*",
-        "*.pyc",
-        "*.pyo",
-        "dist/*",
-        "build/*",
-        "backups/*",
-        "*.tmp",
-        "*.temp",
-        "*.cache",
-        ".pytest_cache/*",
-        ".coverage",
-        "coverage.xml",
-        "*.egg-info/*",
-        ".tox/*",
-        ".mypy_cache/*",
-        "docker/*/data/*",
-        "uploads/*",
-        "*.zip",
-        "*.tar.gz",
-        "*.rar",
-        "*.7z"
+    # Directory-level exclusions for early pruning
+    exclude_dirs = {
+        "node_modules", ".vscode", ".idea", ".git", "venv", "env", 
+        "__pycache__", "dist", "build", "backups", ".pytest_cache",
+        ".tox", ".mypy_cache"
+    }
+    
+    # File-level exclusions
+    exclude_file_patterns = [
+        "*.log", "*.pyc", "*.pyo", "*.tmp", "*.temp", "*.cache",
+        ".coverage", "coverage.xml", "*.zip", "*.tar.gz", "*.rar", "*.7z"
     ]
-
-    # 特殊目录处理：bak和logs目录只备份目录结构，不备份具体内容文件
-    special_structure_dirs = ["bak", "logs"]
-
-    def should_backup_structure_only(item_path):
-        """检查是否应该只备份目录结构（用于bak和logs目录）"""
-        path_parts = item_path.relative_to(PROJECT_ROOT).parts
-        if len(path_parts) > 0 and path_parts[0] in special_structure_dirs:
-            # 如果是bak或logs目录下的文件（非目录），则跳过
-            if item_path.is_file():
-                return False
-            # 如果是目录，则保留（创建空目录结构）
-            return True
-        return None  # 不是特殊目录，使用常规逻辑
-
-
-def sync_directory_structure_to_github(git_repo_path):
-    """同步项目目录结构到GitHub仓库，特殊处理bak和logs目录"""
-    import shutil
-
-    # 确保Git仓库目录存在
-    os.makedirs(git_repo_path, exist_ok=True)
-
-    # 特殊目录处理：bak和logs目录只备份目录结构，不备份具体内容文件
-    special_structure_dirs = ["bak", "logs"]
-
-    # 需要同步的主要目录
-    sync_dirs = ["docs", "project", "tools", "bak", "logs"]
-
-    for dir_name in sync_dirs:
-        source_dir = PROJECT_ROOT / dir_name
-        target_dir = Path(git_repo_path) / dir_name
-
-        if not source_dir.exists():
-            continue
-
-        logger.info(f"同步目录结构: {dir_name}")
-
-        if dir_name in special_structure_dirs:
-            # 特殊处理：只同步目录结构，不同步文件内容
-            sync_directory_structure_only(source_dir, target_dir)
-        else:
-            # 常规目录：完整同步
-            if target_dir.exists():
-                shutil.rmtree(target_dir)
-            shutil.copytree(
-                source_dir,
-                target_dir,
-                ignore=shutil.ignore_patterns(
-                    '*.pyc',
-                    '__pycache__',
-                    '*.tmp',
-                    '*.temp',
-                    '*.log'))
-
-    logger.info("目录结构同步完成")
-
-
-def sync_directory_structure_only(source_dir, target_dir):
-    """只同步目录结构，不同步文件内容"""
-    # 清理目标目录
-    if target_dir.exists():
-        shutil.rmtree(target_dir)
-
-    # 创建目标目录
-    target_dir.mkdir(parents=True, exist_ok=True)
-
-    # 递归创建子目录结构
-    for item in source_dir.rglob("*"):
-        if item.is_dir():
-            rel_path = item.relative_to(source_dir)
-            target_subdir = target_dir / rel_path
-            target_subdir.mkdir(parents=True, exist_ok=True)
-
-            # 创建.gitkeep文件以保持空目录在Git中存在
-            gitkeep_file = target_subdir / ".gitkeep"
-            if not any(target_subdir.iterdir()):  # 如果目录为空
-                gitkeep_file.touch()
-
-    # 在根目录也创建.gitkeep
-    root_gitkeep = target_dir / ".gitkeep"
-    if not any(f for f in target_dir.iterdir() if f.name != ".gitkeep"):
-        root_gitkeep.touch()
+    
+    # Special directories to preserve structure only
+    structure_only_dirs = {"bak", "logs"}
+    
+    # Standard subdirectories to preserve in structure-only dirs
+    standard_bak_dirs = {'config', 'github_repo', '专项备份', '迁移备份'}
+    # 从项目规范获取logs标准子目录（根据规范与流程.md中的定义）
+    standard_logs_dirs = {'archive', '其他日志', '工作记录', '检查报告'}
 
     logger.info(f"Creating backup: {backup_path}")
     processed_files = 0
     added_files = 0
+    
+    def should_exclude_file(filename):
+        """Check if file should be excluded based on patterns"""
+        for pattern in exclude_file_patterns:
+            if fnmatch.fnmatch(filename, pattern):
+                return True
+        return False
+    
+    def should_preserve_structure_dir(rel_path, dirname):
+        """Check if directory structure should be preserved"""
+        if rel_path == "bak" or rel_path == "logs":
+            return True
+        if rel_path.startswith("bak/") and dirname in standard_bak_dirs:
+            return True
+        if rel_path.startswith("logs/") and dirname in standard_logs_dirs:
+            return True
+        return False
+    
     try:
         logger.debug("Opening zip file for writing...")
         with zipfile.ZipFile(backup_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-            logger.debug("Starting recursive scan of project root...")
-            for item in PROJECT_ROOT.rglob("*"):
-                processed_files += 1
-                if processed_files % 500 == 0:  # More frequent progress updates
-                    logger.info(
-                        f"正在扫描文件... 已处理 {processed_files} 个项目，已添加 {added_files} 个文件到备份")
-                    logger.debug(f"备份进度: 已扫描 {processed_files} 个项目...")
-
-                item_rel_path_str = str(item.relative_to(PROJECT_ROOT))
-
-                # Check exclusion patterns
-                is_excluded = False
-                # logger.debug(f"Checking exclusions for: {item_rel_path_str}")
-                # # Very verbose
-                for pattern in exclude_patterns:
-                    # Check if the path itself matches, or if any parent
-                    # directory matches
-                    path_parts = item.relative_to(PROJECT_ROOT).parts
-                    path_matches = fnmatch.fnmatch(item_rel_path_str, pattern)
-                    pattern_base = pattern.split("/")[0].split("\\")[0]
-                    parent_matches = any(
-                        fnmatch.fnmatch(
-                            part, pattern_base) for part in path_parts)
-
-                    if path_matches or parent_matches:
-                        is_excluded = True
-                        # logger.debug(f"Excluded {item_rel_path_str} due to pattern {pattern}")
-                        break
-
-                if not is_excluded:
-                    # 检查特殊目录结构处理
-                    structure_check = should_backup_structure_only(item)
-                    if structure_check is False:
-                        # 特殊目录下的文件，跳过备份
+            logger.debug("Starting optimized directory walk...")
+            
+            for root, dirs, files in os.walk(PROJECT_ROOT):
+                # Calculate relative path
+                rel_root = os.path.relpath(root, PROJECT_ROOT)
+                if rel_root == ".":
+                    rel_root = ""
+                
+                # Filter out excluded directories (modify dirs in-place for pruning)
+                dirs[:] = [d for d in dirs if d not in exclude_dirs]
+                
+                # Process files in current directory
+                for filename in files:
+                    processed_files += 1
+                    if processed_files % 1000 == 0:  # Less frequent but more meaningful updates
+                        logger.info(f"正在扫描文件... 已处理 {processed_files} 个项目，已添加 {added_files} 个文件到备份")
+                    
+                    # Skip excluded files
+                    if should_exclude_file(filename):
                         continue
-                    elif structure_check is True:
-                        # 特殊目录下的目录，创建空目录结构
-                        if item.is_dir():
-                            try:
-                                zipf.writestr(item_rel_path_str + "/", "")
-                                added_files += 1
-                                logger.debug(
-                                    f"Added directory structure: {item_rel_path_str}/")
-                            except Exception as e:
-                                logger.warning(
-                                    f"Failed to add directory structure {item} to backup: {e}")
+                    
+                    # Build file path
+                    file_path = os.path.join(root, filename)
+                    rel_file_path = os.path.join(rel_root, filename) if rel_root else filename
+                    
+                    # Skip files in structure-only directories
+                    if any(rel_file_path.startswith(d + os.sep) or rel_file_path.startswith(d + "/") 
+                           for d in structure_only_dirs):
                         continue
-
-                    # 常规文件处理
+                    
                     try:
-                        if item.is_file():
-                            file_size = item.stat().st_size
-                            zipf.write(item, item_rel_path_str)
-                            added_files += 1
-                            if added_files % 100 == 0:  # Progress every 100 files added
-                                logger.info(f"已添加 {added_files} 个文件到备份")
-                                logger.debug(f"备份进度: 已添加 {added_files} 个文件")
-                            logger.debug(
-                                f"Added to backup: {item_rel_path_str} ({file_size} bytes)")
-                        elif item.is_dir():
-                            # 常规目录，创建目录结构
-                            zipf.writestr(item_rel_path_str + "/", "")
-                            logger.debug(
-                                f"Added directory: {item_rel_path_str}/")
+                        file_size = os.path.getsize(file_path)
+                        zipf.write(file_path, rel_file_path.replace(os.sep, "/"))
+                        added_files += 1
+                        if added_files % 100 == 0:
+                            logger.info(f"已添加 {added_files} 个文件到备份")
+                        logger.debug(f"Added to backup: {rel_file_path} ({file_size} bytes)")
                     except Exception as e:
-                        logger.warning(f"Failed to add {item} to backup: {e}")
-                # else:
-                # logger.debug(f"Excluding from backup: {item_rel_path_str}") #
-                # Verbose
+                        logger.warning(f"Failed to add {file_path} to backup: {e}")
+                
+                # Add structure-only directories
+                if rel_root and should_preserve_structure_dir(rel_root, os.path.basename(root)):
+                    try:
+                        zipf.writestr(rel_root.replace(os.sep, "/") + "/", "")
+                        logger.debug(f"Added directory structure: {rel_root}/")
+                    except Exception as e:
+                        logger.warning(f"Failed to add directory structure {rel_root}: {e}")
 
         logger.info("备份进度显示结束")
         logger.info(

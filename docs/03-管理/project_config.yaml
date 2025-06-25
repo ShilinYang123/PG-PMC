@@ -4,8 +4,11 @@ app:
   name: 3AI
   port: 3000
   url: http://localhost:3000
-backup_dir: S:\3AI/bak
+
+backup_dir: "s:/3AI/bak"
 created_at: '2025-06-19T17:15:34.936127'
+project_name: "3AI"
+project_version: "1.0.0"
 database:
   dev_name: 3AI_dev_db
   host: localhost
@@ -16,15 +19,128 @@ database:
   url_template: postgresql://{username}:{password}@{host}:{port}/{database_name}
   username: postgres
 environment:
+  # 基础配置
+  app:
+    name: "3AI工作室"
+    version: 1.0.0
+    url: http://localhost:3000
+    api_url: http://localhost:8000
+    port: 3000
+    api_port: 8000
+  
+  # 数据库配置
+  database:
+    url: postgresql://postgres:password@localhost:5432/3AI_db
+    host: localhost
+    port: 5432
+    name: 3AI_db
+    user: postgres
+    password: password
+    pool_min: 2
+    pool_max: 10
+    pool_idle_timeout: 30000
+    test_url: postgresql://postgres:password@localhost:5432/3AI_test_db
+  
+  # Redis配置
+  redis:
+    url: redis://localhost:6379/0
+    host: localhost
+    port: 6379
+    db: 0
+    password: ""
+    session_db: 1
+  
+  # 安全配置
+  security:
+    session_secret: your-session-secret-key-change-this
+    session_max_age: 86400000
+    jwt_secret: your-super-secret-jwt-key-change-this-in-production
+    jwt_expires_in: 7d
+    jwt_refresh_expires_in: 30d
+    encryption_key: your-32-character-encryption-key
+    cors_origin: http://localhost:3000
+    cors_credentials: true
+  
+  # 文件存储配置
+  storage:
+    upload_dir: ./uploads
+    max_file_size: 10485760
+    allowed_file_types: jpg,jpeg,png,gif,pdf,doc,docx,txt
+    # aws_access_key_id: your-aws-access-key
+    # aws_secret_access_key: your-aws-secret-key
+    # aws_region: us-east-1
+    # aws_s3_bucket: your-s3-bucket
+  
+  # 邮件配置
+  mail:
+    smtp_host: smtp.gmail.com
+    smtp_port: 587
+    smtp_secure: false
+    smtp_user: your-email@gmail.com
+    smtp_pass: your-app-password
+    from_name: "3AI工作室"
+    from_address: noreply@3ai.studio
+  
+  # 日志配置
+  logging:
+    level: info
+    dir: ./logs
+    max_size: 10m
+    max_files: 5
+    date_pattern: YYYY-MM-DD
+  
+  # 外部服务配置
+  external_services:
+    openai_api_key: your-openai-api-key
+    openai_model: gpt-4
+    openai_max_tokens: 2000
+    # anthropic_api_key: your-anthropic-api-key
+    # google_ai_api_key: your-google-ai-api-key
+  
+  # 监控配置
+  monitoring:
+    # sentry_dsn: your-sentry-dsn
+    # new_relic_license_key: your-newrelic-key
+    # ga_tracking_id: your-ga-tracking-id
+    health_check_endpoint: /health
+    health_check_interval: 30000
+  
+  # 缓存配置
+  cache:
+    ttl: 3600
+    max_items: 1000
+    static_max_age: 31536000
+  
+  # 限流配置
+  rate_limit:
+    window_ms: 900000
+    max_requests: 100
+    upload_limit: 10
+  
+  # 环境特定配置
   development:
     debug: true
     log_level: DEBUG
+    webpack_dev_server_host: localhost
+    webpack_dev_server_port: 3000
+    webpack_hot_reload: true
+    api_docs_enabled: true
+    api_docs_path: /docs
+    debug_mode: true
+    verbose_logging: false
+  
   production:
     debug: false
     log_level: INFO
+    # ssl_cert_path: /path/to/cert.pem
+    # ssl_key_path: /path/to/key.pem
+    # cluster_workers: auto
+  
   test:
     debug: true
     log_level: DEBUG
+    timeout: 30000
+    coverage_threshold: 80
 git:
   default_branch: main
   ignore_patterns:
@@ -34,7 +150,7 @@ git:
   - node_modules
   - dist
   - build
-  repository_url: ''
+  repository_url: 'https://github.com/ShilinYang123/3AI-Project.git'
 migration:
   cleanup_dirs:
   - __pycache__
@@ -56,30 +172,88 @@ migration:
   - '*.sh'
   - .env*
 paths:
-  backup_dir: bak
-  docs_dir: docs
-  logs_dir: logs
-  project_dir: project
+  root: "s:/3AI"
+  backup_dir: "s:/3AI/bak"
+  docs_dir: "s:/3AI/docs"
+  logs_dir: "s:/3AI/logs"
+  project_dir: "s:/3AI/project"
   required_dirs:
+  - src
+  - logs
   - bak
   - docs
-  - logs
-  - project
   - tools
-  tools_dir: tools
+  - project
+  required_files:
+  - README.md
+  - requirements.txt
+  tools_dir: "s:/3AI/tools"
 project:
   created_at: '2025-06-20T00:11:18.534319'
   name: 3AI
-  root: S:\3AI
+  root: "s:/3AI"
   updated_at: '2025-06-20T00:11:18.534332'
 project_description: 3AI项目
-project_name: 3AI
 project_root: ''
-project_version: 1.0.0
 structure_check:
-  report_dir: logs/检查报告/自检报告
-  report_name_format: 目录结构检查报告_{timestamp}.md
+  # 基本配置
   standard_list_file: docs/01-设计/目录结构标准清单.md
+  report_dir: logs/检查报告
+  report_name_format: 目录结构检查报告_{timestamp}.md
+  
+  # 检查配置
+  excluded_dirs: [.git, node_modules, __pycache__, .pytest_cache]
+  excluded_dirs_for_redundancy: [bak, logs]
+  
+  # 性能优化配置
+  max_depth: 10
+  skip_deep_nested_dirs: true
+  
+  # 默认规则（当标准文件解析失败时使用）
+  default_forbidden_patterns:
+    - "*.tmp"
+    - "*.bak"
+    - "*.swp"
+    - "*.log"
+    - "*~"
+    - "Thumbs.db"
+    - ".DS_Store"
+    - "Everything.db"
+    - "*.db"
+    - "*.sqlite"
+  
+  # 项目根目录严格检查
+  root_directory_rules:
+    # 只允许存在的标准目录
+    allowed_directories:
+      - "bak"
+      - "docs"
+      - "logs"
+      - "project"
+      - "tools"
+    
+    # 严格禁止的目录模式
+    forbidden_directory_patterns:
+      - "config*"
+      - "example*"
+      - "sample*"
+      - "temp*"
+      - "tmp*"
+      - "cache*"
+      - "test*"
+    
+    # 严格禁止的文件模式
+    forbidden_file_patterns:
+      - "*.db"
+      - "*.sqlite"
+      - "Everything.db"
+      - "*.log"
+      - "*.tmp"
+  
+  default_naming_rules:
+    docs: "^[\u4e00-\u9fa5a-zA-Z0-9_ -]+\\.(md|txt)$"
+    tools: "^[a-zA-Z0-9_-]+\\.(py|js|sh|bat|ps1)$"
+    config: "^[a-zA-Z0-9_-]+\\.(json|yaml|yml|ini|conf)$"
 template:
   default_description: AI项目开发框架
   default_project_name: 3AI
@@ -89,14 +263,6 @@ template:
   - CREATED_AT
   - UPDATED_AT
 updated_at: '2025-06-19T17:15:34.936137'
-structure:
-  required_dirs:
-  - bak
-  - docs
-  - logs
-  - project
-  - tools
-  disallowed_top_dirs: []
 mcp:
   memory:
     storage_path: "docs/02-开发/memory.json"  # 相对于项目根目录

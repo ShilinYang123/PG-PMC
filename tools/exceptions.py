@@ -244,9 +244,17 @@ class ErrorCollector:
 class ErrorHandler:
     """错误处理器，提供统一的错误处理和报告功能"""
 
-    def __init__(self, collector: ErrorCollector = None):
+    def __init__(self, collector: ErrorCollector = None, enable_graceful_degradation: bool = True):
         self.collector = collector or ErrorCollector()
         self.debug_mode = False
+        self.enable_graceful_degradation = enable_graceful_degradation
+        self.degradation_strategies = {
+            ConfigurationError: self._handle_config_error,
+            FileSystemError: self._handle_filesystem_error,
+            StandardParsingError: self._handle_parsing_error,
+            ValidationError: self._handle_validation_error,
+            PerformanceError: self._handle_performance_error
+        }
 
     def set_debug_mode(self, enabled: bool):
         """设置调试模式"""
@@ -255,8 +263,13 @@ class ErrorHandler:
     def handle_exception(
             self,
             exc: Exception,
-            context: str = None) -> StructureCheckError:
-        """处理异常，转换为结构化错误"""
+            context: str = None,
+            allow_degradation: bool = True) -> tuple[StructureCheckError, bool]:
+        """处理异常，转换为结构化错误
+        
+        Returns:
+            tuple: (structured_error, should_continue)
+        """
         if isinstance(exc, StructureCheckError):
             structured_error = exc
         else:
@@ -270,7 +283,13 @@ class ErrorHandler:
                     'traceback': traceback.format_exc() if self.debug_mode else None})
 
         self.collector.add_error(structured_error)
-        return structured_error
+        
+        # 尝试优雅降级
+        should_continue = True
+        if self.enable_graceful_degradation and allow_degradation:
+            should_continue = self._attempt_graceful_degradation(structured_error, context)
+        
+        return structured_error, should_continue
 
     def handle_validation_error(
             self,
@@ -291,13 +310,42 @@ class ErrorHandler:
         self.collector.add_warning(warning)
         return warning
 
-    def safe_execute(self, func, *args, **kwargs):
-        """安全执行函数，自动处理异常"""
+    def handle_error(self, error, context: str = None):
+        """处理错误的通用方法"""
+        if isinstance(error, Exception):
+            self.handle_exception(error, context)
+        elif isinstance(error, StructureCheckError):
+            self.collector.add_error(error)
+        else:
+            # 如果是字符串消息，创建一个通用错误
+            structured_error = StructureCheckError(
+                message=str(error),
+                error_code='GENERAL_ERROR',
+                details={'context': context} if context else None
+            )
+            self.collector.add_error(structured_error)
+
+    def safe_execute(self, func, *args, default_return=None, allow_degradation=True, **kwargs):
+        """安全执行函数，自动处理异常
+        
+        Args:
+            func: 要执行的函数
+            *args: 函数参数
+            default_return: 异常时的默认返回值
+            allow_degradation: 是否允许优雅降级
+            **kwargs: 函数关键字参数
+            
+        Returns:
+            函数返回值或默认值
+        """
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            self.handle_exception(e, f"执行函数 {func.__name__}")
-            return None
+            error, should_continue = self.handle_exception(e, f"执行函数 {func.__name__}", allow_degradation)
+            if should_continue:
+                return default_return
+            else:
+                raise error
 
     def generate_error_report(self) -> str:
         """生成错误报告"""
@@ -323,6 +371,114 @@ class ErrorHandler:
                 report_lines.append(f"  {i}. {warning}")
 
         return "\n".join(report_lines)
+    
+    def _attempt_graceful_degradation(self, error: StructureCheckError, context: str = None) -> bool:
+        """尝试优雅降级处理
+        
+        Args:
+            error: 结构化错误对象
+            context: 错误上下文
+            
+        Returns:
+            bool: 是否可以继续执行
+        """
+        error_type = type(error)
+        
+        # 查找对应的降级策略
+        for exception_type, strategy in self.degradation_strategies.items():
+            if isinstance(error, exception_type):
+                return strategy(error, context)
+        
+        # 没有找到特定策略，使用默认策略
+        return self._default_degradation_strategy(error, context)
+    
+    def _handle_config_error(self, error: ConfigurationError, context: str = None) -> bool:
+        """处理配置错误的降级策略"""
+        if self.debug_mode:
+            print(f"🔧 配置错误降级: {error.message}")
+        
+        # 配置错误通常可以使用默认值继续
+        if 'config_key' in error.details:
+            print(f"   使用默认配置项: {error.details['config_key']}")
+        
+        return True  # 可以继续执行
+    
+    def _handle_filesystem_error(self, error: FileSystemError, context: str = None) -> bool:
+        """处理文件系统错误的降级策略"""
+        if self.debug_mode:
+            print(f"📁 文件系统错误降级: {error.message}")
+        
+        # 根据操作类型决定是否可以继续
+        operation = error.details.get('operation', '')
+        
+        if operation in ['read', 'scan', 'access']:
+            print(f"   跳过无法访问的文件/目录")
+            return True  # 可以继续执行
+        elif operation in ['write', 'create', 'delete']:
+            print(f"   写操作失败，尝试替代方案")
+            return True  # 可以尝试继续
+        else:
+            return False  # 未知操作，停止执行
+    
+    def _handle_parsing_error(self, error: StandardParsingError, context: str = None) -> bool:
+        """处理解析错误的降级策略"""
+        if self.debug_mode:
+            print(f"📄 解析错误降级: {error.message}")
+        
+        # 解析错误通常可以使用部分数据继续
+        if 'line_number' in error.details:
+            print(f"   跳过第 {error.details['line_number']} 行，继续解析")
+        
+        return True  # 可以继续执行
+    
+    def _handle_validation_error(self, error: ValidationError, context: str = None) -> bool:
+        """处理验证错误的降级策略"""
+        if self.debug_mode:
+            print(f"✅ 验证错误降级: {error.message}")
+        
+        # 验证错误通常不影响继续执行
+        validation_type = error.details.get('validation_type', '')
+        
+        if validation_type in ['naming_convention', 'forbidden_item']:
+            print(f"   记录违规项目，继续检查")
+            return True
+        elif validation_type == 'missing_required':
+            print(f"   记录缺失项目，继续检查")
+            return True
+        else:
+            return True  # 默认可以继续
+    
+    def _handle_performance_error(self, error: PerformanceError, context: str = None) -> bool:
+        """处理性能错误的降级策略"""
+        if self.debug_mode:
+            print(f"⚡ 性能错误降级: {error.message}")
+        
+        # 性能错误通常可以通过调整参数继续
+        operation = error.details.get('operation', '')
+        duration = error.details.get('duration', 0)
+        
+        if operation == 'scan' and duration > 30:
+            print(f"   扫描超时，尝试减少扫描深度")
+            return True
+        elif operation == 'parse' and duration > 10:
+            print(f"   解析超时，尝试简化解析")
+            return True
+        else:
+            return True  # 默认可以继续
+    
+    def _default_degradation_strategy(self, error: StructureCheckError, context: str = None) -> bool:
+        """默认降级策略"""
+        if self.debug_mode:
+            print(f"🔄 默认降级策略: {error.message}")
+        
+        # 根据错误代码决定是否可以继续
+        if error.error_code in ['WARNING', 'INFO']:
+            return True
+        elif error.error_code in ['CRITICAL_ERROR', 'FATAL_ERROR']:
+            return False
+        else:
+            # 未知错误，保守处理
+            return True
 
 
 def create_error_handler(debug_mode: bool = False) -> ErrorHandler:

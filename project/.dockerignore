@@ -69,8 +69,7 @@ build/
 .next/
 out/
 
-# Environment variables
-.env
+# Environment variables (now managed in project_config.yaml)
 .env.local
 .env.development.local
 .env.test.local

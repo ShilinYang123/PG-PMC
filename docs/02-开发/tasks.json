@@ -1,22 +1,82 @@
 [
   {
-    "id": "approval_1750516113",
+    "id": "approval_1750823661",
     "title": "每日自检关键问题处理",
     "description": "自检发现关键问题需要处理：代码质量问题, 缺少必要文件",
     "type": "approval",
     "priority": "high",
     "status": "pending_approval",
-    "created_at": "2025-06-21T22:28:33.542531",
+    "created_at": "2025-06-25T11:54:21.588596",
     "requires_human_approval": true
   },
   {
-    "id": "approval_1750520367",
+    "id": "approval_1750827264",
     "title": "每日自检关键问题处理",
     "description": "自检发现关键问题需要处理：代码质量问题, 缺少必要文件",
     "type": "approval",
     "priority": "high",
     "status": "pending_approval",
-    "created_at": "2025-06-21T23:39:27.552224",
+    "created_at": "2025-06-25T12:54:24.742335",
+    "requires_human_approval": true
+  },
+  {
+    "id": "approval_1750832569",
+    "title": "每日自检关键问题处理",
+    "description": "自检发现关键问题需要处理：代码质量问题, 缺少必要文件",
+    "type": "approval",
+    "priority": "high",
+    "status": "pending_approval",
+    "created_at": "2025-06-25T14:22:49.619851",
+    "requires_human_approval": true
+  },
+  {
+    "id": "approval_1750837267",
+    "title": "每日自检关键问题处理",
+    "description": "自检发现关键问题需要处理：代码质量问题, 缺少必要文件",
+    "type": "approval",
+    "priority": "high",
+    "status": "pending_approval",
+    "created_at": "2025-06-25T15:41:07.649863",
+    "requires_human_approval": true
+  },
+  {
+    "id": "approval_1750844061",
+    "title": "每日自检关键问题处理",
+    "description": "自检发现关键问题需要处理：代码质量问题",
+    "type": "approval",
+    "priority": "high",
+    "status": "pending_approval",
+    "created_at": "2025-06-25T17:34:21.339190",
+    "requires_human_approval": true
+  },
+  {
+    "id": "approval_1750844130",
+    "title": "每日自检关键问题处理",
+    "description": "自检发现关键问题需要处理：代码质量问题",
+    "type": "approval",
+    "priority": "high",
+    "status": "pending_approval",
+    "created_at": "2025-06-25T17:35:30.141351",
+    "requires_human_approval": true
+  },
+  {
+    "id": "approval_1750844354",
+    "title": "每日自检关键问题处理",
+    "description": "自检发现关键问题需要处理：代码质量问题",
+    "type": "approval",
+    "priority": "high",
+    "status": "pending_approval",
+    "created_at": "2025-06-25T17:39:14.204080",
+    "requires_human_approval": true
+  },
+  {
+    "id": "approval_1750844428",
+    "title": "每日自检关键问题处理",
+    "description": "自检发现关键问题需要处理：代码质量问题",
+    "type": "approval",
+    "priority": "high",
+    "status": "pending_approval",
+    "created_at": "2025-06-25T17:40:28.881085",
     "requires_human_approval": true
   }
 ]

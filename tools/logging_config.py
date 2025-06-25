@@ -14,7 +14,7 @@ Date: 2024
 """
 
 import os
-import sys
+# import sys  # 未使用，注释掉
 import logging
 import logging.config
 import logging.handlers
@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 import json
 import threading
 from functools import wraps
-from collections import defaultdict
+# from collections import defaultdict  # 未使用，注释掉
 import time
 import glob
 
@@ -37,11 +37,14 @@ class LoggingConfig:
         'disable_existing_loggers': False,
         'formatters': {
             'standard': {
-                'format': '%(asctime)s [%(levelname)s] %(name)s:%(lineno)d - %(message)s',
+                'format': ('%(asctime)s [%(levelname)s] %(name)s:%(lineno)d '
+                           '- %(message)s'),
                 'datefmt': '%Y-%m-%d %H:%M:%S'
             },
             'detailed': {
-                'format': '%(asctime)s [%(levelname)s] %(name)s:%(lineno)d [%(funcName)s] - %(message)s [PID:%(process)d TID:%(thread)d]',
+                'format': ('%(asctime)s [%(levelname)s] %(name)s:%(lineno)d '
+                           '[%(funcName)s] - %(message)s '
+                           '[PID:%(process)d TID:%(thread)d]'),
                 'datefmt': '%Y-%m-%d %H:%M:%S'
             },
             'simple': {
@@ -267,8 +270,8 @@ class PerformanceLogger(StandardLogger):
 
     def _should_flush(self) -> bool:
         """判断是否应该刷新缓冲区"""
-        return (len(self.buffer) >= self.buffer_size or
-                time.time() - self.last_flush >= self.flush_interval)
+        return (len(self.buffer) >= self.buffer_size
+                or time.time() - self.last_flush >= self.flush_interval)
 
     def _flush_buffer(self):
         """刷新缓冲区"""
@@ -392,8 +395,6 @@ def initialize_logging(config_path: Optional[str] = None,
 
 def get_logger(name: str) -> StandardLogger:
     """获取标准日志器"""
-    global _global_config
-
     if _global_config is None:
         initialize_logging()
 

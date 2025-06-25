@@ -19,8 +19,8 @@ from datetime import datetime
 from contextlib import contextmanager
 import logging
 
-# 配置日志
-logging.basicConfig(level=logging.INFO)
+# 配置日志（已在主程序中配置）
+# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -231,7 +231,7 @@ class PerformanceMonitor:
                     operation_stats[op_name] = {
                         'count': 0,
                         'total_duration': 0,
-                        'min_duration': float('in'),
+                        'min_duration': float('inf'),
                         'max_duration': 0,
                         'avg_memory_delta': 0,
                         'total_memory_delta': 0

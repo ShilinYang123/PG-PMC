@@ -10,9 +10,9 @@ import argparse
 import logging
 # from datetime import datetime  # unused
 
-from .config_loader import get_config
-from .utils import get_project_root
-from .utils import ensure_dir_exists, execute_command
+from config_loader import get_config
+from utils import get_project_root
+from utils import ensure_dir_exists, execute_command
 
 # 配置日志
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -77,6 +77,9 @@ def create_core_directories(target_project_root):
         logger.warning(
             "配置中未找到 'init_project.core_directories'，将使用预设核心目录列表。"
         )
+        # 从配置文件获取报告目录
+        report_dir = CONFIG.get('structure_check', {}).get('report_dir', 'logs/检查报告')
+
         core_directories = [
             "docs/01-设计",
             "docs/02-开发",
@@ -84,7 +87,7 @@ def create_core_directories(target_project_root):
             "docs/04-接口",
             "docs/05-用户",
             "docs/04-模板",
-            "logs/自检报告",
+            report_dir,
             "project/.devcontainer",
             "project/.github/workflows",
             "project/.vscode",

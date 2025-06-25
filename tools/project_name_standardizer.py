@@ -59,7 +59,6 @@ class ProjectNameStandardizer:
             (r'\b3ai\b', project_name),
 
             # 容器名称
-            (r'container_nam{{PROJECT_ROOT}}', r'container_name: 3AI-\1'),
             (r'container_name:\s*"3ai-([\w-]+)"', r'container_name: "3AI-\1"'),
 
             # 数据库名称

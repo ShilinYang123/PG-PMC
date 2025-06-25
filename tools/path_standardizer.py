@@ -17,6 +17,7 @@ import json
 from pathlib import Path
 from typing import Dict, List  # Optional, Tuple, Set unused
 from datetime import datetime
+from config_loader import get_project_root, get_config
 
 
 class PathStandardizer:
@@ -31,7 +32,11 @@ class PathStandardizer:
         if project_root:
             self.project_root = Path(project_root)
         else:
-            self.project_root = Path(__file__).parent.parent
+            config = get_config()
+            if config and config.get('paths', {}).get('root'):
+                self.project_root = Path(config['paths']['root'])
+            else:
+                self.project_root = get_project_root()
 
         # 硬编码路径模式
         self.path_patterns = [
@@ -154,7 +159,7 @@ class PathStandardizer:
                                     rel_path = abs_path.relative_to(
                                         self.project_root)
                                     replacement = (
-                                        f'{{ PROJECT_ROOT} } /{rel_path.as_posix()}')
+                                        '{{ PROJECT_ROOT }}/' + rel_path.as_posix())
                             except (ValueError, OSError):
                                 pass
 

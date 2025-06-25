@@ -13,11 +13,12 @@ from typing import Dict, List, Any, Optional, Union
 import logging
 
 # 导入错误处理机制
+from config_loader import load_yaml_config
 from exceptions import ValidationError, ErrorHandler
 from config_loader import get_config, PROJECT_CONFIG_PATH
 
-# 配置日志
-logging.basicConfig(level=logging.INFO)
+# 日志配置移除（避免重复配置）
+# logging.basicConfig 已在主程序中配置
 logger = logging.getLogger(__name__)
 
 # 初始化错误处理器
@@ -167,9 +168,9 @@ class ConfigValidator:
                 for ext in file_types[section]:
                     if not isinstance(ext, str):
                         self.errors.append(
-                            ""file_types.{section}' 中的扩展名必须是字符串")
+                            f"file_types.{section} 中的扩展名必须是字符串")
                     elif not ext.startswith('.'):
-                        self.errors.append("扩展名 "{ext}' 必须以点号开头")
+                        self.errors.append(f"扩展名 '{ext}' 必须以点号开头")
 
     def _validate_logging_config(self, config: Dict[str, Any]) -> None:
         """验证日志配置"""
@@ -183,7 +184,7 @@ class ConfigValidator:
         if 'level' in log_config:
             valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
             if log_config['level'] not in valid_levels:
-                self.errors.append(""logging.level' 必须是以下值之一: {valid_levels}")
+                self.errors.append(f"'logging.level' 必须是以下值之一: {valid_levels}")
 
         # 验证格式字符串
         if 'format' in log_config:
@@ -218,14 +219,14 @@ class ConfigValidator:
             else:
                 for category, pattern in rules.items():
                     if not isinstance(pattern, str):
-                        self.errors.append("命名规则 "{category}' 必须是字符串类型")
+                        self.errors.append(f"命名规则 '{category}' 必须是字符串类型")
                     else:
                         # 验证正则表达式
                         try:
                             re.compile(pattern)
                         except re.error as e:
                             self.errors.append(
-                                "命名规则 "{category}' 的正则表达式无效: {e}")
+                                f"命名规则 '{category}' 的正则表达式无效: {e}")
 
     def _validate_check_rules(self, config: Dict[str, Any]) -> None:
         """验证检查规则"""
@@ -245,7 +246,7 @@ class ConfigValidator:
 
         for field in boolean_fields:
             if field in rules and not isinstance(rules[field], bool):
-                self.errors.append(""rules.{field}' 必须是布尔类型")
+                self.errors.append(f"'rules.{field}' 必须是布尔类型")
 
         # 验证编码
         if 'default_encoding' in rules:
@@ -311,9 +312,9 @@ class ConfigValidator:
         required_fields = ['project_name', 'project_root']
         for field in required_fields:
             if field not in config:
-                self.errors.append("缺少必需字段 "{field}'")
+                self.errors.append(f"缺少必需字段 '{field}'")
             elif not isinstance(config[field], str):
-                self.errors.append(""{field}' 必须是字符串类型")
+                self.errors.append(f"'{field}' 必须是字符串类型")
 
         # 验证项目根目录是否存在
         if 'project_root' in config:
@@ -335,9 +336,9 @@ class ConfigValidator:
             if field in app_config:
                 port = app_config[field]
                 if not isinstance(port, int):
-                    self.errors.append(""app.{field}' 必须是整数类型")
+                    self.errors.append(f"'app.{field}' 必须是整数类型")
                 elif not (1 <= port <= 65535):
-                    self.errors.append(""app.{field}' 必须在 1-65535 范围内")
+                    self.errors.append(f"'app.{field}' 必须在 1-65535 范围内")
 
         # 验证URL格式
         url_fields = ['url', 'api_url']
@@ -345,9 +346,9 @@ class ConfigValidator:
             if field in app_config:
                 url = app_config[field]
                 if not isinstance(url, str):
-                    self.errors.append(""app.{field}' 必须是字符串类型")
+                    self.errors.append(f"'app.{field}' 必须是字符串类型")
                 elif not re.match(r'^https?://', url):
-                    self.warnings.append(""app.{field}' 建议使用完整的URL格式")
+                    self.warnings.append(f"'app.{field}' 建议使用完整的URL格式")
 
     def _validate_database_config(self, config: Dict[str, Any]) -> None:
         """验证数据库配置"""
@@ -361,7 +362,7 @@ class ConfigValidator:
         required_fields = ['host', 'port', 'username', 'name']
         for field in required_fields:
             if field not in db_config:
-                self.errors.append("缺少必需字段 "database.{field}'")
+                self.errors.append(f"缺少必需字段 'database.{field}'")
 
         # 验证端口
         if 'port' in db_config:
@@ -472,7 +473,7 @@ class ConfigValidator:
 
             # 检查重复定义
             if key in env_vars:
-                self.warnings.append("环境变量 "{key}' 重复定义")
+                self.warnings.append(f"环境变量 '{key}' 重复定义")
 
             env_vars[key] = value
 
@@ -494,9 +495,9 @@ class ConfigValidator:
                 try:
                     port = int(env_vars[var])
                     if not (1 <= port <= 65535):
-                        self.errors.append("环境变量 "{var}' 端口值超出范围: {port}")
+                        self.errors.append(f"环境变量 '{var}' 端口值超出范围: {port}")
                 except ValueError:
-                    self.errors.append("环境变量 "{var}' 必须是有效的端口号")
+                    self.errors.append(f"环境变量 '{var}' 必须是有效的端口号")
 
         # 输出验证结果
         self._report_validation_results()
@@ -528,127 +529,71 @@ def validate_config_file(config_path: Union[str, Path]) -> bool:
         bool: 验证是否通过
 
     Raises:
-        FileNotFoundError: 配置文件不存在
-        ConfigValidationError: 配置验证失败
+        ConfigValidationError: 配置验证失败时抛出
     """
-    import yaml
-
-    config_path = Path(config_path)
-    if not config_path.exists():
-        raise FileNotFoundError(f"配置文件不存在: {config_path}")
-
     try:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            config = yaml.safe_load(f)
-    except yaml.YAMLError as e:
-        raise ConfigValidationError(f"配置文件格式错误: {e}")
+        config = load_yaml_config(config_path)
+        validator = ConfigValidator()
+        return validator.validate_structure_check_config(config)
+    except Exception as e:
+        error_handler.handle_error(e, "配置文件验证失败")
+        return False
 
-    validator = ConfigValidator()
-    return validator.validate_structure_check_config(config)
+
+def validate_project_config_file(config_path: Union[str, Path]) -> bool:
+    """验证项目配置文件
+
+    Args:
+        config_path: 项目配置文件路径
+
+    Returns:
+        bool: 验证是否通过
+    """
+    try:
+        config = load_yaml_config(config_path)
+        validator = ConfigValidator()
+        return validator.validate_project_config(config)
+    except Exception as e:
+        error_handler.handle_error(e, "项目配置文件验证失败")
+        return False
 
 
 def main():
-    """测试配置验证功能"""
-    validator = ConfigValidator()
-
-    # 测试结构检查配置验证
-    structure_config_path = Path(
-        __file__).parent.parent / "docs" / "03-管理" / "structure_check_config.yaml"
-
-    if structure_config_path.exists():
-        print(f"验证结构检查配置文件: {structure_config_path}")
-        result = validate_config_file(structure_config_path)
-
-        if result:
-            print("✅ 结构检查配置验证通过")
-        else:
-            print("❌ 结构检查配置验证失败")
-
-        # 显示验证摘要
-        summary = validator.get_validation_summary()
-        print("\n验证摘要:")
-        print(f"- 错误数量: {summary['error_count']}")
-        print(f"- 警告数量: {summary['warning_count']}")
-
-        if summary['errors']:
-            print("\n错误详情:")
-            for error in summary['errors']:
-                print(f"  - {error}")
-
-        if summary['warnings']:
-            print("\n警告详情:")
-            for warning in summary['warnings']:
-                print(f"  - {warning}")
-    else:
-        print(f"结构检查配置文件不存在: {structure_config_path}")
-
-    print("\n" + "=" * 50)
-
-    # 测试项目配置验证
+    """主函数 - 验证默认配置文件"""
     try:
-        project_config = get_config()
-        print(f"验证项目配置: {PROJECT_CONFIG_PATH}")
-        result = validator.validate_project_config(project_config)
-
-        if result:
-            print("✅ 项目配置验证通过")
+        # 验证结构检查配置
+        logger.info("开始验证结构检查配置...")
+        if validate_config_file(PROJECT_CONFIG_PATH):
+            logger.info("结构检查配置验证通过")
         else:
-            print("❌ 项目配置验证失败")
+            logger.error("结构检查配置验证失败")
 
-        # 显示验证摘要
-        summary = validator.get_validation_summary()
-        print("\n验证摘要:")
-        print(f"- 错误数量: {summary['error_count']}")
-        print(f"- 警告数量: {summary['warning_count']}")
-
-        if summary['errors']:
-            print("\n错误详情:")
-            for error in summary['errors']:
-                print(f"  - {error}")
-
-        if summary['warnings']:
-            print("\n警告详情:")
-            for warning in summary['warnings']:
-                print(f"  - {warning}")
-    except Exception as e:
-        print(f"加载项目配置失败: {e}")
-
-    print("\n" + "=" * 50)
-
-    # 测试环境变量文件验证
-    env_path = Path(__file__).parent.parent / "docs" / "03-管理" / ".env"
-
-    if env_path.exists():
-        print(f"验证环境变量文件: {env_path}")
-        result = validator.validate_env_file(env_path)
-
-        if result:
-            print("✅ 环境变量文件验证通过")
+        # 验证项目配置
+        project_config_path = Path(PROJECT_CONFIG_PATH).parent / "project_config.yaml"
+        if project_config_path.exists():
+            logger.info("开始验证项目配置...")
+            if validate_project_config_file(project_config_path):
+                logger.info("项目配置验证通过")
+            else:
+                logger.error("项目配置验证失败")
         else:
-            print("❌ 环境变量文件验证失败")
+            logger.warning(f"项目配置文件不存在: {project_config_path}")
 
-        # 显示验证摘要
-        summary = validator.get_validation_summary()
-        print("\n验证摘要:")
-        print(f"- 错误数量: {summary['error_count']}")
-        print(f"- 警告数量: {summary['warning_count']}")
+        # 验证环境变量文件
+        env_file_path = Path(PROJECT_CONFIG_PATH).parent / ".env"
+        if env_file_path.exists():
+            logger.info("开始验证环境变量文件...")
+            validator = ConfigValidator()
+            if validator.validate_env_file(env_file_path):
+                logger.info("环境变量文件验证通过")
+            else:
+                logger.error("环境变量文件验证失败")
+        else:
+            logger.warning(f"环境变量文件不存在: {env_file_path}")
 
-        if summary['errors']:
-            print("\n错误详情:")
-            for error in summary['errors']:
-                print(f"  - {error}")
-
-        if summary['warnings']:
-            print("\n警告详情:")
-            for warning in summary['warnings']:
-                print(f"  - {warning}")
-    else:
-        print(f"环境变量文件不存在: {env_path}")
-
-
-if __name__ == '__main__':
-    # 测试配置验证
-    try:
-        main()
     except Exception as e:
-        error_handler.handle_error(ValidationError(f"验证过程中发生错误: {e}"))
+        error_handler.handle_error(e, "配置验证过程中发生错误")
+
+
+if __name__ == "__main__":
+    main()

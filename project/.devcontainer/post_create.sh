@@ -101,11 +101,8 @@ install_dependencies() {
 setup_environment() {
     log_step "设置环境变量..."
     
-    # 创建 .env 文件（如果不存在）
-    if [ ! -f ".env" ] && [ -f ".env.example" ]; then
-        cp .env.example .env
-        log_info "✓ 从 .env.example 创建 .env 文件"
-    fi
+    # 配置文件已整合到 project_config.yaml 中
+    log_info "✓ 配置文件使用统一的 project_config.yaml 管理"
     
     # 设置 Python 路径
     echo 'export PYTHONPATH=/workspace:$PYTHONPATH' >> ~/.bashrc

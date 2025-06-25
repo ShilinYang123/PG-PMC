@@ -6,23 +6,32 @@
 """
 import yaml
 import logging
+import os
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
 
 # 导入错误处理机制
 from exceptions import ValidationError, ErrorHandler
 
+def get_project_root():
+    """获取项目根目录"""
+    # 首先尝试从环境变量获取
+    if 'PROJECT_ROOT' in os.environ:
+        return Path(os.environ['PROJECT_ROOT'])
+    
+    # 备用方案：从当前文件位置推断
+    return Path(__file__).parent.parent
+
 # 配置文件路径
-PROJECT_CONFIG_PATH = Path(__file__).parent.parent / \
-    "docs" / "03-管理" / "project_config.yaml"
-STRUCTURE_CONFIG_PATH = Path(__file__).parent / "structure_check_config.yaml"
+PROJECT_ROOT = get_project_root()
+PROJECT_CONFIG_PATH = PROJECT_ROOT / "docs" / "03-管理" / "project_config.yaml"
 
 # 缓存配置
 _project_config = None
-_structure_config = None
 
-# 配置日志
-logging.basicConfig(level=logging.INFO)
+# 配置日志（已在主程序中配置）
+# if not logging.getLogger().handlers:
+#     logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # 初始化错误处理器
@@ -174,7 +183,8 @@ def _process_template_variables(
             'default_description',
             'AI项目开发框架'),
         'CREATED_AT': datetime.now().strftime('%Y-%m-%d'),
-        'UPDATED_AT': datetime.now().strftime('%Y-%m-%d')}
+        'UPDATED_AT': datetime.now().strftime('%Y-%m-%d'),
+        'PROJECT_ROOT': str(config.get('project_root', PROJECT_ROOT))}
 
     def replace_in_dict(obj):
         if isinstance(obj, dict):
@@ -188,8 +198,70 @@ def _process_template_variables(
                 result = result.replace(f'{{{{{var_name}}}}}', str(var_value))
             return result
         return obj
-
+    
+    # 执行模板变量替换
     replace_in_dict(config)
+
+class ConfigLoader:
+    """配置加载器，负责从 project_config.yaml 加载配置"""
+    
+    def __init__(self, project_root: Path):
+        """初始化配置加载器
+
+        Args:
+            project_root (Path): 项目的根目录。
+        """
+        self.project_root = project_root
+        self.config = self._load_config()
+
+    def _load_config(self):
+        """加载项目配置文件 (project_config.yaml)
+
+        如果文件存在，则加载；否则，返回默认配置。
+        """
+        config_file = self.project_root / "docs" / "03-管理" / "project_config.yaml"
+        if config_file.exists():
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    return yaml.safe_load(f)
+            except Exception as e:
+                print(f"警告: 无法加载或解析配置文件 {config_file}: {e}")
+        return self._get_default_config()
+
+    def _get_default_config(self):
+        """提供一份默认配置，以防配置文件不存在或加载失败"""
+        return {
+            'structure_check': {
+                'standard_list_file': 'docs/01-设计/目录结构标准清单.md',
+                'report_dir': 'logs/检查报告',
+                'report_naming_format': 'structure_report_{timestamp}.md',
+                'excluded_dirs': [
+                    '.git', '.hg', '.svn', 'node_modules', '__pycache__', 
+                    '.pytest_cache', '.mypy_cache', 'build', 'dist', '*.egg-info', 'bak'
+                ],
+                'redundancy_check_excluded_dirs': ['docs', 'logs'],
+                'max_depth': 10,
+                'skip_deeply_nested_dirs': True,
+                'default_disabled': False
+            }
+        }
+
+    def get_config(self, key: str, default=None):
+        """从加载的配置中获取指定键的值"""
+        return self.config.get(key, default)
+
+    def get_path(self, path_key: str) -> Path:
+        """获取并解析配置中的路径，支持 {{PROJECT_ROOT}} 模板变量"""
+        paths = self.config.get('paths', {})
+        path_value = paths.get(path_key, path_key)
+        
+        if isinstance(path_value, str):
+            # 替换模板变量
+            path_str = path_value.replace('{{ PROJECT_ROOT }}', str(self.project_root)) \
+                                 .replace('{{PROJECT_ROOT}}', str(self.project_root))
+            return Path(path_str)
+        
+        return self.project_root / path_key # 如果没有在配置中找到，则返回一个默认路径
 
 
 def get_database_config(env: str = 'development') -> Dict[str, Any]:
@@ -308,30 +380,10 @@ def get_project_info() -> Dict[str, Any]:
     }
 
 
-def get_structure_config() -> Dict[str, Any]:
-    """加载并返回结构检查配置字典
-
-    Returns:
-        Dict: 结构检查配置字典
-
-    Raises:
-        ConfigLoadError: 配置加载失败
-    """
-    global _structure_config
-
-    if _structure_config is None:
-        _structure_config = load_yaml_config(
-            STRUCTURE_CONFIG_PATH, validate=True)
-        logger.info("结构检查配置加载完成")
-
-    return _structure_config
-
-
 def reload_configs():
     """重新加载所有配置（清除缓存）"""
-    global _project_config, _structure_config
+    global _project_config
     _project_config = None
-    _structure_config = None
     logger.info("配置缓存已清除")
 
 
@@ -343,18 +395,13 @@ def get_config_info() -> Dict[str, Any]:
     """
     info = {
         'project_config_path': str(PROJECT_CONFIG_PATH),
-        'structure_config_path': str(STRUCTURE_CONFIG_PATH),
         'project_config_exists': PROJECT_CONFIG_PATH.exists(),
-        'structure_config_exists': STRUCTURE_CONFIG_PATH.exists(),
-        'project_config_loaded': _project_config is not None,
-        'structure_config_loaded': _structure_config is not None
+        'project_config_loaded': _project_config is not None
     }
 
     if _project_config:
         info['project_root'] = str(_project_config.get('project_root', 'N/A'))
-
-    if _structure_config:
-        sc_config = _structure_config.get('structure_check', {})
+        sc_config = _project_config.get('structure_check', {})
         info['config_version'] = sc_config.get('config_version', 'N/A')
         info['performance_config'] = 'performance' in sc_config
         info['logging_config'] = 'logging' in sc_config
@@ -382,16 +429,16 @@ if __name__ == "__main__":
             if 'structure_check' in config:
                 report_dir = config.get(
                     'project_root') / config['structure_check'].get('report_dir', '')
-                logger.info(f"  自检报告目录: {report_dir}")
+                logger.info(f"  检查报告目录: {report_dir}")
         except Exception as e:
             logger.error(f"✗ 项目配置加载失败: {e}")
 
-        # 测试结构检查配置加载
-        logger.info("\n3. 测试结构检查配置加载:")
+        # 测试结构检查配置
+        logger.info("\n3. 测试结构检查配置:")
         try:
-            sc_config = get_structure_config()
-            logger.info("✓ 结构检查配置加载成功")
-            sc_data = sc_config.get('structure_check', {})
+            config = get_config()
+            sc_data = config.get('structure_check', {})
+            logger.info(f"✓ 结构检查配置加载成功")
             logger.info(f"  配置版本: {sc_data.get('config_version', 'N/A')}")
             logger.info(f"  性能配置: {'✓' if 'performance' in sc_data else '✗'}")
             logger.info(f"  日志配置: {'✓' if 'logging' in sc_data else '✗'}")
@@ -403,7 +450,7 @@ if __name__ == "__main__":
         logger.info("\n4. 测试配置验证:")
         try:
             from config_validator import validate_config_file
-            result = validate_config_file(STRUCTURE_CONFIG_PATH)
+            result = validate_config_file(PROJECT_CONFIG_PATH)
             logger.info(f"✓ 配置验证完成，结果: {'通过' if result else '有问题'}")
         except Exception as e:
             error_handler.handle_error(ValidationError(f"配置验证失败: {e}"))

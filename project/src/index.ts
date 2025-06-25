@@ -4,15 +4,13 @@
  * 这是项目的主要启动文件，负责初始化应用程序。
  */
 
-// 加载环境变量
-import 'dotenv/config';
-
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 
 // 导入配置
-const config = require('./config/app_config');
+const { getAppConfig } = require('./config/config_reader');
+const config = getAppConfig();
 
 // 创建Express应用
 const app = express();

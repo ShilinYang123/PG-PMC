@@ -5,10 +5,8 @@ import logging
 # 导入错误处理机制
 from exceptions import ValidationError, ErrorHandler
 
-# Configure basic logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+# 日志配置移除（避免重复配置）
+# logging.basicConfig 已在主程序中配置
 
 # 初始化错误处理器
 error_handler = ErrorHandler()

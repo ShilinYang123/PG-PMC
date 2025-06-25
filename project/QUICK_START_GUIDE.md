@@ -11,7 +11,7 @@
 在项目根目录执行：
 
 ```bash
-cd s:\3AI\project
+cd {{ PROJECT_ROOT }}/project
 npm install winston
 npm install --save-dev @types/node
 ```

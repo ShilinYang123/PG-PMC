@@ -8,9 +8,8 @@ const path = require('path');
 const yaml = require('js-yaml');
 
 // 配置文件路径
-const CONFIG_DIR = path.join(__dirname, '../../docs/03-管理');
+const CONFIG_DIR = path.join(__dirname, '../../../docs/03-管理');
 const PROJECT_CONFIG_PATH = path.join(CONFIG_DIR, 'project_config.yaml');
-const ENV_PATH = path.join(CONFIG_DIR, '.env');
 
 // 缓存配置
 let _projectConfig = null;
@@ -40,9 +39,10 @@ function loadProjectConfig() {
 
 /**
  * 加载环境变量配置
+ * @param {string} env 环境名称 (development, production, test)
  * @returns {Object} 环境变量配置对象
  */
-function loadEnvConfig() {
+function loadEnvConfig(env = 'development') {
   if (_envConfig) {
     return _envConfig;
   }
@@ -50,44 +50,68 @@ function loadEnvConfig() {
   _envConfig = {};
 
   try {
-    if (fs.existsSync(ENV_PATH)) {
-      const envContent = fs.readFileSync(ENV_PATH, 'utf8');
-      const lines = envContent.split('\n');
-
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-        if (
-          trimmedLine &&
-          !trimmedLine.startsWith('#') &&
-          trimmedLine.includes('=')
-        ) {
-          const [key, ...valueParts] = trimmedLine.split('=');
-          const value = valueParts.join('=').replace(/^["']|["']$/g, '');
-          _envConfig[key.trim()] = value;
-        }
+    const projectConfig = loadProjectConfig();
+    const environmentConfig = projectConfig.environment || {};
+    
+    // 合并通用配置和环境特定配置
+    const commonConfigs = ['app', 'database', 'redis', 'security', 'storage', 'mail', 'logging', 'external_services', 'monitoring', 'cache', 'rate_limit'];
+    
+    // 加载通用配置
+    for (const configType of commonConfigs) {
+      if (environmentConfig[configType]) {
+        Object.assign(_envConfig, flattenConfig(environmentConfig[configType], configType.toUpperCase()));
       }
     }
+    
+    // 加载环境特定配置
+    if (environmentConfig[env]) {
+      Object.assign(_envConfig, flattenConfig(environmentConfig[env], ''));
+    }
+    
   } catch (error) {
-    console.warn('无法加载环境配置文件:', error.message);
+    console.warn('无法加载环境配置:', error.message);
   }
 
   return _envConfig;
 }
 
 /**
+ * 将嵌套配置对象扁平化为环境变量格式
+ * @param {Object} config 配置对象
+ * @param {string} prefix 前缀
+ * @returns {Object} 扁平化的配置对象
+ */
+function flattenConfig(config, prefix = '') {
+  const result = {};
+  
+  for (const [key, value] of Object.entries(config)) {
+    const envKey = prefix ? `${prefix}_${key.toUpperCase()}` : key.toUpperCase();
+    
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      Object.assign(result, flattenConfig(value, envKey));
+    } else {
+      result[envKey] = value;
+    }
+  }
+  
+  return result;
+}
+
+/**
  * 获取配置值，优先级：环境变量 > 统一配置文件 > 默认值
  * @param {string} key 配置键
  * @param {*} defaultValue 默认值
+ * @param {string} env 环境名称
  * @returns {*} 配置值
  */
-function getConfig(key, defaultValue = null) {
+function getConfig(key, defaultValue = null, env = process.env.NODE_ENV || 'development') {
   // 优先使用环境变量
   if (process.env[key] !== undefined) {
     return process.env[key];
   }
 
   // 其次使用统一配置文件中的环境变量
-  const envConfig = loadEnvConfig();
+  const envConfig = loadEnvConfig(env);
   if (envConfig[key] !== undefined) {
     return envConfig[key];
   }
@@ -103,95 +127,100 @@ function getConfig(key, defaultValue = null) {
  */
 function getDatabaseConfig(env = 'development') {
   const projectConfig = loadProjectConfig();
-  const dbConfig = projectConfig.database || {};
+  const dbConfig = projectConfig.environment?.database || {};
 
-  let dbName;
+  let dbUrl;
   switch (env) {
   case 'test':
-    dbName =
-        dbConfig.test_name || `${projectConfig.project_name || '3AI'}_test_db`;
-    break;
-  case 'development':
-    dbName =
-        dbConfig.dev_name || `${projectConfig.project_name || '3AI'}_dev_db`;
+    dbUrl = dbConfig.test_url || `postgresql://postgres:password@localhost:5432/3AI_test_db`;
     break;
   default:
-    dbName = dbConfig.name || `${projectConfig.project_name || '3AI'}_db`;
+    dbUrl = dbConfig.url || `postgresql://postgres:password@localhost:5432/3AI_db`;
   }
 
   return {
-    host: getConfig('DB_HOST', dbConfig.host || 'localhost'),
-    port: parseInt(getConfig('DB_PORT', dbConfig.port || 5432)),
-    name: getConfig('DB_NAME', dbName),
-    username: getConfig('DB_USER', dbConfig.username || 'postgres'),
-    password: getConfig('DB_PASSWORD', dbConfig.password || 'password'),
+    host: getConfig('DATABASE_HOST', dbConfig.host || 'localhost', env),
+    port: parseInt(getConfig('DATABASE_PORT', dbConfig.port || 5432, env)),
+    name: getConfig('DATABASE_NAME', dbConfig.name || '3AI_db', env),
+    username: getConfig('DATABASE_USER', dbConfig.user || 'postgres', env),
+    password: getConfig('DATABASE_PASSWORD', dbConfig.password || 'password', env),
+    url: getConfig('DATABASE_URL', dbUrl, env),
     dialect: 'postgres',
   };
 }
 
 /**
  * 获取应用配置
+ * @param {string} env 环境名称
  * @returns {Object} 应用配置
  */
-function getAppConfig() {
+function getAppConfig(env = process.env.NODE_ENV || 'development') {
   const projectConfig = loadProjectConfig();
-  const appConfig = projectConfig.app || {};
+  const appConfig = projectConfig.environment?.app || {};
 
   return {
-    name: getConfig('APP_NAME', projectConfig.project_name || '3AI'),
-    version: getConfig('APP_VERSION', projectConfig.project_version || '1.0.0'),
-    port: parseInt(getConfig('PORT', appConfig.port || 3000)),
-    host: getConfig('HOST', 'localhost'),
-    url: getConfig(
-      'APP_URL',
-      appConfig.url || `http://localhost:${getConfig('PORT', 3000)}`
-    ),
-    api_port: parseInt(getConfig('API_PORT', appConfig.api_port || 8000)),
-    api_url: getConfig(
-      'API_URL',
-      appConfig.api_url || `http://localhost:${getConfig('API_PORT', 8000)}`
-    ),
+    name: getConfig('APP_NAME', appConfig.name || '3AI', env),
+    version: getConfig('APP_VERSION', appConfig.version || '1.0.0', env),
+    port: parseInt(getConfig('PORT', appConfig.port || 3000, env)),
+    host: getConfig('HOST', appConfig.host || 'localhost', env),
+    url: getConfig('APP_URL', appConfig.url || `http://localhost:${getConfig('PORT', 3000, env)}`, env),
+    api_port: parseInt(getConfig('API_PORT', appConfig.api_port || 8000, env)),
+    api_url: getConfig('API_URL', appConfig.api_url || `http://localhost:${getConfig('API_PORT', 8000, env)}`, env),
   };
 }
 
 /**
  * 获取Redis配置
+ * @param {string} env 环境名称
  * @returns {Object} Redis配置
  */
-function getRedisConfig() {
+function getRedisConfig(env = process.env.NODE_ENV || 'development') {
+  const projectConfig = loadProjectConfig();
+  const redisConfig = projectConfig.environment?.redis || {};
+
   return {
-    host: getConfig('REDIS_HOST', 'localhost'),
-    port: parseInt(getConfig('REDIS_PORT', 6379)),
-    password: getConfig('REDIS_PASSWORD', null),
-    db: parseInt(getConfig('REDIS_DB', 0)),
+    host: getConfig('REDIS_HOST', redisConfig.host || 'localhost', env),
+    port: parseInt(getConfig('REDIS_PORT', redisConfig.port || 6379, env)),
+    password: getConfig('REDIS_PASSWORD', redisConfig.password || null, env),
+    db: parseInt(getConfig('REDIS_DB', redisConfig.db || 0, env)),
+    url: getConfig('REDIS_URL', redisConfig.url || null, env),
   };
 }
 
 /**
  * 获取JWT配置
+ * @param {string} env 环境名称
  * @returns {Object} JWT配置
  */
-function getJwtConfig() {
+function getJwtConfig(env = process.env.NODE_ENV || 'development') {
+  const projectConfig = loadProjectConfig();
+  const jwtConfig = projectConfig.environment?.security?.jwt || {};
+
   return {
-    secret: getConfig('JWT_SECRET', '3ai-secret-key'),
-    expiresIn: getConfig('JWT_EXPIRES_IN', '24h'),
-    refreshExpiresIn: getConfig('JWT_REFRESH_EXPIRES_IN', '7d'),
+    secret: getConfig('JWT_SECRET', jwtConfig.secret || '3ai-secret-key', env),
+    expiresIn: getConfig('JWT_EXPIRES_IN', jwtConfig.expires_in || '24h', env),
+    refreshExpiresIn: getConfig('JWT_REFRESH_EXPIRES_IN', jwtConfig.refresh_expires_in || '7d', env),
   };
 }
 
 /**
  * 获取邮件配置
+ * @param {string} env 环境名称
  * @returns {Object} 邮件配置
  */
-function getEmailConfig() {
+function getEmailConfig(env = process.env.NODE_ENV || 'development') {
+  const projectConfig = loadProjectConfig();
+  const emailConfig = projectConfig.environment?.email || {};
+
   return {
-    host: getConfig('SMTP_HOST', 'smtp.gmail.com'),
-    port: parseInt(getConfig('SMTP_PORT', 587)),
-    secure: getConfig('SMTP_SECURE', 'false') === 'true',
+    host: getConfig('SMTP_HOST', emailConfig.smtp_host || 'smtp.gmail.com', env),
+    port: parseInt(getConfig('SMTP_PORT', emailConfig.smtp_port || 587, env)),
+    secure: getConfig('SMTP_SECURE', emailConfig.smtp_secure || 'false', env) === 'true',
     auth: {
-      user: getConfig('SMTP_USER'),
-      pass: getConfig('SMTP_PASS'),
+      user: getConfig('SMTP_USER', emailConfig.smtp_user || null, env),
+      pass: getConfig('SMTP_PASS', emailConfig.smtp_pass || null, env),
     },
+    from: getConfig('EMAIL_FROM', emailConfig.from || null, env),
   };
 }
 
