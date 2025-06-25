@@ -153,7 +153,7 @@ class StructureChecker:
                 content = f.read()
 
             # 查找目录树部分
-            tree_start = content.find('```\n3AI/')
+            tree_start = content.find('```\n')
             if tree_start == -1:
                 raise ValueError("未找到目录树结构")
 
@@ -170,28 +170,23 @@ class StructureChecker:
                 if not line.strip():
                     continue
 
-                # 跳过根目录行
-                if line.strip() == '3AI/':
+                # 跳过空行
+                if not line.strip():
                     continue
 
                 # 计算实际缩进级别
-                # 移除开头的树形字符，找到实际内容
-                stripped = line.lstrip(' │├└─')
-                if not stripped:
-                    continue
-
-                # 计算缩进级别：统计开头的空格和树形字符数量
-                indent_chars = len(line) - len(line.lstrip(' │├└─'))
-                # 每个缩进级别通常是4个字符（包括空格和树形字符）
-                indent_level = max(0, (indent_chars - 4) // 4 + 1)  # 第一级从1开始
+                # 计算开头空格数量
+                indent_chars = len(line) - len(line.lstrip(' '))
+                # 每个缩进级别通常是4个空格
+                indent_level = indent_chars // 4
 
                 # 清理行内容
-                clean_line = stripped.strip()
+                clean_line = line.strip()
                 if not clean_line:
                     continue
 
                 # 调整路径栈到当前级别
-                while len(path_stack) >= indent_level:
+                while len(path_stack) > indent_level:
                     path_stack.pop()
 
                 # 构建完整路径

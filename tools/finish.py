@@ -1934,51 +1934,77 @@ def invoke_backup(skip_backup=False):
         with zipfile.ZipFile(backup_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             logger.debug("Starting optimized directory walk...")
             
-            for root, dirs, files in os.walk(PROJECT_ROOT):
-                # Calculate relative path
-                rel_root = os.path.relpath(root, PROJECT_ROOT)
-                if rel_root == ".":
-                    rel_root = ""
+            # 只备份指定的目录：docs, project, tools
+            backup_dirs = ["docs", "project", "tools"]
+            
+            for backup_dir in backup_dirs:
+                backup_dir_path = os.path.join(PROJECT_ROOT, backup_dir)
+                if not os.path.exists(backup_dir_path):
+                    logger.warning(f"备份目录不存在，跳过: {backup_dir}")
+                    continue
+                    
+                logger.info(f"正在备份目录: {backup_dir}")
                 
-                # Filter out excluded directories (modify dirs in-place for pruning)
-                dirs[:] = [d for d in dirs if d not in exclude_dirs]
-                
-                # Process files in current directory
-                for filename in files:
-                    processed_files += 1
-                    if processed_files % 1000 == 0:  # Less frequent but more meaningful updates
-                        logger.info(f"正在扫描文件... 已处理 {processed_files} 个项目，已添加 {added_files} 个文件到备份")
+                for root, dirs, files in os.walk(backup_dir_path):
+                    # Calculate relative path
+                    rel_root = os.path.relpath(root, PROJECT_ROOT)
+                    if rel_root == ".":
+                        rel_root = ""
                     
-                    # Skip excluded files
-                    if should_exclude_file(filename):
-                        continue
+                    # Filter out excluded directories (modify dirs in-place for pruning)
+                    dirs[:] = [d for d in dirs if d not in exclude_dirs]
                     
-                    # Build file path
-                    file_path = os.path.join(root, filename)
-                    rel_file_path = os.path.join(rel_root, filename) if rel_root else filename
+                    # Process files in current directory
+                    for filename in files:
+                        processed_files += 1
+                        if processed_files % 1000 == 0:  # Less frequent but more meaningful updates
+                            logger.info(f"正在扫描文件... 已处理 {processed_files} 个项目，已添加 {added_files} 个文件到备份")
+                        
+                        # Skip excluded files
+                        if should_exclude_file(filename):
+                            continue
+                        
+                        # Build file path
+                        file_path = os.path.join(root, filename)
+                        rel_file_path = os.path.join(rel_root, filename) if rel_root else filename
+                        
+                        # Skip files in structure-only directories
+                        if any(rel_file_path.startswith(d + os.sep) or rel_file_path.startswith(d + "/") 
+                               for d in structure_only_dirs):
+                            continue
+                        
+                        try:
+                            file_size = os.path.getsize(file_path)
+                            zipf.write(file_path, rel_file_path.replace(os.sep, "/"))
+                            added_files += 1
+                            if added_files % 100 == 0:
+                                logger.info(f"已添加 {added_files} 个文件到备份")
+                            logger.debug(f"Added to backup: {rel_file_path} ({file_size} bytes)")
+                        except Exception as e:
+                            logger.warning(f"Failed to add {file_path} to backup: {e}")
                     
-                    # Skip files in structure-only directories
-                    if any(rel_file_path.startswith(d + os.sep) or rel_file_path.startswith(d + "/") 
-                           for d in structure_only_dirs):
-                        continue
-                    
+                    # Add structure-only directories
+                    if rel_root and should_preserve_structure_dir(rel_root, os.path.basename(root)):
+                        try:
+                            zipf.writestr(rel_root.replace(os.sep, "/") + "/", "")
+                            logger.debug(f"Added directory structure: {rel_root}/")
+                        except Exception as e:
+                            logger.warning(f"Failed to add directory structure {rel_root}: {e}")
+            
+            # 备份根目录的重要文件
+            logger.info("正在备份根目录重要文件")
+            root_files = ["README.md", "requirements.txt", ".gitignore", "pyproject.toml"]
+            for file_name in root_files:
+                src_file = os.path.join(PROJECT_ROOT, file_name)
+                if os.path.exists(src_file):
                     try:
-                        file_size = os.path.getsize(file_path)
-                        zipf.write(file_path, rel_file_path.replace(os.sep, "/"))
+                        file_size = os.path.getsize(src_file)
+                        zipf.write(src_file, file_name)
                         added_files += 1
-                        if added_files % 100 == 0:
-                            logger.info(f"已添加 {added_files} 个文件到备份")
-                        logger.debug(f"Added to backup: {rel_file_path} ({file_size} bytes)")
+                        logger.info(f"已添加根目录文件到备份: {file_name}")
+                        logger.debug(f"Added root file to backup: {file_name} ({file_size} bytes)")
                     except Exception as e:
-                        logger.warning(f"Failed to add {file_path} to backup: {e}")
-                
-                # Add structure-only directories
-                if rel_root and should_preserve_structure_dir(rel_root, os.path.basename(root)):
-                    try:
-                        zipf.writestr(rel_root.replace(os.sep, "/") + "/", "")
-                        logger.debug(f"Added directory structure: {rel_root}/")
-                    except Exception as e:
-                        logger.warning(f"Failed to add directory structure {rel_root}: {e}")
+                         logger.warning(f"Failed to add root file {file_name} to backup: {e}")
 
         logger.info("备份进度显示结束")
         logger.info(
