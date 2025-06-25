@@ -1478,6 +1478,11 @@ def invoke_workdir_clean_check():
         "logs",  # Logs directory
         "project",  # Main project directory
         "tools",  # Tools directory
+        "bak",  # Backup directory
+        # Python environment
+        ".venv",  # Python virtual environment
+        "venv",  # Python virtual environment
+        "env",  # Python virtual environment
         # Git and IDE directories
         ".git",  # Git directory
         ".cursor",  # Cursor IDE directory

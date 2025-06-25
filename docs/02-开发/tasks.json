@@ -28,5 +28,15 @@
     "status": "pending_approval",
     "created_at": "2025-06-25T20:08:55.038015",
     "requires_human_approval": true
+  },
+  {
+    "id": "approval_1750853556",
+    "title": "每日自检关键问题处理",
+    "description": "自检发现关键问题需要处理：代码质量问题",
+    "type": "approval",
+    "priority": "high",
+    "status": "pending_approval",
+    "created_at": "2025-06-25T20:12:36.296246",
+    "requires_human_approval": true
   }
 ]
