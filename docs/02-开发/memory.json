@@ -2,11 +2,11 @@
   "general": {
     "self_check_start": {
       "content": {
-        "timestamp": "20250625-200315",
+        "timestamp": "20250625-200656",
         "status": "started",
         "report_type": "daily_self_check"
       },
-      "timestamp": "2025-06-25T20:03:15.748565",
+      "timestamp": "2025-06-25T20:06:56.512351",
       "updated_by": "finish.py"
     },
     "approval_task_approval_1750852997": {
@@ -71,7 +71,7 @@
     },
     "self_check_result": {
       "content": {
-        "timestamp": "20250625-200315",
+        "timestamp": "20250625-200656",
         "status": "completed",
         "critical_issues_count": 1,
         "critical_issues": [
@@ -79,12 +79,12 @@
         ],
         "has_approval_task": true
       },
-      "timestamp": "2025-06-25T20:03:17.973277",
+      "timestamp": "2025-06-25T20:06:58.947299",
       "updated_by": "finish.py"
     },
     "script_start": {
       "content": {
-        "timestamp": "20250625-200315",
+        "timestamp": "20250625-200656",
         "mode": "default",
         "args": {
           "daily": false,
@@ -100,15 +100,108 @@
           "verbose": false
         }
       },
-      "timestamp": "2025-06-25T20:03:18.134278",
+      "timestamp": "2025-06-25T20:06:59.097376",
       "updated_by": "finish.py"
     },
     "structure_verification": {
       "content": {
         "status": "passed",
-        "timestamp": "20250625-200315"
+        "timestamp": "20250625-200656"
       },
-      "timestamp": "2025-06-25T20:03:24.396475",
+      "timestamp": "2025-06-25T20:07:05.366821",
+      "updated_by": "finish.py"
+    },
+    "backup_result": {
+      "content": {
+        "status": "success",
+        "timestamp": "20250625-200315",
+        "mode": "full_process"
+      },
+      "timestamp": "2025-06-25T20:03:28.341946",
+      "updated_by": "finish.py"
+    },
+    "execution_result": {
+      "content": {
+        "timestamp": "20250625-200315",
+        "issues_found": 1,
+        "warnings_found": 20,
+        "backup_ok": true,
+        "code_quality_ok": true,
+        "workdir_clean_ok": false,
+        "cleanup_ok": true,
+        "agent_ok": true,
+        "error_detection_ok": true
+      },
+      "timestamp": "2025-06-25T20:03:28.352937",
+      "updated_by": "finish.py"
+    },
+    "final_status": {
+      "content": {
+        "status": "completed_with_issues",
+        "issues": 1,
+        "warnings": 20
+      },
+      "timestamp": "2025-06-25T20:03:28.363436",
+      "updated_by": "finish.py"
+    },
+    "approval_task_approval_1750853218": {
+      "content": {
+        "task_id": "approval_1750853218",
+        "issues": [
+          "代码质量问题"
+        ],
+        "thinking_result": {
+          "context": "每日自检发现关键问题的处理决策",
+          "reasoning_type": "self_check_analysis",
+          "decision_points": [
+            {
+              "question": "如何处理代码质量问题？",
+              "factors": [
+                "代码可维护性",
+                "团队开发效率",
+                "项目稳定性"
+              ],
+              "risks": [
+                "技术债务累积",
+                "bug增加",
+                "开发效率下降"
+              ],
+              "benefits": [
+                "提高代码质量",
+                "减少维护成本",
+                "提升团队协作"
+              ],
+              "recommendation": "立即修复代码质量问题，建立代码审查流程"
+            }
+          ],
+          "timestamp": "2025-06-25T20:06:58.914494",
+          "conclusions": [
+            {
+              "step": 1,
+              "question": "如何处理代码质量问题？",
+              "factors": [
+                "代码可维护性",
+                "团队开发效率",
+                "项目稳定性"
+              ],
+              "risks": [
+                "技术债务累积",
+                "bug增加",
+                "开发效率下降"
+              ],
+              "benefits": [
+                "提高代码质量",
+                "减少维护成本",
+                "提升团队协作"
+              ],
+              "recommendation": "立即修复代码质量问题，建立代码审查流程"
+            }
+          ]
+        },
+        "created_at": "20250625-200656",
+        "status": "pending"
+      },
+      "timestamp": "2025-06-25T20:06:58.936982",
       "updated_by": "finish.py"
     }
   },
@@ -138,7 +231,7 @@
             "recommendation": "立即修复代码质量问题，建立代码审查流程"
           }
         ],
-        "timestamp": "2025-06-25T20:03:17.945894",
+        "timestamp": "2025-06-25T20:06:58.914494",
         "conclusions": [
           {
             "step": 1,
@@ -162,7 +255,7 @@
           }
         ]
       },
-      "timestamp": "2025-06-25T20:03:17.953816",
+      "timestamp": "2025-06-25T20:06:58.926355",
       "updated_by": "finish.py"
     },
     "thinking_structure_verification": {
@@ -209,7 +302,7 @@
             "recommendation": "对于关键结构变更，必须进行人工审批"
           }
         ],
-        "timestamp": "2025-06-25T20:03:24.373990",
+        "timestamp": "2025-06-25T20:07:05.344443",
         "conclusions": [
           {
             "step": 1,
@@ -253,7 +346,7 @@
           }
         ]
       },
-      "timestamp": "2025-06-25T20:03:24.383664",
+      "timestamp": "2025-06-25T20:07:05.354719",
       "updated_by": "finish.py"
     },
     "thinking_backup_strategy": {
@@ -304,7 +397,7 @@
             "recommendation": "建立多层备份机制，失败时立即告警并启动备用方案"
           }
         ],
-        "timestamp": "2025-06-25T20:03:24.398441",
+        "timestamp": "2025-06-25T20:07:05.369010",
         "conclusions": [
           {
             "step": 1,
@@ -352,14 +445,14 @@
           }
         ]
       },
-      "timestamp": "2025-06-25T20:03:24.410087",
+      "timestamp": "2025-06-25T20:07:05.378000",
       "updated_by": "finish.py"
     }
   },
   "dependencies": {
     "dependency_check_results": {
       "content": {
-        "timestamp": "2025-06-25T20:03:20.126617",
+        "timestamp": "2025-06-25T20:07:01.018151",
         "all_deps_ok": true,
         "results": {
           "Python": {
@@ -385,28 +478,28 @@
         ],
         "warnings_count": 0
       },
-      "timestamp": "2025-06-25T20:03:20.126976",
+      "timestamp": "2025-06-25T20:07:01.026822",
       "updated_by": "finish.py"
     }
   },
   "directory_structure": {
     "directory_check_results": {
       "content": {
-        "timestamp": "2025-06-25T20:03:20.130335",
+        "timestamp": "2025-06-25T20:07:01.030920",
         "structure_ok": true,
         "config_uniqueness_ok": true,
         "no_duplicates_ok": true,
         "overall_success": true,
         "legacy_backup_exists": false
       },
-      "timestamp": "2025-06-25T20:03:20.138265",
+      "timestamp": "2025-06-25T20:07:01.039825",
       "updated_by": "finish.py"
     }
   },
   "code_quality": {
     "code_quality_results": {
       "content": {
-        "timestamp": "2025-06-25T20:03:21.961260",
+        "timestamp": "2025-06-25T20:07:02.828139",
         "overall_success": true,
         "total_issues_found": 0,
         "results": {
@@ -428,14 +521,14 @@
           "JavaScript (eslint)"
         ]
       },
-      "timestamp": "2025-06-25T20:03:21.968683",
+      "timestamp": "2025-06-25T20:07:02.828507",
       "updated_by": "finish.py"
     }
   },
   "project_cleanup": {
     "cleanup_results": {
       "content": {
-        "timestamp": "2025-06-25T20:03:24.372264",
+        "timestamp": "2025-06-25T20:07:05.342305",
         "success": true,
         "deleted_temp_files": 0,
         "deleted_empty_dirs": 0,
@@ -448,7 +541,7 @@
         ],
         "issues_detected": []
       },
-      "timestamp": "2025-06-25T20:03:24.372584",
+      "timestamp": "2025-06-25T20:07:05.342647",
       "updated_by": "finish.py"
     }
   }
