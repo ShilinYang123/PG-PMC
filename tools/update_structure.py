@@ -1,250 +1,314 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-目录结构更新工具
+目录结构标准清单生成工具
 
-功能:
-- 扫描项目目录结构
-- 生成标准化的目录结构清单
-- 支持排除特定目录和文件
-- 生成Markdown格式的结构文档
+功能：
+- 扫描项目根目录，生成完整的目录结构标准清单
+- 按照规范要求，排除 bak 和 logs 目录的具体文件内容
+- 生成符合标准格式的 Markdown 文档
 
-作者: 雨俊
-创建时间: 2024-12-20
-最后更新: 2025-06-25
+作者：雨俊
+创建时间：2025-06-24
 """
 
+import os
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import List, Dict
-from datetime import datetime
-
-# 导入工具模块
-from utils import get_project_root
-
-# 添加项目根目录到Python路径
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root))
 
 
 class DirectoryStructureGenerator:
     """目录结构生成器"""
-
-    def __init__(self):
-        self.excluded_dirs = {
-            '__pycache__', '.git', '.vscode', '.idea', 'node_modules',
-            '.pytest_cache', '.coverage', 'htmlcov', 'dist', 'build',
-            '*.egg-info', '.tox', '.mypy_cache', '.DS_Store',
-            'Thumbs.db', '.venv', 'venv', 'env'
-        }
-
-        self.excluded_files = {
-            '.gitignore', '.gitkeep', '.DS_Store', 'Thumbs.db',
-            '*.pyc', '*.pyo', '*.pyd', '__pycache__',
-            '*.so', '*.dylib', '*.dll'
-        }
-
+    
+    def __init__(self, root_path: str):
+        """初始化生成器
+        
+        Args:
+            root_path: 项目根目录路径
+        """
+        self.root_path = Path(root_path).resolve()
+        self.excluded_dirs = {'.git', '__pycache__', 'node_modules'}
+        self.excluded_files = {'.DS_Store', 'Thumbs.db', '*.pyc'}
+        
+        # 对于特殊目录（bak、logs），只保留子目录结构，
+        # 不扫描具体文件内容
+        self.special_dirs = {'bak', 'logs'}
+        
         self.stats = {
             'total_dirs': 0,
             'total_files': 0,
             'template_files': 0
         }
-
-    def should_exclude(self, path: Path) -> bool:
-        """判断是否应该排除某个路径"""
-
+    
+    def should_exclude_path(self, path: Path, parent_name: str = None) -> bool:
+        """判断路径是否应该被排除
+        
+        Args:
+            path: 要检查的路径
+            parent_name: 父目录名称
+            
+        Returns:
+            True 如果应该排除，False 否则
+        """
+        # 排除隐藏目录和文件（除了特定的配置文件）
+        if (path.name.startswith('.') and
+            path.name not in {'.env', '.env.example', '.gitignore',
+                              '.dockerignore', '.eslintrc.js',
+                              '.prettierrc', '.pre-commit-config.yaml'}):
+            return True
+            
         # 排除特定目录
         if path.name in self.excluded_dirs:
             return True
-
+            
         # 排除特定文件
         if path.is_file() and path.name in self.excluded_files:
             return True
-
+            
         return False
-
+    
     def scan_directory(self, dir_path: Path, relative_path: str = "") -> List[Dict]:
         """扫描目录结构
-
+        
         Args:
             dir_path: 要扫描的目录路径
-            relative_path: 相对路径前缀
-
+            relative_path: 相对路径
+            
         Returns:
             目录结构列表
         """
         items = []
-
+        
         try:
-            # 获取目录下所有项目
-            entries = list(dir_path.iterdir())
-            # 按名称排序，目录在前
-            entries.sort(key=lambda x: (x.is_file(), x.name.lower()))
-
+            # 获取目录中的所有项目
+            entries = sorted(dir_path.iterdir(),
+                          key=lambda x: (x.is_file(), x.name.lower()))
+            
             for entry in entries:
-                if self.should_exclude(entry):
+                if self.should_exclude_path(entry):
                     continue
-
-                # 构建相对路径
-                if relative_path:
-                    item_relative_path = f"{relative_path}/{entry.name}"
-                else:
-                    item_relative_path = entry.name
-
+                    
+                rel_path = str(entry.relative_to(self.root_path)) \
+                    .replace('\\', '/')
+                
                 if entry.is_dir():
-                    # 目录
                     self.stats['total_dirs'] += 1
-                    item = {
-                        'type': 'directory',
-                        'name': entry.name,
-                        'path': item_relative_path,
-                        'children': self.scan_directory(entry, item_relative_path)
-                    }
-                    items.append(item)
-
-                else:
-                    # 文件
+                    
+                    # 处理特殊目录（bak和logs）
+                    if entry.name in self.special_dirs:
+                        # 扫描所有子目录，但不扫描子目录内容
+                        subdirs = []
+                        
+                        try:
+                            for subentry in sorted(entry.iterdir(), key=lambda x: x.name.lower()):
+                                if subentry.is_dir() and not self.should_exclude_path(subentry):
+                                    self.stats['total_dirs'] += 1  # 统计子目录
+                                    subdirs.append({
+                                        'name': subentry.name,
+                                        'type': 'directory',
+                                        'path': os.path.join(rel_path, subentry.name),
+                                        'children': []  # 不扫描子目录内容
+                                    })
+                        except PermissionError:
+                            pass
+                        
+                        items.append({
+                            'name': entry.name,
+                            'type': 'directory',
+                            'path': rel_path,
+                            'children': subdirs
+                        })
+                    else:
+                        # 普通目录，递归扫描
+                        children = self.scan_directory(entry, rel_path)
+                        items.append({
+                            'name': entry.name,
+                            'type': 'directory',
+                            'path': rel_path,
+                            'children': children
+                        })
+                        
+                elif entry.is_file():
                     self.stats['total_files'] += 1
-                    if self.is_template_file(entry):
+                    
+                    # 统计模板文件
+                    if any(keyword in entry.name.lower()
+                           for keyword in ['template', 'example',
+                                           'sample', '.template']):
                         self.stats['template_files'] += 1
-
-                    item = {
-                        'type': 'file',
+                    
+                    items.append({
                         'name': entry.name,
-                        'path': item_relative_path,
-                        'size': entry.stat().st_size if entry.exists() else 0
-                    }
-                    items.append(item)
-
+                        'type': 'file',
+                        'path': rel_path
+                    })
+                    
         except PermissionError:
-            print(f"⚠️  权限不足，跳过目录: {dir_path}")
-        except Exception as e:
-            print(f"❌ 扫描目录时出错 {dir_path}: {e}")
-
+            print(f"警告: 无法访问目录 {dir_path}")
+            
         return items
-
-    def is_template_file(self, file_path: Path) -> bool:
-        """判断是否为模板文件"""
-        template_extensions = {'.template', '.tpl', '.tmpl', '.example'}
-        return any(file_path.name.endswith(ext) for ext in template_extensions)
-
-    def generate_markdown(self, structure: List[Dict], title: str = "项目目录结构") -> str:
-        """生成Markdown格式的目录结构
-
+    
+    def generate_tree_text(self, items: List[Dict], prefix: str = "",
+                           is_last: bool = True) -> str:
+        """生成树形文本结构
+        
         Args:
-            structure: 目录结构数据
-            title: 文档标题
-
+            items: 目录项目列表
+            prefix: 前缀字符串
+            is_last: 是否是最后一个项目
+            
         Returns:
-            Markdown格式的字符串
+            树形文本字符串
         """
-        lines = []
-        lines.append(f"# {title}")
-        lines.append("")
-        lines.append(f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        lines.append("")
-        lines.append("## 目录结构")
-        lines.append("")
-        lines.append("```")
-
-        def format_item(item: Dict, prefix: str = "", is_last: bool = True) -> None:
-            """格式化单个项目"""
-            # 选择合适的前缀符号
-            if prefix == "":
-                current_prefix = ""
-                next_prefix = ""
-            else:
-                current_prefix = prefix + ("└── " if is_last else "├── ")
-                next_prefix = prefix + ("    " if is_last else "│   ")
-
-            # 添加项目名称
+        result = []
+        
+        for i, item in enumerate(items):
+            is_last_item = (i == len(items) - 1)
+            
+            # 确定连接符
+            connector = "└── " if is_last_item else "├── "
+            
+            # 添加目录或文件名
             if item['type'] == 'directory':
-                lines.append(f"{current_prefix}{item['name']}/")
-                # 处理子项目
-                children = item.get('children', [])
-                for i, child in enumerate(children):
-                    is_last_child = (i == len(children) - 1)
-                    format_item(child, next_prefix, is_last_child)
+                result.append(f"{prefix}{connector}{item['name']}/")
+                
+                # 递归处理子项目
+                if item.get('children'):
+                    child_prefix = prefix + ("    " if is_last_item else "│   ")
+                    child_tree = self.generate_tree_text(
+                        item['children'], child_prefix, is_last_item
+                    )
+                    result.append(child_tree)
             else:
-                lines.append(f"{current_prefix}{item['name']}")
-
-        # 格式化所有顶级项目
-        for i, item in enumerate(structure):
-            is_last_item = (i == len(structure) - 1)
-            format_item(item, "", is_last_item)
-
-        lines.append("```")
-        lines.append("")
-
-        # 添加统计信息
-        lines.append("## 统计信息")
-        lines.append("")
-        lines.append(f"- **目录数量**: {self.stats['total_dirs']}")
-        lines.append(f"- **文件数量**: {self.stats['total_files']}")
-        lines.append(f"- **模板文件**: {self.stats['template_files']}")
-        lines.append("")
-
-        # 添加说明
-        lines.append("## 说明")
-        lines.append("")
-        lines.append("- 此文档由目录结构更新工具自动生成")
-        lines.append("- 已排除常见的临时文件和缓存目录")
-        lines.append("- 模板文件包括 .template、.tpl、.tmpl、.example 等扩展名的文件")
-        lines.append("")
-
-        return "\n".join(lines)
-
-    def save_structure(self, structure: List[Dict], output_file: Path) -> None:
-        """保存目录结构到文件
-
+                result.append(f"{prefix}{connector}{item['name']}")
+        
+        return "\n".join(filter(None, result))
+    
+    def generate_markdown(self, structure: List[Dict]) -> str:
+        """生成 Markdown 格式的目录结构文档
+        
         Args:
             structure: 目录结构数据
-            output_file: 输出文件路径
+            
+        Returns:
+            Markdown 格式的文档内容
         """
-        try:
-            # 确保输出目录存在
-            output_file.parent.mkdir(parents=True, exist_ok=True)
+        now = datetime.now()
+        timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+        
+        # 生成树形结构
+        tree_text = self.generate_tree_text(structure)
+        
+        markdown_content = f"""# 目录结构标准清单
 
-            # 生成Markdown内容
-            markdown_content = self.generate_markdown(structure)
+> 生成时间: {timestamp}
+> 生成工具: update_structure.py
+> 目录数量: {self.stats['total_dirs']}
+> 文件数量: {self.stats['total_files']}
+> 模板文件: {self.stats['template_files']}
 
-            # 写入文件
-            with open(output_file, 'w', encoding='utf-8') as f:
-                f.write(markdown_content)
 
-            print("\n✅ 目录结构标准清单已生成:")
-            print(f"   {output_file}")
+## 当前目录结构
 
-            print("📊 统计信息:")
-            print(f"   - 目录数量: {self.stats['total_dirs']}")
-            print(f"   - 文件数量: {self.stats['total_files']}")
-            print(f"   - 模板文件: {self.stats['template_files']}")
+### 完整目录树
 
-        except Exception as e:
-            print(f"❌ 保存文件失败: {e}")
-            raise
+```
+{self.root_path.name}/
+{tree_text}
+```
+
+## 说明
+
+### 目录结构规范
+
+1. **bak目录**: 仅显示标准子目录结构，不包含具体备份文件
+   - `github_repo/`: Git仓库备份
+   - `专项备份/`: 专项功能备份
+   - `迁移备份/`: 项目迁移备份
+   - `待清理资料/`: 待处理的临时文件
+   - `常规备份/`: 日常备份文件
+
+2. **logs目录**: 仅显示标准子目录结构，不包含具体日志文件
+   - `archive/`: 归档日志
+   - `其他日志/`: 其他类型日志
+   - `工作记录/`: 工作过程记录
+   - `检查报告/`: 各类检查报告
+
+3. **docs目录**: 项目文档，包含所有设计、开发、管理和模板文档
+
+4. **project目录**: 项目源代码，包含完整的应用程序代码
+
+5. **tools目录**: 项目工具脚本，包含各种辅助开发工具
+
+### 统计信息
+
+- 总目录数: {self.stats['total_dirs']}
+- 总文件数: {self.stats['total_files']}
+- 模板文件数: {self.stats['template_files']}
+- 生成时间: {timestamp}
+
+---
+
+*此文档由 update_structure.py 自动生成，请勿手动编辑*
+"""
+        
+        return markdown_content
+    
+    def generate_structure_list(self) -> str:
+        """生成目录结构标准清单
+        
+        Returns:
+            Markdown 格式的目录结构清单
+        """
+        print(f"开始扫描目录: {self.root_path}")
+
+        # 扫描目录结构
+        structure = self.scan_directory(self.root_path)
+
+        # 生成 Markdown 文档
+        markdown_content = self.generate_markdown(structure)
+
+        print(f"扫描完成: 目录 {self.stats['total_dirs']} 个，文件 {self.stats['total_files']} 个")
+
+        return markdown_content
 
 
 def main():
     """主函数"""
+    # 获取项目根目录
+    script_dir = Path(__file__).parent
+    root_dir = script_dir.parent
+
+    print("=" * 60)
+    print("目录结构标准清单生成工具")
+    print("=" * 60)
+    print(f"项目根目录: {root_dir}")
+
     try:
-        # 获取项目根目录
-        project_root_str = get_project_root()
-        project_root = Path(project_root_str)
-        print(f"📁 项目根目录: {project_root}")
+        # 创建生成器实例
+        generator = DirectoryStructureGenerator(str(root_dir))
 
-        # 创建生成器
-        generator = DirectoryStructureGenerator()
+        # 生成目录结构清单
+        markdown_content = generator.generate_structure_list()
 
-        # 扫描目录结构
-        print("🔍 正在扫描目录结构...")
-        structure = generator.scan_directory(project_root)
+        # 输出文件路径
+        output_file = root_dir / "docs" / "01-设计" / "目录结构标准清单.md"
 
-        # 生成输出文件路径
-        output_file = project_root / "docs" / "01-设计" / "目录结构标准清单.md"
+        # 确保输出目录存在
+        output_file.parent.mkdir(parents=True, exist_ok=True)
 
-        # 保存结构
-        generator.save_structure(structure, output_file)
+        # 写入文件
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(markdown_content)
+
+        print(f"\n✅ 目录结构标准清单已生成:")
+        print(f"   {output_file}")
+        print("📊 统计信息:")
+        print(f"   - 目录数量: {generator.stats['total_dirs']}")
+        print(f"   - 文件数量: {generator.stats['total_files']}")
+        print(f"   - 模板文件: {generator.stats['template_files']}")
 
     except Exception as e:
         print(f"❌ 生成失败: {e}")

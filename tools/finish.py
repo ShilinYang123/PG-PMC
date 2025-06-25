@@ -2148,102 +2148,10 @@ def invoke_project_cleanup_py():
         )
     warnings_found += len(found_temp_files)
 
-    # --- 2. Clean Empty Directories ---
+    # --- 2. Clean Empty Directories (Disabled) ---
+    # Empty directory cleanup has been disabled to prevent accidental deletion
     found_empty_dirs = []
-
-    # We need to walk the tree bottom-up to safely delete empty dirs
-    for dirpath, dirnames, filenames in os.walk(PROJECT_ROOT, topdown=False):
-        current_dir = Path(dirpath)
-
-        # Skip excluded directories
-        rel_path_parts = current_dir.relative_to(PROJECT_ROOT).parts
-        if any(part in exclude_dirs_patterns for part in rel_path_parts):
-            continue
-        # Check top level dir name itself too
-        if not rel_path_parts and current_dir.name in exclude_dirs_patterns:
-            continue
-
-        # Check if the directory is empty (only contains other excluded items
-        # perhaps)
-        try:
-            # List items not in exclude list
-            non_excluded_items = [
-                item
-                for item in current_dir.iterdir()
-                if item.name not in exclude_dirs_patterns and
-                # Also check for pattern matches like .git* ? Maybe not needed
-                # for dirs.
-                item.name != ".DS_Store"  # Exclude macOS specific
-            ]
-            # Consider a directory empty if it contains no non-excluded items
-            # Or if it only contains empty subdirectories that we are about to delete?
-            # Simple check for now: empty if iterdir() list is empty or only
-            # contains excluded names
-            is_effectively_empty = True
-            if not non_excluded_items:
-                # Truly empty or only contains excluded names
-                pass
-            else:
-                # Check if it only contains other *empty* directories (which os.walk bottom-up handles)
-                # A simpler check: is it just empty now?
-                # If Get-ChildItem equivalent is empty, it's empty.
-                # Python's os.listdir() or Path.iterdir() might be enough
-                # Let's rely on os.walk(topdown=False) - if we reach here and it's empty, it should be safe?
-                # Need to be careful not to delete dirs with hidden files we didn't exclude
-                # Recheck after potential sub-dir deletions? No, `topdown=False` handles this.
-                # Let's check if os.listdir is empty AFTER filtering exclusions
-                if not list(
-                        current_dir.iterdir()):  # Check if literally empty first
-                    pass  # Definitely empty
-                elif not non_excluded_items:  # Check if only contains excluded items
-                    pass  # Effectively empty in our context
-                else:
-                    is_effectively_empty = False
-
-            if is_effectively_empty:
-                # Check against a list of essential dirs that should never be deleted even if empty
-                # Project root should never be deleted
-                essential_dirs = {PROJECT_ROOT}
-                # Add other essential dirs if needed e.g. PROJECT_ROOT / 'src'?
-                if current_dir in essential_dirs:
-                    continue
-
-                # Check if it's a python package directory (contains __init__.py)
-                # Even empty package dirs might be needed.
-                if (current_dir / "__init__.py").exists():
-                    logger.debug(
-                        f"Skipping potentially empty Python package dir: {
-                            current_dir.relative_to(PROJECT_ROOT)}")
-                    continue
-
-                # Delete empty directory
-                relative_dir_path = current_dir.relative_to(PROJECT_ROOT)
-                try:
-                    current_dir.rmdir()
-                    logger.info(
-                        f"Deleted empty directory: {relative_dir_path}")
-                    deleted_empty_dirs += 1
-                except Exception as e:
-                    logger.warning(
-                        f"Failed to delete empty directory {relative_dir_path}: {e}")
-                    issues_detected.append(
-                        f"Failed to delete empty directory: `{relative_dir_path}` ({e})")
-                found_empty_dirs.append(current_dir)
-        except FileNotFoundError:
-            # Directory might have been deleted by a previous step (e.g.,
-            # parent deletion)
-            continue
-        except Exception as e:
-            logger.error(f"Error checking directory {current_dir}: {e}")
-            issues_detected.append(
-                f"Error checking directory: `{
-                    current_dir.relative_to(PROJECT_ROOT)}` ({e})")
-
-    if found_empty_dirs:
-        actions_taken.append(
-            f"- Empty directory check: Found {len(found_empty_dirs)}, deleted {deleted_empty_dirs}."
-        )
-    warnings_found += len(found_empty_dirs)
+    deleted_empty_dirs = 0
 
     # --- 3. Log File Management ---
     stray_logs = []
