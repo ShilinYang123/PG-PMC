@@ -9,6 +9,13 @@ backup_dir: "s:/3AI/bak"
 created_at: '2025-06-19T17:15:34.936127'
 project_name: "3AI"
 project_version: "1.0.0"
+
+# Git配置
+git:
+  repo_dir_name: "github_repo"
+  default_branch: "main"
+  auto_push: true
+  commit_message_prefix: "自动备份"
 database:
   dev_name: 3AI_dev_db
   host: localhost

@@ -36,6 +36,30 @@ from config_loader import get_config
 # 初始化错误处理器
 error_handler = ErrorHandler()
 
+# Git配置管理函数
+def get_git_config():
+    """获取Git配置，支持环境变量覆盖"""
+    config = get_config()
+    git_config = config.get('git', {})
+    
+    # 支持环境变量覆盖
+    repo_dir_name = os.environ.get('GIT_REPO_NAME', git_config.get('repo_dir_name', 'github_repo'))
+    default_branch = os.environ.get('GIT_DEFAULT_BRANCH', git_config.get('default_branch', 'main'))
+    auto_push = os.environ.get('GIT_AUTO_PUSH', str(git_config.get('auto_push', True))).lower() == 'true'
+    commit_prefix = os.environ.get('GIT_COMMIT_PREFIX', git_config.get('commit_message_prefix', '自动备份'))
+    
+    return {
+        'repo_dir_name': repo_dir_name,
+        'default_branch': default_branch,
+        'auto_push': auto_push,
+        'commit_message_prefix': commit_prefix
+    }
+
+def get_git_repo_path():
+    """获取Git仓库路径，支持配置化"""
+    git_config = get_git_config()
+    return BACKUP_DIR / git_config['repo_dir_name']
+
 # --- Configuration Loading ---
 
 
@@ -466,8 +490,8 @@ def get_daily_git_commits():
             f"--before={today_date} 23:59:59",
             "--pretty=format:- %h %s (%an)", "--no-merges"
         ]
-        # 使用正确的Git仓库路径，而不是PROJECT_ROOT
-        git_repo_path = str(BACKUP_DIR / "github_repo")
+        # 使用配置化的Git仓库路径
+        git_repo_path = str(get_git_repo_path())
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -727,7 +751,7 @@ def run_self_check():
         logger.info(f"自检报告已生成: {report_path}")
 
         # 将报告复制到 Git 仓库并提交
-        git_repo_path = str(BACKUP_DIR / "github_repo")  # 使用正确的Git仓库路径
+        git_repo_path = str(get_git_repo_path())  # 使用配置化的Git仓库路径
         git_report_filename = os.path.basename(
             report_path)  # 使用 report_path 中的文件名部分
 
@@ -890,14 +914,14 @@ def run_command(
 
         # 对Git命令进行特殊处理，避免在PROJECT_ROOT执行
         if cwd is None and isinstance(command_parts, list) and len(command_parts) > 0 and command_parts[0] == 'git':
-            # Git命令默认使用Git仓库目录，而不是PROJECT_ROOT
-            git_repo_path = BACKUP_DIR / "github_repo"
+            # Git命令默认使用配置化的Git仓库目录
+            git_repo_path = get_git_repo_path()
             if git_repo_path.exists():
                 effective_cwd = str(git_repo_path)
                 logger.info(f"Git command redirected to: {effective_cwd}")
             else:
                 effective_cwd = PROJECT_ROOT
-                logger.warning(f"Git repo not found, using PROJECT_ROOT: {effective_cwd}")
+                logger.warning(f"Git repo not found at {git_repo_path}, using PROJECT_ROOT: {effective_cwd}")
         else:
             effective_cwd = (
                 cwd if cwd is not None else PROJECT_ROOT
@@ -1860,7 +1884,7 @@ def invoke_backup(skip_backup=False):
         logger.info("Starting Git commit and push backup...")
 
         # 确保Git仓库中存在符合GitHub仓库结构规范的文件夹
-        git_repo_path = str(BACKUP_DIR / "github_repo")  # 使用正确的Git仓库路径
+        git_repo_path = str(get_git_repo_path())  # 使用配置化的Git仓库路径
 
         # 清理并重新创建Git仓库目录（除了.git目录）
         if os.path.exists(git_repo_path):
@@ -3163,4 +3187,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-的
