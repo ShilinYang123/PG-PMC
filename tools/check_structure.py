@@ -152,62 +152,39 @@ class StructureChecker:
             with open(self.whitelist_file, 'r', encoding='utf-8') as f:
                 content = f.read()
 
-            # 查找目录树部分
-            tree_start = content.find('```\n3AI/')
-            if tree_start == -1:
-                raise ValueError("未找到目录树结构")
-
-            tree_end = content.find('```', tree_start + 4)
-            if tree_end == -1:
-                raise ValueError("目录树结构不完整")
-
-            tree_content = content[tree_start + 4:tree_end].strip()
-            lines = tree_content.split('\n')
-
-            path_stack = []  # 用于跟踪当前路径
-
+            lines = content.split('\n')
+            current_section = None
+            
             for line in lines:
-                if not line.strip():
+                line = line.strip()
+                if not line:
                     continue
-
-                # 跳过根目录行
-                if line.strip() == '3AI/':
+                    
+                # 检查是否是章节标题
+                if line == "### 目录":
+                    current_section = "directories"
                     continue
-
-                # 计算实际缩进级别
-                # 移除开头的树形字符，找到实际内容
-                stripped = line.lstrip(' │├└─')
-                if not stripped:
+                elif line == "### 文件":
+                    current_section = "files"
                     continue
-
-                # 计算缩进级别：统计开头的空格和树形字符数量
-                indent_chars = len(line) - len(line.lstrip(' │├└─'))
-                # 每个缩进级别通常是4个字符（包括空格和树形字符）
-                indent_level = max(0, (indent_chars - 4) // 4 + 1)  # 第一级从1开始
-
-                # 清理行内容
-                clean_line = stripped.strip()
-                if not clean_line:
+                elif line.startswith("#") or line.startswith("##"):
+                    current_section = None
                     continue
-
-                # 调整路径栈到当前级别
-                while len(path_stack) >= indent_level:
-                    path_stack.pop()
-
-                # 构建完整路径
-                if clean_line.endswith('/'):
-                    # 目录
-                    dir_name = clean_line[:-1]  # 移除末尾的 '/'
-                    path_stack.append(dir_name)
-                    full_path = '/'.join(path_stack)
-                    whitelist_structure['directories'].add(full_path)
-                else:
-                    # 文件
-                    if path_stack:
-                        full_path = '/'.join(path_stack) + '/' + clean_line
-                    else:
-                        full_path = clean_line
-                    whitelist_structure['files'].add(full_path)
+                    
+                # 解析列表项
+                if line.startswith("- ") and current_section:
+                    path = line[2:].strip()  # 移除 "- " 前缀
+                    
+                    if current_section == "directories":
+                        # 目录路径，移除末尾的 /
+                        if path.endswith("/"):
+                            path = path[:-1]
+                        if path:  # 非空路径才添加
+                            whitelist_structure['directories'].add(path)
+                    elif current_section == "files":
+                        # 文件路径
+                        if path:  # 非空路径才添加
+                            whitelist_structure['files'].add(path)
 
             # 更新统计信息
             dirs_count = len(whitelist_structure['directories'])
