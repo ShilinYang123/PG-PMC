@@ -37,9 +37,12 @@ from config_loader import get_config
 error_handler = ErrorHandler()
 
 # --- Configuration Loading ---
+
+
 def load_project_config():
     """加载项目配置"""
-    config_path = Path(__file__).parent.parent / "docs" / "03-管理" / "project_config.yaml"
+    config_path = Path(__file__).parent.parent / "docs" / \
+        "03-管理" / "project_config.yaml"
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
@@ -48,12 +51,13 @@ def load_project_config():
         print(f"加载配置文件失败: {e}")
         return None
 
+
 def get_project_root():
     """获取项目根目录"""
     config = load_project_config()
     if config and config.get('paths', {}).get('root'):
         return Path(config['paths']['root'])
-    
+
     # 备用方案
     return Path(__file__).resolve().parent.parent
 
@@ -78,7 +82,8 @@ class MCPToolsManager:
             self.tasks_file = self.project_root / tasks_path
             self.memory_file = self.project_root / memory_path
 
-            logging.getLogger(__name__).info(f"MCP配置加载成功 - Tasks: {self.tasks_file}, Memory: {self.memory_file}")
+            logging.getLogger(__name__).info(
+                f"MCP配置加载成功 - Tasks: {self.tasks_file}, Memory: {self.memory_file}")
 
         except Exception as e:
             # 回退到默认路径
@@ -352,7 +357,11 @@ parser = init_arg_parser()
 args = parser.parse_args()
 
 # 设置默认模式为 daily（如果没有指定任何模式）
-if not any([args.daily, args.release, args.backup_only, args.init_config, args.self_check]):
+if not any([args.daily,
+            args.release,
+            args.backup_only,
+            args.init_config,
+            args.self_check]):
     args.daily = True
     print("未指定运行模式，默认使用 --daily 模式")
 
@@ -372,8 +381,15 @@ mcp_tools = MCPToolsManager(PROJECT_ROOT)
 # 项目标准路径配置
 config = load_project_config()
 if config and config.get('paths'):
-    STANDARD_BACKUP_DIR = Path(config['paths'].get('backup_dir', PROJECT_ROOT / "bak"))
-    STANDARD_LOGS_DIR = Path(config['paths'].get('logs_dir', PROJECT_ROOT / "logs"))
+    STANDARD_BACKUP_DIR = Path(
+        config['paths'].get(
+            'backup_dir',
+            PROJECT_ROOT / "bak"))
+    STANDARD_LOGS_DIR = Path(
+        config['paths'].get(
+            'logs_dir',
+            PROJECT_ROOT /
+            "logs"))
 else:
     STANDARD_BACKUP_DIR = PROJECT_ROOT / "bak"  # 标准备份目录
     STANDARD_LOGS_DIR = PROJECT_ROOT / "logs"  # 标准日志目录
@@ -383,7 +399,11 @@ STANDARD_CLEANUP_DIR = STANDARD_BACKUP_DIR / "待清理资料"  # 标准清理�
 LOG_DIR = STANDARD_LOGS_DIR / "工作记录"
 # 从配置文件获取报告目录
 config = get_config()
-report_dir_config = config.get('structure_check', {}).get('report_dir', 'logs/检查报告')
+report_dir_config = config.get(
+    'structure_check',
+    {}).get(
+        'report_dir',
+    'logs/检查报告')
 REPORT_DIR = PROJECT_ROOT / report_dir_config
 TIMESTAMP = datetime.now().strftime("%Y%m%d-%H%M%S")
 LOG_FILE = LOG_DIR / f"finish_py_{TIMESTAMP}.log"
@@ -500,9 +520,16 @@ try:
         full_config = yaml.safe_load(f)
         # 从project_config.yaml的paths部分提取directory_spec格式的配置
         dir_spec = {
-            "required_dirs": full_config.get('paths', {}).get('required_dirs', []),
-            "required_files": full_config.get('paths', {}).get('required_files', [])
-        }
+            "required_dirs": full_config.get(
+                'paths',
+                {}).get(
+                'required_dirs',
+                []),
+            "required_files": full_config.get(
+                'paths',
+                {}).get(
+                    'required_files',
+                [])}
     logger.info(f"成功加载配置文件：{config_path}")
 except FileNotFoundError:
     logger.error(
@@ -542,7 +569,7 @@ def run_self_check():
         if config_file.exists():
             flake8_cmd.extend(["--config", str(config_file)])
         flake8_cmd.append(".")
-        
+
         flake8_result = subprocess.run(
             flake8_cmd,
             capture_output=True, text=True, cwd=PROJECT_ROOT
@@ -765,10 +792,16 @@ else:
     if "backup_dir" in dir_spec:
         config_backup_dir = dir_spec.get("backup_dir")
         if not Path(config_backup_dir).is_absolute():
-            # 相对路径，相对于项目根目录的父目录
-            BACKUP_DIR = PROJECT_ROOT.parent / config_backup_dir
+            # 相对路径，相对于项目根目录（不是父目录）
+            BACKUP_DIR = PROJECT_ROOT / config_backup_dir
         else:
-            BACKUP_DIR = Path(config_backup_dir)
+            # 绝对路径，检查是否在项目内
+            abs_backup_path = Path(config_backup_dir)
+            if PROJECT_ROOT in abs_backup_path.parents or abs_backup_path == PROJECT_ROOT:
+                BACKUP_DIR = abs_backup_path
+            else:
+                logger.warning(f"配置的备份目录 {config_backup_dir} 不在项目内，使用默认备份目录")
+                BACKUP_DIR = STANDARD_BACKUP_DIR
 
 logger.info(f"当前备份目录：{BACKUP_DIR}")
 if not BACKUP_DIR.exists():
@@ -1815,7 +1848,7 @@ def invoke_backup(skip_backup=False):
 
         # 确保Git仓库中存在符合GitHub仓库结构规范的文件夹
         git_repo_path = str(BACKUP_DIR / "github_repo")  # 使用正确的Git仓库路径
-        
+
         # 清理并重新创建Git仓库目录（除了.git目录）
         if os.path.exists(git_repo_path):
             for item in os.listdir(git_repo_path):
@@ -1827,18 +1860,24 @@ def invoke_backup(skip_backup=False):
                         os.remove(item_path)
         else:
             os.makedirs(git_repo_path, exist_ok=True)
-        
+
         # 同步项目文件到Git仓库（排除bak和logs目录）
         github_dirs = ["docs", "project", "tools"]
         for dir_name in github_dirs:
             src_dir = os.path.join(PROJECT_ROOT, dir_name)
             dst_dir = os.path.join(git_repo_path, dir_name)
             if os.path.exists(src_dir):
-                shutil.copytree(src_dir, dst_dir, ignore=shutil.ignore_patterns('*.log', '*.tmp', '__pycache__'))
+                shutil.copytree(
+                    src_dir, dst_dir, ignore=shutil.ignore_patterns(
+                        '*.log', '*.tmp', '__pycache__'))
                 logger.info(f"已同步目录到Git仓库：{dir_name}")
-        
+
         # 同步根目录的重要文件
-        root_files = ["README.md", "requirements.txt", ".gitignore", "pyproject.toml"]
+        root_files = [
+            "README.md",
+            "requirements.txt",
+            ".gitignore",
+            "pyproject.toml"]
         for file_name in root_files:
             src_file = os.path.join(PROJECT_ROOT, file_name)
             dst_file = os.path.join(git_repo_path, file_name)
@@ -1908,20 +1947,20 @@ def invoke_backup(skip_backup=False):
     # Define exclusion patterns (optimized for performance)
     # Directory-level exclusions for early pruning
     exclude_dirs = {
-        "node_modules", ".vscode", ".idea", ".git", "venv", "env", 
+        "node_modules", ".vscode", ".idea", ".git", "venv", "env",
         "__pycache__", "dist", "build", "backups", ".pytest_cache",
         ".tox", ".mypy_cache"
     }
-    
+
     # File-level exclusions
     exclude_file_patterns = [
         "*.log", "*.pyc", "*.pyo", "*.tmp", "*.temp", "*.cache",
         ".coverage", "coverage.xml", "*.zip", "*.tar.gz", "*.rar", "*.7z"
     ]
-    
+
     # Special directories to preserve structure only
     structure_only_dirs = {"bak", "logs"}
-    
+
     # Standard subdirectories to preserve in structure-only dirs
     standard_bak_dirs = {'config', 'github_repo', '专项备份', '迁移备份'}
     # 从项目规范获取logs标准子目录（根据规范与流程.md中的定义）
@@ -1930,14 +1969,14 @@ def invoke_backup(skip_backup=False):
     logger.info(f"Creating backup: {backup_path}")
     processed_files = 0
     added_files = 0
-    
+
     def should_exclude_file(filename):
         """Check if file should be excluded based on patterns"""
         for pattern in exclude_file_patterns:
             if fnmatch.fnmatch(filename, pattern):
                 return True
         return False
-    
+
     def should_preserve_structure_dir(rel_path, dirname):
         """Check if directory structure should be preserved"""
         if rel_path == "bak" or rel_path == "logs":
@@ -1947,72 +1986,92 @@ def invoke_backup(skip_backup=False):
         if rel_path.startswith("logs/") and dirname in standard_logs_dirs:
             return True
         return False
-    
+
     try:
         logger.debug("Opening zip file for writing...")
         with zipfile.ZipFile(backup_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             logger.debug("Starting optimized directory walk...")
-            
+
             # 只备份指定的目录：docs, project, tools
             backup_dirs = ["docs", "project", "tools"]
-            
+
             for backup_dir in backup_dirs:
                 backup_dir_path = os.path.join(PROJECT_ROOT, backup_dir)
                 if not os.path.exists(backup_dir_path):
                     logger.warning(f"备份目录不存在，跳过: {backup_dir}")
                     continue
-                    
+
                 logger.info(f"正在备份目录: {backup_dir}")
-                
+
                 for root, dirs, files in os.walk(backup_dir_path):
                     # Calculate relative path
                     rel_root = os.path.relpath(root, PROJECT_ROOT)
                     if rel_root == ".":
                         rel_root = ""
-                    
-                    # Filter out excluded directories (modify dirs in-place for pruning)
+
+                    # Filter out excluded directories (modify dirs in-place for
+                    # pruning)
                     dirs[:] = [d for d in dirs if d not in exclude_dirs]
-                    
+
                     # Process files in current directory
                     for filename in files:
                         processed_files += 1
                         if processed_files % 1000 == 0:  # Less frequent but more meaningful updates
-                            logger.info(f"正在扫描文件... 已处理 {processed_files} 个项目，已添加 {added_files} 个文件到备份")
-                        
+                            logger.info(
+                                f"正在扫描文件... 已处理 {processed_files} 个项目，已添加 {added_files} 个文件到备份")
+
                         # Skip excluded files
                         if should_exclude_file(filename):
                             continue
-                        
+
                         # Build file path
                         file_path = os.path.join(root, filename)
-                        rel_file_path = os.path.join(rel_root, filename) if rel_root else filename
-                        
+                        rel_file_path = os.path.join(
+                            rel_root, filename) if rel_root else filename
+
                         # Skip files in structure-only directories
-                        if any(rel_file_path.startswith(d + os.sep) or rel_file_path.startswith(d + "/") 
-                               for d in structure_only_dirs):
+                        if any(
+                            rel_file_path.startswith(
+                                d +
+                                os.sep) or rel_file_path.startswith(
+                                d +
+                                "/") for d in structure_only_dirs):
                             continue
-                        
+
                         try:
                             file_size = os.path.getsize(file_path)
-                            zipf.write(file_path, rel_file_path.replace(os.sep, "/"))
+                            zipf.write(
+                                file_path, rel_file_path.replace(
+                                    os.sep, "/"))
                             added_files += 1
                             if added_files % 100 == 0:
                                 logger.info(f"已添加 {added_files} 个文件到备份")
-                            logger.debug(f"Added to backup: {rel_file_path} ({file_size} bytes)")
+                            logger.debug(
+                                f"Added to backup: {rel_file_path} ({file_size} bytes)")
                         except Exception as e:
-                            logger.warning(f"Failed to add {file_path} to backup: {e}")
-                    
+                            logger.warning(
+                                f"Failed to add {file_path} to backup: {e}")
+
                     # Add structure-only directories
-                    if rel_root and should_preserve_structure_dir(rel_root, os.path.basename(root)):
+                    if rel_root and should_preserve_structure_dir(
+                            rel_root, os.path.basename(root)):
                         try:
-                            zipf.writestr(rel_root.replace(os.sep, "/") + "/", "")
-                            logger.debug(f"Added directory structure: {rel_root}/")
+                            zipf.writestr(
+                                rel_root.replace(
+                                    os.sep, "/") + "/", "")
+                            logger.debug(
+                                f"Added directory structure: {rel_root}/")
                         except Exception as e:
-                            logger.warning(f"Failed to add directory structure {rel_root}: {e}")
-            
+                            logger.warning(
+                                f"Failed to add directory structure {rel_root}: {e}")
+
             # 备份根目录的重要文件
             logger.info("正在备份根目录重要文件")
-            root_files = ["README.md", "requirements.txt", ".gitignore", "pyproject.toml"]
+            root_files = [
+                "README.md",
+                "requirements.txt",
+                ".gitignore",
+                "pyproject.toml"]
             for file_name in root_files:
                 src_file = os.path.join(PROJECT_ROOT, file_name)
                 if os.path.exists(src_file):
@@ -2021,9 +2080,11 @@ def invoke_backup(skip_backup=False):
                         zipf.write(src_file, file_name)
                         added_files += 1
                         logger.info(f"已添加根目录文件到备份: {file_name}")
-                        logger.debug(f"Added root file to backup: {file_name} ({file_size} bytes)")
+                        logger.debug(
+                            f"Added root file to backup: {file_name} ({file_size} bytes)")
                     except Exception as e:
-                         logger.warning(f"Failed to add root file {file_name} to backup: {e}")
+                        logger.warning(
+                            f"Failed to add root file {file_name} to backup: {e}")
 
         logger.info("备份进度显示结束")
         logger.info(
@@ -2474,8 +2535,10 @@ def invoke_eslint_check():
 
     if not eslint_installed:
         # Skip auto-install to prevent unwanted npm package installations
-        logger.warning("ESLint not detected. Skipping JavaScript/TypeScript check.")
-        logger.info("To enable ESLint checks, please install ESLint manually: npm install eslint --save-dev")
+        logger.warning(
+            "ESLint not detected. Skipping JavaScript/TypeScript check.")
+        logger.info(
+            "To enable ESLint checks, please install ESLint manually: npm install eslint --save-dev")
         return (
             True,
             "ESLint not installed - check skipped",
@@ -2572,15 +2635,30 @@ def invoke_ci_check(port=None):
     # 加载配置
     try:
         config = load_project_config()
-        host = config.get('environment', {}).get('network', {}).get('preview_host', 'localhost')
+        host = config.get(
+            'environment',
+            {}).get(
+            'network',
+            {}).get(
+            'preview_host',
+            'localhost')
         if port is None:
-            port = config.get('environment', {}).get('network', {}).get('default_ports', {}).get('preview', 3000)
+            port = config.get(
+                'environment',
+                {}).get(
+                'network',
+                {}).get(
+                'default_ports',
+                {}).get(
+                'preview',
+                3000)
     except Exception as e:
         logger.warning(f"Failed to load network config: {e}, using defaults")
         host = 'localhost'
         port = port or 3000
-    
-    logger.info(f"Starting CI checks on frontend (host: {host}, port: {port})...")
+
+    logger.info(
+        f"Starting CI checks on frontend (host: {host}, port: {port})...")
     success = True
     # 1. Change to frontend admin directory
     frontend_dir = PROJECT_ROOT / "src" / "frontend" / "admin"

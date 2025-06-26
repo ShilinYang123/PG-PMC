@@ -153,8 +153,16 @@ class EnhancedStructureChecker:
     
     def _setup_logging(self):
         """设置日志记录"""
-        # 创建日志目录
-        log_dir = Path(__file__).parent.parent / "logs" / "检查报告"
+        # 创建日志目录 - 确保在项目根目录内
+        try:
+            from tools.config_loader import ConfigLoader
+            config_loader = ConfigLoader()
+            project_root = config_loader.get_project_root()
+        except Exception:
+            # 备用方案：使用当前工作目录作为项目根目录
+            project_root = Path.cwd()
+        
+        log_dir = project_root / "logs" / "检查报告"
         log_dir.mkdir(parents=True, exist_ok=True)
         
         # 设置日志文件
