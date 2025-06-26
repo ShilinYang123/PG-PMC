@@ -248,6 +248,49 @@ class ConfigValidator:
             if field in rules and not isinstance(rules[field], bool):
                 self.errors.append(f"'rules.{field}' 必须是布尔类型")
 
+    def _validate_rules_config(self, config: Dict[str, Any]) -> None:
+        """验证规则配置"""
+        if 'rules' not in config:
+            self.warnings.append("建议添加 'rules' 配置节")
+            return
+
+        rules_config = config['rules']
+
+        # 验证validation子节
+        if 'validation' in rules_config:
+            validation = rules_config['validation']
+            bool_fields = ['strict_mode', 'allow_empty_files', 'require_documentation', 'enforce_naming_conventions']
+            for field in bool_fields:
+                if field in validation and not isinstance(validation[field], bool):
+                    self.errors.append(f"'rules.validation.{field}' 必须是布尔类型")
+
+        # 验证code_quality子节
+        if 'code_quality' in rules_config:
+            quality = rules_config['code_quality']
+            int_fields = ['max_line_length', 'max_function_length', 'max_file_length']
+            for field in int_fields:
+                if field in quality:
+                    if not isinstance(quality[field], int):
+                        self.errors.append(f"'rules.code_quality.{field}' 必须是整数类型")
+                    elif quality[field] <= 0:
+                        self.errors.append(f"'rules.code_quality.{field}' 必须是正整数")
+
+        # 验证security子节
+        if 'security' in rules_config:
+            security = rules_config['security']
+            bool_fields = ['scan_for_secrets', 'require_https', 'validate_inputs', 'sanitize_outputs']
+            for field in bool_fields:
+                if field in security and not isinstance(security[field], bool):
+                    self.errors.append(f"'rules.security.{field}' 必须是布尔类型")
+
+        # 验证compliance子节
+        if 'compliance' in rules_config:
+            compliance = rules_config['compliance']
+            bool_fields = ['license_check', 'dependency_audit', 'vulnerability_scan']
+            for field in bool_fields:
+                if field in compliance and not isinstance(compliance[field], bool):
+                    self.errors.append(f"'rules.compliance.{field}' 必须是布尔类型")
+
         # 验证编码
         if 'default_encoding' in rules:
             encoding = rules['default_encoding']
@@ -287,11 +330,26 @@ class ConfigValidator:
         self.errors.clear()
         self.warnings.clear()
 
+        # 验证版本信息
+        self._validate_version(config)
+
         # 验证项目基本信息
         self._validate_project_info(config)
 
         # 验证应用配置
         self._validate_app_config(config)
+
+        # 验证性能配置
+        self._validate_performance_config(config)
+
+        # 验证文件类型配置
+        self._validate_file_types_config(config)
+
+        # 验证日志配置
+        self._validate_logging_config(config)
+
+        # 验证规则配置
+        self._validate_rules_config(config)
 
         # 验证数据库配置
         self._validate_database_config(config)
@@ -301,6 +359,10 @@ class ConfigValidator:
 
         # 验证安全配置
         self._validate_security_config(config)
+
+        # 验证环境变量配置（不清空错误和警告列表）
+        if 'environment' in config:
+            self._validate_environment_variables(config['environment'])
 
         # 输出验证结果
         self._report_validation_results()
@@ -391,11 +453,16 @@ class ConfigValidator:
 
     def _validate_redis_config(self, config: Dict[str, Any]) -> None:
         """验证Redis配置"""
-        if 'redis' not in config:
+        # 检查顶层或environment节下的redis配置
+        redis_config = None
+        if 'redis' in config:
+            redis_config = config['redis']
+        elif 'environment' in config and 'redis' in config['environment']:
+            redis_config = config['environment']['redis']
+        
+        if redis_config is None:
             self.warnings.append("建议添加 'redis' 配置节")
             return
-
-        redis_config = config['redis']
 
         # 验证端口
         if 'port' in redis_config:
@@ -412,11 +479,16 @@ class ConfigValidator:
 
     def _validate_security_config(self, config: Dict[str, Any]) -> None:
         """验证安全配置"""
-        if 'security' not in config:
+        # 检查顶层或environment节下的security配置
+        security_config = None
+        if 'security' in config:
+            security_config = config['security']
+        elif 'environment' in config and 'security' in config['environment']:
+            security_config = config['environment']['security']
+        
+        if security_config is None:
             self.warnings.append("建议添加 'security' 配置节")
             return
-
-        security_config = config['security']
 
         # 验证JWT密钥
         if 'jwt_secret' in security_config:
@@ -504,6 +576,191 @@ class ConfigValidator:
 
         return len(self.errors) == 0
 
+    def validate_environment_config(self, config: Dict[str, Any]) -> bool:
+        """验证 project_config.yaml 中的环境变量配置
+
+        Args:
+            config: 项目配置字典
+
+        Returns:
+            bool: 验证是否通过
+        """
+        self.errors.clear()
+        self.warnings.clear()
+
+        if 'environment' not in config:
+            self.errors.append("缺少 'environment' 配置节")
+            return False
+
+        env_config = config['environment']
+
+        # 验证应用配置
+        if 'app' in env_config:
+            app_config = env_config['app']
+            required_app_fields = ['name', 'version', 'port', 'api_port']
+            for field in required_app_fields:
+                if field not in app_config:
+                    self.warnings.append(f"建议在 environment.app 中添加 '{field}' 配置")
+            
+            # 验证端口配置
+            for port_field in ['port', 'api_port']:
+                if port_field in app_config:
+                    try:
+                        port = int(app_config[port_field])
+                        if not (1 <= port <= 65535):
+                            self.errors.append(f"environment.app.{port_field} 端口值超出范围: {port}")
+                    except (ValueError, TypeError):
+                        self.errors.append(f"environment.app.{port_field} 必须是有效的端口号")
+
+        # 验证数据库配置
+        if 'database' in env_config:
+            db_config = env_config['database']
+            required_db_fields = ['host', 'port', 'name', 'user']
+            for field in required_db_fields:
+                if field not in db_config:
+                    self.warnings.append(f"建议在 environment.database 中添加 '{field}' 配置")
+            
+            # 验证数据库端口
+            if 'port' in db_config:
+                try:
+                    port = int(db_config['port'])
+                    if not (1 <= port <= 65535):
+                        self.errors.append(f"environment.database.port 端口值超出范围: {port}")
+                except (ValueError, TypeError):
+                    self.errors.append("environment.database.port 必须是有效的端口号")
+
+        # 验证Redis配置
+        if 'redis' in env_config:
+            redis_config = env_config['redis']
+            required_redis_fields = ['host', 'port', 'db']
+            for field in required_redis_fields:
+                if field not in redis_config:
+                    self.warnings.append(f"建议在 environment.redis 中添加 '{field}' 配置")
+            
+            # 验证Redis端口
+            if 'port' in redis_config:
+                try:
+                    port = int(redis_config['port'])
+                    if not (1 <= port <= 65535):
+                        self.errors.append(f"environment.redis.port 端口值超出范围: {port}")
+                except (ValueError, TypeError):
+                    self.errors.append("environment.redis.port 必须是有效的端口号")
+
+        # 验证安全配置
+        if 'security' in env_config:
+            security_config = env_config['security']
+            required_security_fields = ['session_secret', 'jwt_secret']
+            for field in required_security_fields:
+                if field not in security_config:
+                    self.warnings.append(f"建议在 environment.security 中添加 '{field}' 配置")
+                elif isinstance(security_config[field], str):
+                    # 检查是否使用了默认的不安全密钥
+                    if 'change-this' in security_config[field].lower() or len(security_config[field]) < 32:
+                        self.warnings.append(f"environment.security.{field} 建议使用更安全的密钥")
+
+        # 输出验证结果
+        self._report_validation_results()
+
+        return len(self.errors) == 0
+
+    def _validate_environment_variables(self, env_config: Dict[str, Any]) -> None:
+        """验证环境变量配置（内部方法，不清空错误和警告列表）
+
+        Args:
+            env_config: 环境变量配置字典
+        """
+        # 验证应用配置
+        if 'app' in env_config:
+            app_config = env_config['app']
+            required_app_fields = ['name', 'version', 'port', 'api_port']
+            for field in required_app_fields:
+                if field not in app_config:
+                    self.warnings.append(f"建议在 environment.app 中添加 '{field}' 配置")
+            
+            # 验证端口配置
+            for port_field in ['port', 'api_port']:
+                if port_field in app_config:
+                    try:
+                        port = int(app_config[port_field])
+                        if not (1 <= port <= 65535):
+                            self.errors.append(f"environment.app.{port_field} 端口值超出范围: {port}")
+                    except (ValueError, TypeError):
+                        self.errors.append(f"environment.app.{port_field} 必须是有效的端口号")
+
+        # 验证数据库配置
+        if 'database' in env_config:
+            db_config = env_config['database']
+            required_db_fields = ['host', 'port', 'name', 'user']
+            for field in required_db_fields:
+                if field not in db_config:
+                    self.warnings.append(f"建议在 environment.database 中添加 '{field}' 配置")
+            
+            # 验证数据库端口
+            if 'port' in db_config:
+                try:
+                    port = int(db_config['port'])
+                    if not (1 <= port <= 65535):
+                        self.errors.append(f"environment.database.port 端口值超出范围: {port}")
+                except (ValueError, TypeError):
+                    self.errors.append("environment.database.port 必须是有效的端口号")
+
+        # 验证Redis配置
+        if 'redis' in env_config:
+            redis_config = env_config['redis']
+            required_redis_fields = ['host', 'port', 'db']
+            for field in required_redis_fields:
+                if field not in redis_config:
+                    self.warnings.append(f"建议在 environment.redis 中添加 '{field}' 配置")
+            
+            # 验证Redis端口
+            if 'port' in redis_config:
+                try:
+                    port = int(redis_config['port'])
+                    if not (1 <= port <= 65535):
+                        self.errors.append(f"environment.redis.port 端口值超出范围: {port}")
+                except (ValueError, TypeError):
+                    self.errors.append("environment.redis.port 必须是有效的端口号")
+
+        # 验证安全配置
+        if 'security' in env_config:
+            security_config = env_config['security']
+            required_security_fields = ['session_secret', 'jwt_secret']
+            for field in required_security_fields:
+                if field not in security_config:
+                    self.warnings.append(f"建议在 environment.security 中添加 '{field}' 配置")
+                elif isinstance(security_config[field], str):
+                    # 检查是否使用了默认的不安全密钥
+                    if 'change-this' in security_config[field].lower() or len(security_config[field]) < 32:
+                        self.warnings.append(f"environment.security.{field} 建议使用更安全的密钥")
+
+    def validate_structure_check_config(self, config: Dict[str, Any]) -> bool:
+        """验证结构检查配置
+
+        Args:
+            config: 结构检查配置字典
+
+        Returns:
+            bool: 验证是否通过
+        """
+        self.errors.clear()
+        self.warnings.clear()
+
+        # 验证版本信息
+        self._validate_version(config)
+        # 验证性能配置
+        self._validate_performance_config(config)
+        # 验证文件类型配置
+        self._validate_file_types_config(config)
+        # 验证日志配置
+        self._validate_logging_config(config)
+        # 验证规则配置
+        self._validate_rules_config(config)
+
+        # 输出验证结果
+        self._report_validation_results()
+
+        return len(self.errors) == 0
+
     def get_validation_summary(self) -> Dict[str, Any]:
         """获取验证摘要
 
@@ -520,23 +777,30 @@ class ConfigValidator:
 
 
 def validate_config_file(config_path: Union[str, Path]) -> bool:
-    """验证配置文件
+    """验证结构检查配置文件
 
     Args:
         config_path: 配置文件路径
 
     Returns:
         bool: 验证是否通过
-
-    Raises:
-        ConfigValidationError: 配置验证失败时抛出
     """
     try:
-        config = load_yaml_config(config_path)
+        # 强制重新加载配置，避免缓存问题
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        
         validator = ConfigValidator()
-        return validator.validate_structure_check_config(config)
+        # 验证结构检查配置（检查structure_check节）
+        if 'structure_check' in config:
+            sc_config = config['structure_check']
+            return validator.validate_structure_check_config(sc_config)
+        else:
+            validator.warnings.append("缺少 'structure_check' 配置节")
+            validator._report_validation_results()
+            return False
     except Exception as e:
-        error_handler.handle_error(e, "配置文件验证失败")
+        logger.error(f"验证结构检查配置文件失败: {e}")
         return False
 
 
@@ -550,7 +814,13 @@ def validate_project_config_file(config_path: Union[str, Path]) -> bool:
         bool: 验证是否通过
     """
     try:
-        config = load_yaml_config(config_path)
+        # 强制重新加载配置文件，不使用缓存
+        import yaml
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        
+
+        
         validator = ConfigValidator()
         return validator.validate_project_config(config)
     except Exception as e:
@@ -579,17 +849,18 @@ def main():
         else:
             logger.warning(f"项目配置文件不存在: {project_config_path}")
 
-        # 验证环境变量文件
-        env_file_path = Path(PROJECT_CONFIG_PATH).parent / ".env"
-        if env_file_path.exists():
-            logger.info("开始验证环境变量文件...")
-            validator = ConfigValidator()
-            if validator.validate_env_file(env_file_path):
-                logger.info("环境变量文件验证通过")
-            else:
-                logger.error("环境变量文件验证失败")
-        else:
-            logger.warning(f"环境变量文件不存在: {env_file_path}")
+        # 环境变量验证已禁用 - 环境变量已整合到 project_config.yaml 中
+        # env_file_path = Path(PROJECT_CONFIG_PATH).parent / ".env"
+        # if env_file_path.exists():
+        #     logger.info("开始验证环境变量文件...")
+        #     validator = ConfigValidator()
+        #     if validator.validate_env_file(env_file_path):
+        #         logger.info("环境变量文件验证通过")
+        #     else:
+        #         logger.error("环境变量文件验证失败")
+        # else:
+        #     logger.warning(f"环境变量文件不存在: {env_file_path}")
+        logger.info("环境变量配置已整合到 project_config.yaml 中，跳过 .env 文件验证")
 
     except Exception as e:
         error_handler.handle_error(e, "配置验证过程中发生错误")

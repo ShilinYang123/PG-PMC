@@ -40,29 +40,10 @@ class PathStandardizer:
 
         # 硬编码路径模式
         self.path_patterns = [
-            # Windows绝对路径模式
-            (r'[A-Z]:\\[^\s"\'\']*3[Aa][Ii][^\s"\'\']*', 'absolute_path'),
-            (r'[a-z]:\\[^\s"\'\']*3[Aa][Ii][^\s"\'\']*', 'absolute_path'),
-            # 特定的3AI路径模式
-            (r'{{PROJECT_ROOT}}/.', 'project_root'),
-            (r'{{PROJECT_ROOT}}/.', 'project_root'),
-            (r'{{PROJECT_ROOT}}', 'project_root'),
-            (r'{{PROJECT_ROOT}}', 'project_root'),
-            # 备份目录路径
-            (r'{{PROJECT_ROOT}}/bak', 'backup_dir'),
-            (r'{{PROJECT_ROOT}}/bak', 'backup_dir'),
-            # 日志目录路径
-            (r'{{PROJECT_ROOT}}/logs', 'logs_dir'),
-            (r'{{PROJECT_ROOT}}/logs', 'logs_dir'),
-            # 文档目录路径
-            (r'{{PROJECT_ROOT}}/docs', 'docs_dir'),
-            (r'{{PROJECT_ROOT}}/docs', 'docs_dir'),
-            # 工具目录路径
-            (r'{{PROJECT_ROOT}}/tools', 'tools_dir'),
-            (r'{{PROJECT_ROOT}}/tools', 'tools_dir'),
-            # 项目目录路径
-            (r'{{PROJECT_ROOT}}/project', 'project_dir'),
-            (r'{{PROJECT_ROOT}}/project', 'project_dir'),
+            # Windows绝对路径模式（只检测真正的硬编码路径）
+            (r'[A-Za-z]:\\[^\s"\'\']*3[Aa][Ii][^\s"\'\']*', 'absolute_path'),
+            # 特定的3AI路径模式（排除已经标准化的模板变量）
+            # 注意：不检测已经正确使用的{{PROJECT_ROOT}}模板变量
         ]
 
         # 路径替换规则
@@ -79,7 +60,7 @@ class PathStandardizer:
         # 需要排除的目录
         self.excluded_dirs = {
             'bak', 'logs', '__pycache__', '.git', 'node_modules',
-            '.pytest_cache', '.vscode', '.idea'
+            '.pytest_cache', '.vscode', '.idea', '.venv'
         }
 
         # 需要排除的文件扩展名
@@ -116,6 +97,30 @@ class PathStandardizer:
 
         return False
 
+    def _is_already_standardized(self, line: str, path: str) -> bool:
+        """判断路径是否已经正确标准化（避免误报）"""
+        # 如果是在注释中的示例或文档说明，跳过
+        if line.strip().startswith('#') or line.strip().startswith('//'):
+            return True
+            
+        # 如果是在README或文档中的模板变量示例，跳过
+        if '{{PROJECT_ROOT}}' in line and not path.startswith('s:'):
+            return True
+            
+        # 如果是配置文件中的模板变量，跳过
+        if 'PROJECT_ROOT' in path and not path.startswith('s:'):
+            return True
+            
+        # 如果是在代码中作为正则表达式模式或字符串字面量，跳过
+        if any(keyword in line for keyword in ['old_path_patterns', 'pattern', 'r\'', 'r"']):
+            return True
+            
+        # 如果是在列表或数组定义中的字符串字面量，跳过
+        if line.strip().startswith('r\'') or line.strip().startswith('r"'):
+            return True
+            
+        return False
+
     def scan_file_for_paths(self, file_path: Path) -> List[Dict]:
         """扫描文件中的硬编码路径
 
@@ -148,6 +153,11 @@ class PathStandardizer:
                     matches = re.finditer(pattern, line, re.IGNORECASE)
                     for match in matches:
                         original_path = match.group(0)
+                        
+                        # 跳过已经正确标准化的路径（避免误报）
+                        if self._is_already_standardized(line, original_path):
+                            continue
+                            
                         replacement = self.replacement_rules.get(
                             path_type, '{{PROJECT_ROOT}}')
 

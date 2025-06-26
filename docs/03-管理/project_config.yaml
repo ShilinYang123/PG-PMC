@@ -1,3 +1,6 @@
+# 项目配置文件
+config_version: "1.0.0"
+
 app:
   api_port: 8000
   api_url: http://localhost:8000/api
@@ -9,6 +12,87 @@ backup_dir: "s:/3AI/bak"
 created_at: '2025-06-19T17:15:34.936127'
 project_name: "3AI"
 project_version: "1.0.0"
+
+# 性能配置
+performance:
+  max_concurrent_requests: 100
+  request_timeout: 30000
+  memory_limit: "512MB"
+  cpu_limit: "1000m"
+  cache_size: 100
+  connection_pool_size: 10
+  worker_processes: 4
+  enable_compression: true
+  static_cache_ttl: 86400
+
+# 文件类型配置
+file_types:
+  allowed_extensions:
+    - ".py"
+    - ".js"
+    - ".ts"
+    - ".jsx"
+    - ".tsx"
+    - ".md"
+    - ".txt"
+    - ".json"
+    - ".yaml"
+    - ".yml"
+    - ".html"
+    - ".css"
+    - ".scss"
+    - ".less"
+    - ".sql"
+    - ".sh"
+    - ".bat"
+    - ".ps1"
+  max_file_size: 10485760  # 10MB
+  encoding: "utf-8"
+  line_ending: "auto"  # auto, lf, crlf
+  exclude_patterns:
+    - "*.pyc"
+    - "*.pyo"
+    - "*.pyd"
+    - "__pycache__"
+    - "node_modules"
+    - ".git"
+    - "*.log"
+    - "*.tmp"
+
+# 规则配置
+rules:
+  validation:
+    strict_mode: false
+    allow_empty_files: true
+    require_documentation: true
+    enforce_naming_conventions: true
+  code_quality:
+    max_line_length: 120
+    max_function_length: 50
+    max_file_length: 1000
+    require_type_hints: true
+    enforce_docstrings: true
+  security:
+    scan_for_secrets: true
+    require_https: false
+    validate_inputs: true
+    sanitize_outputs: true
+  compliance:
+    license_check: false
+    dependency_audit: true
+    vulnerability_scan: true
+
+# 日志配置
+logging:
+  level: info
+  dir: ./logs
+  max_size: 10m
+  max_files: 5
+  date_pattern: YYYY-MM-DD
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  rotation: daily
+  compress: true
+  backup_count: 30
 
 # Git配置
 git:
@@ -88,13 +172,7 @@ environment:
     from_name: "3AI工作室"
     from_address: noreply@3ai.studio
   
-  # 日志配置
-  logging:
-    level: info
-    dir: ./logs
-    max_size: 10m
-    max_files: 5
-    date_pattern: YYYY-MM-DD
+  # 日志配置已移至顶层
   
   # 外部服务配置
   external_services:

@@ -77,7 +77,7 @@ class MCPToolsManager:
 
 通过测试脚本验证，不同项目的memory路径确实实现了隔离：
 
-- **项目A**: `S:\3AI\docs\02-开发\memory.json`
+- **项目A**: `{{PROJECT_ROOT}}\docs\02-开发\memory.json`
 - **项目B**: `D:\AnotherProject\docs\02-开发\memory.json`
 
 ### 功能验证

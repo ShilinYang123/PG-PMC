@@ -2,12 +2,12 @@
   "general": {
     "script_start": {
       "content": {
-        "timestamp": "20250626-220721",
-        "mode": "backup_only",
+        "timestamp": "20250626-225639",
+        "mode": "daily",
         "args": {
-          "daily": false,
+          "daily": true,
           "release": false,
-          "backup_only": true,
+          "backup_only": false,
           "init_config": false,
           "self_check": false,
           "backup_dir": null,
@@ -15,18 +15,18 @@
           "no_backup": false,
           "no_quality_check": false,
           "auto_cleanup": false,
-          "verbose": true
+          "verbose": false
         }
       },
-      "timestamp": "2025-06-26T22:07:21.019789",
+      "timestamp": "2025-06-26T22:56:39.885017",
       "updated_by": "finish.py"
     },
     "structure_verification": {
       "content": {
         "status": "passed",
-        "timestamp": "20250626-214328"
+        "timestamp": "20250626-225639"
       },
-      "timestamp": "2025-06-26T21:43:40.168578",
+      "timestamp": "2025-06-26T22:56:53.067062",
       "updated_by": "finish.py"
     },
     "backup_result": {
@@ -34,7 +34,7 @@
         "status": "success",
         "mode": "backup_only"
       },
-      "timestamp": "2025-06-26T22:02:25.396468",
+      "timestamp": "2025-06-26T22:07:26.366296",
       "updated_by": "finish.py"
     },
     "execution_result": {
@@ -65,7 +65,7 @@
   "dependencies": {
     "dependency_check_results": {
       "content": {
-        "timestamp": "2025-06-26T21:43:34.709232",
+        "timestamp": "2025-06-26T22:56:46.913565",
         "all_deps_ok": true,
         "results": {
           "Python": {
@@ -91,28 +91,28 @@
         ],
         "warnings_count": 0
       },
-      "timestamp": "2025-06-26T21:43:34.710299",
+      "timestamp": "2025-06-26T22:56:46.913935",
       "updated_by": "finish.py"
     }
   },
   "directory_structure": {
     "directory_check_results": {
       "content": {
-        "timestamp": "2025-06-26T21:43:34.719184",
+        "timestamp": "2025-06-26T22:56:46.917140",
         "structure_ok": true,
         "config_uniqueness_ok": true,
         "no_duplicates_ok": true,
         "overall_success": true,
         "legacy_backup_exists": false
       },
-      "timestamp": "2025-06-26T21:43:34.731726",
+      "timestamp": "2025-06-26T22:56:46.926786",
       "updated_by": "finish.py"
     }
   },
   "code_quality": {
     "code_quality_results": {
       "content": {
-        "timestamp": "2025-06-26T21:43:36.650736",
+        "timestamp": "2025-06-26T22:56:48.774714",
         "overall_success": true,
         "total_issues_found": 0,
         "results": {
@@ -134,14 +134,14 @@
           "JavaScript (eslint)"
         ]
       },
-      "timestamp": "2025-06-26T21:43:36.658605",
+      "timestamp": "2025-06-26T22:56:48.782554",
       "updated_by": "finish.py"
     }
   },
   "project_cleanup": {
     "cleanup_results": {
       "content": {
-        "timestamp": "2025-06-26T21:43:40.139672",
+        "timestamp": "2025-06-26T22:56:53.040216",
         "success": true,
         "deleted_temp_files": 0,
         "deleted_empty_dirs": 0,
@@ -154,7 +154,7 @@
         ],
         "issues_detected": []
       },
-      "timestamp": "2025-06-26T21:43:40.139975",
+      "timestamp": "2025-06-26T22:56:53.040582",
       "updated_by": "finish.py"
     }
   },
@@ -203,7 +203,7 @@
             "recommendation": "对于关键结构变更，必须进行人工审批"
           }
         ],
-        "timestamp": "2025-06-26T21:43:40.141516",
+        "timestamp": "2025-06-26T22:56:53.042167",
         "conclusions": [
           {
             "step": 1,
@@ -247,7 +247,7 @@
           }
         ]
       },
-      "timestamp": "2025-06-26T21:43:40.156734",
+      "timestamp": "2025-06-26T22:56:53.051087",
       "updated_by": "finish.py"
     },
     "thinking_backup_strategy": {
@@ -298,7 +298,7 @@
             "recommendation": "建立多层备份机制，失败时立即告警并启动备用方案"
           }
         ],
-        "timestamp": "2025-06-26T21:43:40.171049",
+        "timestamp": "2025-06-26T22:56:53.069358",
         "conclusions": [
           {
             "step": 1,
@@ -346,7 +346,7 @@
           }
         ]
       },
-      "timestamp": "2025-06-26T21:43:40.181176",
+      "timestamp": "2025-06-26T22:56:53.079200",
       "updated_by": "finish.py"
     }
   }
