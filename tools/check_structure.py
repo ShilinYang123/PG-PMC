@@ -181,9 +181,9 @@ class EnhancedStructureChecker:
         file_handler = logging.FileHandler(log_file, encoding='utf-8')
         file_handler.setLevel(logging.DEBUG)
         
-        # 控制台处理器
+        # 控制台处理器 - 只显示警告和错误信息
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.INFO)
+        console_handler.setLevel(logging.WARNING)
         
         # 设置格式
         formatter = logging.Formatter(
@@ -915,6 +915,11 @@ def main():
         print("\n" + "=" * 60)
         print("✅ 增强版检查报告已生成:")
         print(f"   {report_file}")
+        print("📊 检查统计:")
+        print(f"   - 检查目录数量: {checker.stats['total_dirs_actual']} 个")
+        print(f"   - 检查文件数量: {checker.stats['total_files_actual']} 个")
+        print(f"   - 标准目录数量: {checker.stats['total_dirs_expected']} 个")
+        print(f"   - 标准文件数量: {checker.stats['total_files_expected']} 个")
         print("📊 检查结果:")
         print(f"   - 合规率: {checker.stats['compliance_rate']:.1f}%")
         missing_count = checker.stats['missing_dirs'] + checker.stats['missing_files']
@@ -924,6 +929,22 @@ def main():
         
         if checker.results['errors']:
             print(f"   - 错误数量: {len(checker.results['errors'])} 个")
+        
+        # 显示违规项清单
+        if missing_count > 0 or extra_count > 0:
+            print("\n📋 违规项清单:")
+            
+            if checker.results['missing_items']:
+                print("\n🔍 缺失项目:")
+                for item in sorted(checker.results['missing_items'], key=lambda x: x['path']):
+                    item_type = "📁目录" if item['type'] == 'directory' else "📄文件"
+                    print(f"   - {item_type}: {item['path']}")
+            
+            if checker.results['extra_items']:
+                print("\n🗑️ 多余项目:")
+                for item in sorted(checker.results['extra_items'], key=lambda x: x['path']):
+                    item_type = "📁目录" if item['type'] == 'directory' else "📄文件"
+                    print(f"   - {item_type}: {item['path']}")
         
         # 根据合规率设置退出码
         if checker.stats['compliance_rate'] < 70:
