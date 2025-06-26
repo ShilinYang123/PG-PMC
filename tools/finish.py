@@ -39,8 +39,15 @@ error_handler = ErrorHandler()
 # Git配置管理函数
 def get_git_config():
     """获取Git配置，支持环境变量覆盖"""
-    config = get_config()
-    git_config = config.get('git', {})
+    try:
+        # 直接加载配置文件，避免导入问题
+        config_path = Path(__file__).parent.parent / "docs" / "03-管理" / "project_config.yaml"
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        git_config = config.get('git', {})
+    except Exception as e:
+        print(f"警告: 无法加载Git配置文件: {e}")
+        git_config = {}
     
     # 支持环境变量覆盖
     repo_dir_name = os.environ.get('GIT_REPO_NAME', git_config.get('repo_dir_name', 'github_repo'))
