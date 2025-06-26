@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 from typing import List, Dict
 from datetime import datetime
+import yaml
 
 # 导入工具模块
 from utils import get_project_root
@@ -31,24 +32,59 @@ class DirectoryStructureGenerator:
     """目录结构生成器"""
 
     def __init__(self):
-        self.excluded_dirs = {
+        # 加载配置文件
+        self.config = self._load_config()
+        
+        # 从配置文件中获取排除规则
+        structure_config = self.config.get('structure_check', {})
+        
+        self.excluded_dirs = set(structure_config.get('excluded_dirs', [
             '__pycache__', '.git', '.vscode', '.idea', 'node_modules',
             '.pytest_cache', '.coverage', 'htmlcov', 'dist', 'build',
             '*.egg-info', '.tox', '.mypy_cache', '.DS_Store',
             'Thumbs.db', '.venv', 'venv', 'env'
-        }
+        ]))
 
-        self.excluded_files = {
-            '.gitignore', '.gitkeep', '.DS_Store', 'Thumbs.db',
+        self.excluded_files = set(structure_config.get('excluded_files', [
+            '.gitkeep', '.DS_Store', 'Thumbs.db',
             '*.pyc', '*.pyo', '*.pyd', '__pycache__',
             '*.so', '*.dylib', '*.dll'
-        }
+        ]))
+        
+        # 允许的隐藏文件/目录
+        self.allowed_hidden_items = set(structure_config.get('allowed_hidden_items', [
+            '.env', '.env.example', '.gitignore', '.dockerignore',
+            '.eslintrc.js', '.prettierrc', '.pre-commit-config.yaml',
+            '.devcontainer', '.github', '.venv'
+        ]))
+        
+        # 特殊目录配置
+        self.special_dirs = structure_config.get('special_dirs', {
+            'bak': ['github_repo', '迁移备份', '专项备份', '待清理资料', '常规备份'],
+            'logs': ['工作记录', '检查报告', '其他日志', 'archive']
+        })
 
         self.stats = {
             'total_dirs': 0,
             'total_files': 0,
             'template_files': 0
         }
+    
+    def _load_config(self) -> Dict:
+        """加载项目配置文件"""
+        try:
+            project_root = get_project_root()
+            config_file = Path(project_root) / "docs" / "03-管理" / "project_config.yaml"
+            
+            if config_file.exists():
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    return yaml.safe_load(f) or {}
+            else:
+                print(f"⚠️  配置文件不存在: {config_file}")
+                return {}
+        except Exception as e:
+            print(f"⚠️  加载配置文件失败: {e}")
+            return {}
 
     def should_exclude(self, path: Path) -> bool:
         """判断是否应该排除某个路径"""
@@ -62,6 +98,81 @@ class DirectoryStructureGenerator:
             return True
 
         return False
+
+    def should_filter_special_directory(self, relative_path: str, entry: Path) -> bool:
+        """判断是否应该过滤特殊目录中的项目"""
+        
+        # 从配置中获取允许的子目录
+        allowed_bak_dirs = set(self.special_dirs.get('bak', []))
+        allowed_logs_dirs = set(self.special_dirs.get('logs', []))
+        
+        # 检查是否在bak/目录下
+        if relative_path.startswith('bak/'):
+            # 如果是bak/下的直接子项，检查是否在允许列表中
+            if relative_path.count('/') == 1:  # bak/xxx 格式
+                dir_name = relative_path.split('/')[-1]
+                if entry.is_dir() and dir_name not in allowed_bak_dirs:
+                    return True  # 过滤掉不在允许列表中的目录
+                elif entry.is_file():
+                    return True  # 过滤掉bak/下的所有文件
+            elif relative_path.count('/') > 1:  # bak/xxx/yyy 格式
+                return True  # 过滤掉bak/子目录下的所有内容
+        
+        # 检查是否在logs/目录下
+        elif relative_path.startswith('logs/'):
+            # 如果是logs/下的直接子项，检查是否在允许列表中
+            if relative_path.count('/') == 1:  # logs/xxx 格式
+                dir_name = relative_path.split('/')[-1]
+                if entry.is_dir() and dir_name not in allowed_logs_dirs:
+                    return True  # 过滤掉不在允许列表中的目录
+                elif entry.is_file():
+                    return True  # 过滤掉logs/下的所有文件
+            elif relative_path.count('/') > 1:  # logs/xxx/yyy 格式
+                return True  # 过滤掉logs/子目录下的所有内容
+        
+        return False
+
+    def scan_filtered_directory(self, dir_path: Path, relative_path: str) -> List[Dict]:
+        """扫描经过特殊过滤的目录（bak/和logs/）"""
+        items = []
+        
+        # 从配置中获取允许的子目录
+        if relative_path == "bak":
+            allowed_dirs = set(self.special_dirs.get('bak', []))
+        elif relative_path == "logs":
+            allowed_dirs = set(self.special_dirs.get('logs', []))
+        else:
+            return items
+        
+        try:
+            # 获取目录下所有项目
+            entries = list(dir_path.iterdir())
+            # 按名称排序，目录在前
+            entries.sort(key=lambda x: (x.is_file(), x.name.lower()))
+            
+            for entry in entries:
+                if self.should_exclude(entry):
+                    continue
+                
+                # 只处理允许的目录，忽略所有文件
+                if entry.is_dir() and entry.name in allowed_dirs:
+                    self.stats['total_dirs'] += 1
+                    item_relative_path = f"{relative_path}/{entry.name}"
+                    
+                    item = {
+                        'type': 'directory',
+                        'name': entry.name,
+                        'path': item_relative_path,
+                        'children': []  # 不扫描子目录内容
+                    }
+                    items.append(item)
+        
+        except PermissionError:
+            print(f"⚠️  权限不足，跳过目录: {dir_path}")
+        except Exception as e:
+            print(f"❌ 扫描目录时出错 {dir_path}: {e}")
+        
+        return items
 
     def scan_directory(self, dir_path: Path, relative_path: str = "") -> List[Dict]:
         """扫描目录结构
@@ -91,14 +202,26 @@ class DirectoryStructureGenerator:
                 else:
                     item_relative_path = entry.name
 
+                # 特殊处理bak/和logs/目录，只显示指定的子目录名
+                if self.should_filter_special_directory(item_relative_path, entry):
+                    continue
+
                 if entry.is_dir():
                     # 目录
                     self.stats['total_dirs'] += 1
+                    
+                    # 对于bak/和logs/目录，只扫描允许的子目录
+                    children = []
+                    if item_relative_path == "bak" or item_relative_path == "logs":
+                        children = self.scan_filtered_directory(entry, item_relative_path)
+                    else:
+                        children = self.scan_directory(entry, item_relative_path)
+                    
                     item = {
                         'type': 'directory',
                         'name': entry.name,
                         'path': item_relative_path,
-                        'children': self.scan_directory(entry, item_relative_path)
+                        'children': children
                     }
                     items.append(item)
 
@@ -145,45 +268,42 @@ class DirectoryStructureGenerator:
         lines.append("")
         lines.append("## 目录结构")
         lines.append("")
-        lines.append("### 目录")
-        lines.append("")
+        lines.append("```")
         
-        # 收集所有目录和文件路径
-        all_dirs = []
-        all_files = []
-        
-        def collect_paths(items: List[Dict], current_path: str = "") -> None:
-            """递归收集所有路径"""
-            for item in items:
-                if current_path:
-                    full_path = f"{current_path}/{item['name']}"
-                else:
-                    full_path = item['name']
+        def generate_tree(items: List[Dict], prefix: str = "", is_last_list: List[bool] = None) -> None:
+            """生成目录树结构"""
+            if is_last_list is None:
+                is_last_list = []
+            
+            for i, item in enumerate(items):
+                is_last = i == len(items) - 1
                 
+                # 构建当前行的前缀
+                current_prefix = ""
+                for j, is_last_parent in enumerate(is_last_list):
+                    if j == len(is_last_list) - 1:
+                        continue
+                    current_prefix += "│   " if not is_last_parent else "    "
+                
+                # 添加当前项的连接符
+                if is_last_list:
+                    current_prefix += "└── " if is_last else "├── "
+                
+                # 输出当前项
                 if item['type'] == 'directory':
-                    all_dirs.append(full_path + "/")
+                    lines.append(f"{current_prefix}{item['name']}/")
                     # 递归处理子目录
                     children = item.get('children', [])
                     if children:
-                        collect_paths(children, full_path)
+                        new_is_last_list = is_last_list + [is_last]
+                        generate_tree(children, current_prefix, new_is_last_list)
                 else:
-                    all_files.append(full_path)
+                    lines.append(f"{current_prefix}{item['name']}")
         
-        # 收集所有路径
-        collect_paths(structure)
+        # 生成目录树
+        generate_tree(structure)
         
-        # 输出目录列表
-        for dir_path in sorted(all_dirs):
-            lines.append(f"- {dir_path}")
-        
-        lines.append("")
-        lines.append("### 文件")
-        lines.append("")
-        
-        # 输出文件列表
-        for file_path in sorted(all_files):
-            lines.append(f"- {file_path}")
-        
+        lines.append("```")
         lines.append("")
 
         # 添加统计信息

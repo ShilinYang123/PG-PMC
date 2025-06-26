@@ -202,7 +202,61 @@ structure_check:
   report_name_format: 目录结构检查报告_{timestamp}.md
   
   # 检查配置
-  excluded_dirs: [.git, node_modules, __pycache__, .pytest_cache]
+  excluded_dirs: 
+    - .git
+    - node_modules
+    - __pycache__
+    - .pytest_cache
+    - venv
+    - .venv
+    - env
+    - .env
+    - dist
+    - build
+    - .idea
+    - .vscode
+    - .DS_Store
+    - Thumbs.db
+  
+  excluded_files:
+    - .DS_Store
+    - Thumbs.db
+    - "*.pyc"
+    - "*.pyo"
+    - "*.pyd"
+    - .gitkeep
+    - .keep
+    - "*.tmp"
+    - "*.temp"
+    - "*.log"
+  
+  # 允许的隐藏文件/目录
+  allowed_hidden_items:
+    - .env
+    - .env.example
+    - .gitignore
+    - .dockerignore
+    - .eslintrc.js
+    - .prettierrc
+    - .pre-commit-config.yaml
+    - .devcontainer
+    - .github
+    - .venv
+  
+  # 特殊目录配置
+  special_dirs:
+    bak:
+      - github_repo
+      - 迁移备份
+      - 专项备份
+      - 待清理资料
+      - 常规备份
+    logs:
+      - 工作记录
+      - 检查报告
+      - 其他日志
+      - archive
+  
   excluded_dirs_for_redundancy: [bak, logs]
   
   # 性能优化配置

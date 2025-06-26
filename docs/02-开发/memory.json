@@ -2,11 +2,11 @@
   "general": {
     "self_check_start": {
       "content": {
-        "timestamp": "20250626-084323",
+        "timestamp": "20250626-201109",
         "status": "started",
         "report_type": "daily_self_check"
       },
-      "timestamp": "2025-06-26T08:43:23.468601",
+      "timestamp": "2025-06-26T20:11:09.647250",
       "updated_by": "finish.py"
     },
     "approval_task_approval_1750852997": {
@@ -71,27 +71,28 @@
     },
     "self_check_result": {
       "content": {
-        "timestamp": "20250626-084323",
+        "timestamp": "20250626-201109",
         "status": "completed",
-        "critical_issues_count": 1,
+        "critical_issues_count": 2,
         "critical_issues": [
-          "代码质量问题"
+          "代码质量问题",
+          "缺少必要文件"
         ],
         "has_approval_task": true
       },
-      "timestamp": "2025-06-26T08:43:26.268495",
+      "timestamp": "2025-06-26T20:11:12.186320",
       "updated_by": "finish.py"
     },
     "script_start": {
       "content": {
-        "timestamp": "20250626-084759",
-        "mode": "daily",
+        "timestamp": "20250626-201109",
+        "mode": "default",
         "args": {
-          "daily": true,
+          "daily": false,
           "release": false,
           "backup_only": false,
           "init_config": false,
-          "self_check": false,
+          "self_check": true,
           "backup_dir": null,
           "config": null,
           "no_backup": false,
@@ -100,48 +101,48 @@
           "verbose": false
         }
       },
-      "timestamp": "2025-06-26T08:47:59.934318",
+      "timestamp": "2025-06-26T20:11:12.367815",
       "updated_by": "finish.py"
     },
     "structure_verification": {
       "content": {
         "status": "passed",
-        "timestamp": "20250626-084759"
+        "timestamp": "20250626-201109"
       },
-      "timestamp": "2025-06-26T08:48:06.216614",
+      "timestamp": "2025-06-26T20:11:19.380825",
       "updated_by": "finish.py"
     },
     "backup_result": {
       "content": {
         "status": "success",
-        "timestamp": "20250626-084722",
+        "timestamp": "20250626-084759",
         "mode": "full_process"
       },
-      "timestamp": "2025-06-26T08:47:32.610178",
+      "timestamp": "2025-06-26T08:48:09.545383",
       "updated_by": "finish.py"
     },
     "execution_result": {
       "content": {
-        "timestamp": "20250626-084722",
-        "issues_found": 2,
+        "timestamp": "20250626-084759",
+        "issues_found": 1,
         "warnings_found": 0,
         "backup_ok": true,
         "code_quality_ok": true,
         "workdir_clean_ok": true,
         "cleanup_ok": true,
         "agent_ok": true,
-        "error_detection_ok": false
+        "error_detection_ok": true
       },
-      "timestamp": "2025-06-26T08:47:32.622518",
+      "timestamp": "2025-06-26T08:48:09.558480",
       "updated_by": "finish.py"
     },
     "final_status": {
       "content": {
         "status": "completed_with_issues",
-        "issues": 2,
+        "issues": 1,
         "warnings": 0
       },
-      "timestamp": "2025-06-26T08:47:32.634107",
+      "timestamp": "2025-06-26T08:48:09.569189",
       "updated_by": "finish.py"
     },
     "approval_task_approval_1750853218": {
@@ -623,6 +624,106 @@
       },
       "timestamp": "2025-06-26T08:43:26.256515",
       "updated_by": "finish.py"
+    },
+    "approval_task_approval_1750939872": {
+      "content": {
+        "task_id": "approval_1750939872",
+        "issues": [
+          "代码质量问题",
+          "缺少必要文件"
+        ],
+        "thinking_result": {
+          "context": "每日自检发现关键问题的处理决策",
+          "reasoning_type": "self_check_analysis",
+          "decision_points": [
+            {
+              "question": "如何处理代码质量问题？",
+              "factors": [
+                "代码可维护性",
+                "团队开发效率",
+                "项目稳定性"
+              ],
+              "risks": [
+                "技术债务累积",
+                "bug增加",
+                "开发效率下降"
+              ],
+              "benefits": [
+                "提高代码质量",
+                "减少维护成本",
+                "提升团队协作"
+              ],
+              "recommendation": "立即修复代码质量问题，建立代码审查流程"
+            },
+            {
+              "question": "如何完善项目结构？",
+              "factors": [
+                "项目规范",
+                "团队协作",
+                "部署要求"
+              ],
+              "risks": [
+                "项目混乱",
+                "部署失败",
+                "协作困难"
+              ],
+              "benefits": [
+                "规范化管理",
+                "提升专业度",
+                "便于维护"
+              ],
+              "recommendation": "立即创建缺失的必要文件"
+            }
+          ],
+          "timestamp": "2025-06-26T20:11:12.151095",
+          "conclusions": [
+            {
+              "step": 1,
+              "question": "如何处理代码质量问题？",
+              "factors": [
+                "代码可维护性",
+                "团队开发效率",
+                "项目稳定性"
+              ],
+              "risks": [
+                "技术债务累积",
+                "bug增加",
+                "开发效率下降"
+              ],
+              "benefits": [
+                "提高代码质量",
+                "减少维护成本",
+                "提升团队协作"
+              ],
+              "recommendation": "立即修复代码质量问题，建立代码审查流程"
+            },
+            {
+              "step": 2,
+              "question": "如何完善项目结构？",
+              "factors": [
+                "项目规范",
+                "团队协作",
+                "部署要求"
+              ],
+              "risks": [
+                "项目混乱",
+                "部署失败",
+                "协作困难"
+              ],
+              "benefits": [
+                "规范化管理",
+                "提升专业度",
+                "便于维护"
+              ],
+              "recommendation": "立即创建缺失的必要文件"
+            }
+          ]
+        },
+        "created_at": "20250626-201109",
+        "status": "pending"
+      },
+      "timestamp": "2025-06-26T20:11:12.175693",
+      "updated_by": "finish.py"
     }
   },
   "sequential_thinking": {
@@ -649,9 +750,28 @@
               "提升团队协作"
             ],
             "recommendation": "立即修复代码质量问题，建立代码审查流程"
+          },
+          {
+            "question": "如何完善项目结构？",
+            "factors": [
+              "项目规范",
+              "团队协作",
+              "部署要求"
+            ],
+            "risks": [
+              "项目混乱",
+              "部署失败",
+              "协作困难"
+            ],
+            "benefits": [
+              "规范化管理",
+              "提升专业度",
+              "便于维护"
+            ],
+            "recommendation": "立即创建缺失的必要文件"
           }
         ],
-        "timestamp": "2025-06-26T08:43:26.225872",
+        "timestamp": "2025-06-26T20:11:12.151095",
         "conclusions": [
           {
             "step": 1,
@@ -672,10 +792,30 @@
               "提升团队协作"
             ],
             "recommendation": "立即修复代码质量问题，建立代码审查流程"
+          },
+          {
+            "step": 2,
+            "question": "如何完善项目结构？",
+            "factors": [
+              "项目规范",
+              "团队协作",
+              "部署要求"
+            ],
+            "risks": [
+              "项目混乱",
+              "部署失败",
+              "协作困难"
+            ],
+            "benefits": [
+              "规范化管理",
+              "提升专业度",
+              "便于维护"
+            ],
+            "recommendation": "立即创建缺失的必要文件"
           }
         ]
       },
-      "timestamp": "2025-06-26T08:43:26.236100",
+      "timestamp": "2025-06-26T20:11:12.161594",
       "updated_by": "finish.py"
     },
     "thinking_structure_verification": {
@@ -722,7 +862,7 @@
             "recommendation": "对于关键结构变更，必须进行人工审批"
           }
         ],
-        "timestamp": "2025-06-26T08:48:06.189681",
+        "timestamp": "2025-06-26T20:11:19.346127",
         "conclusions": [
           {
             "step": 1,
@@ -766,7 +906,7 @@
           }
         ]
       },
-      "timestamp": "2025-06-26T08:48:06.200833",
+      "timestamp": "2025-06-26T20:11:19.357234",
       "updated_by": "finish.py"
     },
     "thinking_backup_strategy": {
@@ -817,7 +957,7 @@
             "recommendation": "建立多层备份机制，失败时立即告警并启动备用方案"
           }
         ],
-        "timestamp": "2025-06-26T08:48:06.223611",
+        "timestamp": "2025-06-26T20:11:19.384822",
         "conclusions": [
           {
             "step": 1,
@@ -865,14 +1005,14 @@
           }
         ]
       },
-      "timestamp": "2025-06-26T08:48:06.236823",
+      "timestamp": "2025-06-26T20:11:19.396259",
       "updated_by": "finish.py"
     }
   },
   "dependencies": {
     "dependency_check_results": {
       "content": {
-        "timestamp": "2025-06-26T08:48:02.045698",
+        "timestamp": "2025-06-26T20:11:15.001519",
         "all_deps_ok": true,
         "results": {
           "Python": {
@@ -898,28 +1038,28 @@
         ],
         "warnings_count": 0
       },
-      "timestamp": "2025-06-26T08:48:02.054108",
+      "timestamp": "2025-06-26T20:11:15.002125",
       "updated_by": "finish.py"
     }
   },
   "directory_structure": {
     "directory_check_results": {
       "content": {
-        "timestamp": "2025-06-26T08:48:02.058888",
+        "timestamp": "2025-06-26T20:11:15.009409",
         "structure_ok": true,
         "config_uniqueness_ok": true,
         "no_duplicates_ok": true,
         "overall_success": true,
         "legacy_backup_exists": false
       },
-      "timestamp": "2025-06-26T08:48:02.067282",
+      "timestamp": "2025-06-26T20:11:15.018568",
       "updated_by": "finish.py"
     }
   },
   "code_quality": {
     "code_quality_results": {
       "content": {
-        "timestamp": "2025-06-26T08:48:03.821542",
+        "timestamp": "2025-06-26T20:11:16.943893",
         "overall_success": true,
         "total_issues_found": 0,
         "results": {
@@ -941,14 +1081,14 @@
           "JavaScript (eslint)"
         ]
       },
-      "timestamp": "2025-06-26T08:48:03.831294",
+      "timestamp": "2025-06-26T20:11:16.944527",
       "updated_by": "finish.py"
     }
   },
   "project_cleanup": {
     "cleanup_results": {
       "content": {
-        "timestamp": "2025-06-26T08:48:06.186376",
+        "timestamp": "2025-06-26T20:11:19.342848",
         "success": true,
         "deleted_temp_files": 0,
         "deleted_empty_dirs": 0,
@@ -961,7 +1101,7 @@
         ],
         "issues_detected": []
       },
-      "timestamp": "2025-06-26T08:48:06.187190",
+      "timestamp": "2025-06-26T20:11:19.343418",
       "updated_by": "finish.py"
     }
   }

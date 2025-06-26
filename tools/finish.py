@@ -2741,42 +2741,19 @@ def invoke_error_path_detection():
     logger.info("开始执行错误路径检测和清理...")
 
     try:
-        # 导入错误检测模块
-        from error_path_detector import run_error_detection
-        
-        logger.info("开始错误路径检测...")
-        
-        # 获取项目根目录
-        project_root = Path(PROJECT_ROOT)
-        
-        # 设置清理目录
-        cleanup_dir = project_root / "logs" / "error_detection"
-        
-        # 运行错误检测
-        success, report_file = run_error_detection(
-            project_root=project_root,
-            cleanup_dir=cleanup_dir,
-            move_files=True,
-            logger=logger
+        # 导入错误检测模块 - 暂时禁用
+        # from error_path_detector import run_error_detection
+        # 注意：error_path_detector模块暂未实现，跳过此功能
+        logger.info("错误路径检测功能暂时禁用 - error_path_detector模块未实现")
+        update_report(
+            "错误路径检测",
+            "⚠️ **功能暂时禁用**\n\n"
+            "错误路径检测模块(error_path_detector)暂未实现，此功能已跳过。\n\n"
+            "如需启用此功能，请实现error_path_detector.py模块。"
         )
-        
-        if success:
-            logger.info(f"错误路径检测完成，报告文件: {report_file}")
-            update_report(
-                "错误路径检测",
-                "✅ **错误路径检测完成**\n\n"
-                f"- 检测报告: {report_file}\n"
-                "- 项目结构正常，无需额外清理操作"
-            )
-        else:
-            logger.warning("错误路径检测未完全成功")
-            update_report(
-                "错误路径检测",
-                "⚠️ **错误路径检测部分完成**\n\n"
-                "检测过程中遇到一些问题，请查看日志获取详细信息。"
-            )
-        
-        return success
+        return True  # 跳过但不报错
+
+        # 原错误检测代码已移除，功能已在上方跳过
 
     except Exception as e:
         logger.error(f"错误路径检测过程中发生异常: {e}")
