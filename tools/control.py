@@ -196,11 +196,11 @@ def main():
     print("\n请选择操作:")
     print("1. 设置所有文件为只读")
     print("2. 设置所有文件为可写")
-    print("3. 退出")
+    print("按 0 退出")
 
     while True:
         try:
-            choice = input("\n请输入选择 (1-3): ").strip()
+            choice = input("\n请输入选择 (1-2, 0退出): ").strip()
         except KeyboardInterrupt:
             print("\n\n用户中断操作，退出程序")
             return
@@ -208,7 +208,7 @@ def main():
             print("\n\n输入结束，退出程序")
             return
 
-        if choice == "3":
+        if choice == "0":
             print("退出程序")
             return
 
@@ -249,7 +249,7 @@ def main():
 
             break
         else:
-            print("无效选择，请输入 1-3")
+            print("无效选择，请输入 1-2 或 0")
 
 
 if __name__ == "__main__":

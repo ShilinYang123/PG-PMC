@@ -286,11 +286,11 @@ def init_arg_parser():
         epilog="示例:\n  python finish.py --daily --backup-dir ./backups\n"
     )
 
-    # 主操作模式参数组 (必须且唯一)
-    mode_group = parser.add_mutually_exclusive_group(required=True)
+    # 主操作模式参数组 (互斥，默认为daily)
+    mode_group = parser.add_mutually_exclusive_group(required=False)
     mode_group.add_argument("--daily",
                             action="store_true",
-                            help="日常备份模式（包含自动备份和日报生成）")
+                            help="日常备份模式（包含自动备份和日报生成）[默认]")
     mode_group.add_argument("--release",
                             action="store_true",
                             help="发布模式（完整校验并生成发布包）")
@@ -350,6 +350,11 @@ def validate_args(args):
 # 初始化参数系统
 parser = init_arg_parser()
 args = parser.parse_args()
+
+# 设置默认模式为 daily（如果没有指定任何模式）
+if not any([args.daily, args.release, args.backup_only, args.init_config, args.self_check]):
+    args.daily = True
+    print("未指定运行模式，默认使用 --daily 模式")
 
 try:
     validate_args(args)
