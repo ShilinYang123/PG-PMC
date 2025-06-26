@@ -2746,6 +2746,9 @@ def invoke_error_path_detection():
         
         logger.info("开始错误路径检测...")
         
+        # 获取项目根目录
+        project_root = Path(PROJECT_ROOT)
+        
         # 设置清理目录
         cleanup_dir = project_root / "logs" / "error_detection"
         

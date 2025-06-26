@@ -84,7 +84,7 @@
     },
     "script_start": {
       "content": {
-        "timestamp": "20250626-084722",
+        "timestamp": "20250626-084759",
         "mode": "daily",
         "args": {
           "daily": true,
@@ -100,48 +100,48 @@
           "verbose": false
         }
       },
-      "timestamp": "2025-06-26T08:47:22.506989",
+      "timestamp": "2025-06-26T08:47:59.934318",
       "updated_by": "finish.py"
     },
     "structure_verification": {
       "content": {
         "status": "passed",
-        "timestamp": "20250626-084722"
+        "timestamp": "20250626-084759"
       },
-      "timestamp": "2025-06-26T08:47:28.840499",
+      "timestamp": "2025-06-26T08:48:06.216614",
       "updated_by": "finish.py"
     },
     "backup_result": {
       "content": {
         "status": "success",
-        "timestamp": "20250626-084637",
+        "timestamp": "20250626-084722",
         "mode": "full_process"
       },
-      "timestamp": "2025-06-26T08:46:47.731638",
+      "timestamp": "2025-06-26T08:47:32.610178",
       "updated_by": "finish.py"
     },
     "execution_result": {
       "content": {
-        "timestamp": "20250626-084637",
-        "issues_found": 1,
+        "timestamp": "20250626-084722",
+        "issues_found": 2,
         "warnings_found": 0,
         "backup_ok": true,
         "code_quality_ok": true,
         "workdir_clean_ok": true,
         "cleanup_ok": true,
         "agent_ok": true,
-        "error_detection_ok": true
+        "error_detection_ok": false
       },
-      "timestamp": "2025-06-26T08:46:47.744194",
+      "timestamp": "2025-06-26T08:47:32.622518",
       "updated_by": "finish.py"
     },
     "final_status": {
       "content": {
         "status": "completed_with_issues",
-        "issues": 1,
+        "issues": 2,
         "warnings": 0
       },
-      "timestamp": "2025-06-26T08:46:47.755173",
+      "timestamp": "2025-06-26T08:47:32.634107",
       "updated_by": "finish.py"
     },
     "approval_task_approval_1750853218": {
@@ -722,7 +722,7 @@
             "recommendation": "对于关键结构变更，必须进行人工审批"
           }
         ],
-        "timestamp": "2025-06-26T08:47:28.816914",
+        "timestamp": "2025-06-26T08:48:06.189681",
         "conclusions": [
           {
             "step": 1,
@@ -766,7 +766,7 @@
           }
         ]
       },
-      "timestamp": "2025-06-26T08:47:28.826819",
+      "timestamp": "2025-06-26T08:48:06.200833",
       "updated_by": "finish.py"
     },
     "thinking_backup_strategy": {
@@ -817,7 +817,7 @@
             "recommendation": "建立多层备份机制，失败时立即告警并启动备用方案"
           }
         ],
-        "timestamp": "2025-06-26T08:47:28.847797",
+        "timestamp": "2025-06-26T08:48:06.223611",
         "conclusions": [
           {
             "step": 1,
@@ -865,14 +865,14 @@
           }
         ]
       },
-      "timestamp": "2025-06-26T08:47:28.858896",
+      "timestamp": "2025-06-26T08:48:06.236823",
       "updated_by": "finish.py"
     }
   },
   "dependencies": {
     "dependency_check_results": {
       "content": {
-        "timestamp": "2025-06-26T08:47:24.604569",
+        "timestamp": "2025-06-26T08:48:02.045698",
         "all_deps_ok": true,
         "results": {
           "Python": {
@@ -898,28 +898,28 @@
         ],
         "warnings_count": 0
       },
-      "timestamp": "2025-06-26T08:47:24.613638",
+      "timestamp": "2025-06-26T08:48:02.054108",
       "updated_by": "finish.py"
     }
   },
   "directory_structure": {
     "directory_check_results": {
       "content": {
-        "timestamp": "2025-06-26T08:47:24.618566",
+        "timestamp": "2025-06-26T08:48:02.058888",
         "structure_ok": true,
         "config_uniqueness_ok": true,
         "no_duplicates_ok": true,
         "overall_success": true,
         "legacy_backup_exists": false
       },
-      "timestamp": "2025-06-26T08:47:24.628390",
+      "timestamp": "2025-06-26T08:48:02.067282",
       "updated_by": "finish.py"
     }
   },
   "code_quality": {
     "code_quality_results": {
       "content": {
-        "timestamp": "2025-06-26T08:47:26.441778",
+        "timestamp": "2025-06-26T08:48:03.821542",
         "overall_success": true,
         "total_issues_found": 0,
         "results": {
@@ -941,14 +941,14 @@
           "JavaScript (eslint)"
         ]
       },
-      "timestamp": "2025-06-26T08:47:26.450163",
+      "timestamp": "2025-06-26T08:48:03.831294",
       "updated_by": "finish.py"
     }
   },
   "project_cleanup": {
     "cleanup_results": {
       "content": {
-        "timestamp": "2025-06-26T08:47:28.813989",
+        "timestamp": "2025-06-26T08:48:06.186376",
         "success": true,
         "deleted_temp_files": 0,
         "deleted_empty_dirs": 0,
@@ -961,7 +961,7 @@
         ],
         "issues_detected": []
       },
-      "timestamp": "2025-06-26T08:47:28.814446",
+      "timestamp": "2025-06-26T08:48:06.187190",
       "updated_by": "finish.py"
     }
   }
