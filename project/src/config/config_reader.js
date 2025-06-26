@@ -125,21 +125,23 @@ function getConfig(key, defaultValue = null, env = process.env.NODE_ENV || 'deve
  * @param {string} env 环境名称
  * @returns {Object} 数据库配置
  */
-function getDatabaseConfig(env = 'development') {
+function getDatabaseConfig(env = process.env.NODE_ENV || 'development') {
   const projectConfig = loadProjectConfig();
   const dbConfig = projectConfig.environment?.database || {};
+  const networkConfig = projectConfig.environment?.network || {};
+  const defaultHost = networkConfig.host || 'localhost';
 
   let dbUrl;
   switch (env) {
   case 'test':
-    dbUrl = dbConfig.test_url || `postgresql://postgres:password@localhost:5432/3AI_test_db`;
+    dbUrl = dbConfig.test_url || `postgresql://postgres:password@${defaultHost}:5432/3AI_test_db`;
     break;
   default:
-    dbUrl = dbConfig.url || `postgresql://postgres:password@localhost:5432/3AI_db`;
+    dbUrl = dbConfig.url || `postgresql://postgres:password@${defaultHost}:5432/3AI_db`;
   }
 
   return {
-    host: getConfig('DATABASE_HOST', dbConfig.host || 'localhost', env),
+    host: getConfig('DATABASE_HOST', dbConfig.host || defaultHost, env),
     port: parseInt(getConfig('DATABASE_PORT', dbConfig.port || 5432, env)),
     name: getConfig('DATABASE_NAME', dbConfig.name || '3AI_db', env),
     username: getConfig('DATABASE_USER', dbConfig.user || 'postgres', env),
@@ -157,15 +159,19 @@ function getDatabaseConfig(env = 'development') {
 function getAppConfig(env = process.env.NODE_ENV || 'development') {
   const projectConfig = loadProjectConfig();
   const appConfig = projectConfig.environment?.app || {};
+  const networkConfig = projectConfig.environment?.network || {};
+  const defaultHost = networkConfig.host || 'localhost';
+  const defaultPort = networkConfig.default_ports?.frontend || 3000;
+  const defaultApiPort = networkConfig.default_ports?.api || 8000;
 
   return {
     name: getConfig('APP_NAME', appConfig.name || '3AI', env),
     version: getConfig('APP_VERSION', appConfig.version || '1.0.0', env),
-    port: parseInt(getConfig('PORT', appConfig.port || 3000, env)),
-    host: getConfig('HOST', appConfig.host || 'localhost', env),
-    url: getConfig('APP_URL', appConfig.url || `http://localhost:${getConfig('PORT', 3000, env)}`, env),
-    api_port: parseInt(getConfig('API_PORT', appConfig.api_port || 8000, env)),
-    api_url: getConfig('API_URL', appConfig.api_url || `http://localhost:${getConfig('API_PORT', 8000, env)}`, env),
+    port: parseInt(getConfig('PORT', appConfig.port || defaultPort, env)),
+    host: getConfig('HOST', appConfig.host || defaultHost, env),
+    url: getConfig('APP_URL', appConfig.url || `http://${defaultHost}:${getConfig('PORT', defaultPort, env)}`, env),
+    api_port: parseInt(getConfig('API_PORT', appConfig.api_port || defaultApiPort, env)),
+    api_url: getConfig('API_URL', appConfig.api_url || `http://${defaultHost}:${getConfig('API_PORT', defaultApiPort, env)}`, env),
   };
 }
 
@@ -177,9 +183,11 @@ function getAppConfig(env = process.env.NODE_ENV || 'development') {
 function getRedisConfig(env = process.env.NODE_ENV || 'development') {
   const projectConfig = loadProjectConfig();
   const redisConfig = projectConfig.environment?.redis || {};
+  const networkConfig = projectConfig.environment?.network || {};
+  const defaultHost = networkConfig.host || 'localhost';
 
   return {
-    host: getConfig('REDIS_HOST', redisConfig.host || 'localhost', env),
+    host: getConfig('REDIS_HOST', redisConfig.host || defaultHost, env),
     port: parseInt(getConfig('REDIS_PORT', redisConfig.port || 6379, env)),
     password: getConfig('REDIS_PASSWORD', redisConfig.password || null, env),
     db: parseInt(getConfig('REDIS_DB', redisConfig.db || 0, env)),

@@ -2562,9 +2562,20 @@ def invoke_eslint_check():
         return True, "No issues found", 0, output_file
 
 
-def invoke_ci_check(port=3000):
+def invoke_ci_check(port=None):
     """Performs CI checks: lint fix, lint, build, serve preview, and availability test."""
-    logger.info(f"Starting CI checks on frontend (port {port})...")
+    # 加载配置
+    try:
+        config = load_project_config()
+        host = config.get('environment', {}).get('network', {}).get('preview_host', 'localhost')
+        if port is None:
+            port = config.get('environment', {}).get('network', {}).get('default_ports', {}).get('preview', 3000)
+    except Exception as e:
+        logger.warning(f"Failed to load network config: {e}, using defaults")
+        host = 'localhost'
+        port = port or 3000
+    
+    logger.info(f"Starting CI checks on frontend (host: {host}, port: {port})...")
     success = True
     # 1. Change to frontend admin directory
     frontend_dir = PROJECT_ROOT / "src" / "frontend" / "admin"
@@ -2590,7 +2601,7 @@ def invoke_ci_check(port=3000):
     time.sleep(3)
     # 5. Test availability
     try:
-        url = f"http://localhost:{port}"
+        url = f"http://{host}:{port}"
         resp = urllib.request.urlopen(url, timeout=10)
         if resp.status == 200:
             logger.info("Preview page available: HTTP 200 OK")

@@ -9,14 +9,15 @@ import cors from 'cors';
 import helmet from 'helmet';
 
 // 导入配置
-const { getAppConfig } = require('./config/config_reader');
+import { getAppConfig } from './config/config_reader';
 const config = getAppConfig();
 
 // 创建Express应用
 const app = express();
 
-// 设置端口（完全依赖统一配置）
+// 设置端口和主机（完全依赖统一配置）
 const PORT = config.port;
+const HOST = config.host;
 
 // 中间件配置
 app.use(helmet()); // 安全中间件
@@ -82,7 +83,7 @@ app.use((req: Request, res: Response) => {
 function startServer() {
   app.listen(PORT, () => {
     console.log('🚀 3AI项目服务器启动成功!');
-    console.log(`📍 服务地址: http://localhost:${PORT}`);
+    console.log(`📍 服务地址: http://${HOST}:${PORT}`);
     console.log(`🌍 环境: ${process.env.NODE_ENV || 'development'}`);
     console.log(`⏰ 启动时间: ${new Date().toLocaleString('zh-CN')}`);
     console.log('='.repeat(50));
@@ -105,4 +106,4 @@ if (require.main === module) {
   startServer();
 }
 
-module.exports = app;
+export default app;

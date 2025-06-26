@@ -22,9 +22,9 @@ load_config() {
         # 设置默认值
         PORT=${PORT:-3000}
         API_PORT=${API_PORT:-8000}
-        DB_HOST=${DB_HOST:-localhost}
+        DB_HOST=${DB_HOST:-127.0.0.1}
         DB_PORT=${DB_PORT:-5432}
-        REDIS_HOST=${REDIS_HOST:-localhost}
+        REDIS_HOST=${REDIS_HOST:-127.0.0.1}
         REDIS_PORT=${REDIS_PORT:-6379}
         PROJECT_NAME=${PROJECT_NAME:-3AI}
     fi
@@ -166,16 +166,16 @@ main() {
     check_memory || exit_code=1
     
     # 服务检查
-    check_http_service "http://localhost:${API_PORT}/health" "后端API" || exit_code=1
-    check_http_service "http://localhost:${PORT}" "前端应用" || exit_code=1
-    
+    check_http_service "http://${DB_HOST}:${API_PORT}/health" "后端API" || exit_code=1
+    check_http_service "http://${DB_HOST}:${PORT}" "前端应用" || exit_code=1
+
     # 数据库检查
     check_database || exit_code=1
     check_redis || exit_code=1
-    
+
     # 端口检查
-    check_port "localhost" "${API_PORT}" "后端服务" || exit_code=1
-    check_port "localhost" "${PORT}" "前端服务" || exit_code=1
+    check_port "${DB_HOST}" "${API_PORT}" "后端服务" || exit_code=1
+    check_port "${DB_HOST}" "${PORT}" "前端服务" || exit_code=1
     
     if [ $exit_code -eq 0 ]; then
         log_info "🎉 所有检查通过，系统运行正常！"

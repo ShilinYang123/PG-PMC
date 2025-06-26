@@ -1,11 +1,14 @@
+const HOST = process.env.HOST || 'localhost';
+const PORT = process.env.PORT || '3000';
+
 module.exports = {
   ci: {
     collect: {
       // 收集配置
       url: [
-        'http://localhost:3000',
-        'http://localhost:3000/dashboard',
-        'http://localhost:3000/api/health'
+        `http://${HOST}:${PORT}`,
+        `http://${HOST}:${PORT}/dashboard`,
+        `http://${HOST}:${PORT}/api/health`
       ],
       startServerCommand: 'npm run build && npx serve -s build -l 3000',
       startServerReadyPattern: 'Local:',

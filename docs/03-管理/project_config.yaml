@@ -105,6 +105,16 @@ environment:
     health_check_endpoint: /health
     health_check_interval: 30000
   
+  # 网络配置
+  network:
+    host: localhost
+    preview_host: localhost
+    default_ports:
+      frontend: 3000
+      api: 8000
+      preview: 3000
+      dev_server: 3000
+  
   # 缓存配置
   cache:
     ttl: 3600
