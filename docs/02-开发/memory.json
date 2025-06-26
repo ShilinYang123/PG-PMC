@@ -2,12 +2,12 @@
   "general": {
     "script_start": {
       "content": {
-        "timestamp": "20250626-214328",
-        "mode": "daily",
+        "timestamp": "20250626-215733",
+        "mode": "backup_only",
         "args": {
-          "daily": true,
+          "daily": false,
           "release": false,
-          "backup_only": false,
+          "backup_only": true,
           "init_config": false,
           "self_check": false,
           "backup_dir": null,
@@ -18,7 +18,7 @@
           "verbose": false
         }
       },
-      "timestamp": "2025-06-26T21:43:28.866566",
+      "timestamp": "2025-06-26T21:57:33.693835",
       "updated_by": "finish.py"
     },
     "structure_verification": {
@@ -32,15 +32,15 @@
     "backup_result": {
       "content": {
         "status": "success",
-        "timestamp": "20250626-205727",
+        "timestamp": "20250626-214328",
         "mode": "full_process"
       },
-      "timestamp": "2025-06-26T20:58:01.402102",
+      "timestamp": "2025-06-26T21:43:43.735011",
       "updated_by": "finish.py"
     },
     "execution_result": {
       "content": {
-        "timestamp": "20250626-205727",
+        "timestamp": "20250626-214328",
         "issues_found": 1,
         "warnings_found": 0,
         "backup_ok": true,
@@ -50,7 +50,7 @@
         "agent_ok": true,
         "error_detection_ok": true
       },
-      "timestamp": "2025-06-26T20:58:01.416279",
+      "timestamp": "2025-06-26T21:43:43.747861",
       "updated_by": "finish.py"
     },
     "final_status": {
@@ -59,7 +59,7 @@
         "issues": 1,
         "warnings": 0
       },
-      "timestamp": "2025-06-26T20:58:01.427244",
+      "timestamp": "2025-06-26T21:43:43.758141",
       "updated_by": "finish.py"
     }
   },

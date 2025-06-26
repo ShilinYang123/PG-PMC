@@ -466,13 +466,15 @@ def get_daily_git_commits():
             f"--before={today_date} 23:59:59",
             "--pretty=format:- %h %s (%an)", "--no-merges"
         ]
+        # 使用正确的Git仓库路径，而不是PROJECT_ROOT
+        git_repo_path = str(BACKUP_DIR / "github_repo")
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             check=True,
             encoding='utf-8',
-            cwd=PROJECT_ROOT)
+            cwd=git_repo_path)
         commits = result.stdout.strip()
         if commits:
             logger.info("成功获取当日 Git 提交记录。")
