@@ -2,7 +2,7 @@
   "general": {
     "script_start": {
       "content": {
-        "timestamp": "20250626-215733",
+        "timestamp": "20250626-215815",
         "mode": "backup_only",
         "args": {
           "daily": false,
@@ -18,7 +18,7 @@
           "verbose": false
         }
       },
-      "timestamp": "2025-06-26T21:57:33.693835",
+      "timestamp": "2025-06-26T21:58:15.772688",
       "updated_by": "finish.py"
     },
     "structure_verification": {
@@ -32,10 +32,9 @@
     "backup_result": {
       "content": {
         "status": "success",
-        "timestamp": "20250626-214328",
-        "mode": "full_process"
+        "mode": "backup_only"
       },
-      "timestamp": "2025-06-26T21:43:43.735011",
+      "timestamp": "2025-06-26T21:57:37.402828",
       "updated_by": "finish.py"
     },
     "execution_result": {

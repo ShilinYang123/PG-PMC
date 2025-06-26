@@ -888,9 +888,20 @@ def run_command(
                 logger.info(
                     f"Using shell=True for Windows npm/npx command: {command_parts}")
 
-        effective_cwd = (
-            cwd if cwd is not None else PROJECT_ROOT
-        )  # Default to project root if not specified
+        # 对Git命令进行特殊处理，避免在PROJECT_ROOT执行
+        if cwd is None and isinstance(command_parts, list) and len(command_parts) > 0 and command_parts[0] == 'git':
+            # Git命令默认使用Git仓库目录，而不是PROJECT_ROOT
+            git_repo_path = BACKUP_DIR / "github_repo"
+            if git_repo_path.exists():
+                effective_cwd = str(git_repo_path)
+                logger.info(f"Git command redirected to: {effective_cwd}")
+            else:
+                effective_cwd = PROJECT_ROOT
+                logger.warning(f"Git repo not found, using PROJECT_ROOT: {effective_cwd}")
+        else:
+            effective_cwd = (
+                cwd if cwd is not None else PROJECT_ROOT
+            )  # Default to project root if not specified
 
         # 在Windows上，确保使用正确的编码
         env = os.environ.copy()
@@ -3152,3 +3163,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+的
