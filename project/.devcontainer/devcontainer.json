@@ -1,9 +1,7 @@
 {
-  "name": "3AI工作室开发环境",
-  "dockerComposeFile": "../docker-compose.dev.yml",
-  "service": "app-dev",
+  "name": "PinGao AI设计助理开发环境",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
   "workspaceFolder": "/workspace",
-  "shutdownAction": "stopCompose",
   
   // 开发容器功能
   "features": {
@@ -15,10 +13,6 @@
       "userUid": "1000",
       "userGid": "1000"
     },
-    "ghcr.io/devcontainers/features/node:1": {
-      "nodeGypDependencies": true,
-      "version": "18"
-    },
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.11",
       "installTools": true
@@ -26,10 +20,6 @@
     "ghcr.io/devcontainers/features/git:1": {
       "ppa": true,
       "version": "latest"
-    },
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "version": "latest",
-      "enableNonRootDocker": "true"
     }
   },
   
@@ -40,61 +30,34 @@
         "terminal.integrated.defaultProfile.linux": "zsh",
         "python.defaultInterpreterPath": "/usr/local/bin/python",
         "python.linting.enabled": true,
-        "python.linting.pylintEnabled": true,
+        "python.linting.flake8Enabled": true,
         "python.formatting.provider": "black",
         "python.formatting.blackArgs": ["--line-length=88"],
-        "typescript.preferences.quoteStyle": "single",
-        "javascript.preferences.quoteStyle": "single",
+        "python.linting.mypyEnabled": true,
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
-          "source.fixAll.eslint": true,
+          "source.organizeImports": true,
           "source.organizeImports": true
         },
         "files.associations": {
-          "*.json": "jsonc"
-        },
-        "emmet.includeLanguages": {
-          "javascript": "javascriptreact",
-          "typescript": "typescriptreact"
-        },
-        "tailwindCSS.includeLanguages": {
-          "typescript": "javascript",
-          "typescriptreact": "javascript"
-        },
-        "css.validate": false,
-        "less.validate": false,
-        "scss.validate": false
+          "*.py": "python",
+          "*.pyi": "python",
+          "*.yaml": "yaml",
+          "*.yml": "yaml"
+        }
       },
       
       "extensions": [
-        // 基础开发工具
-        "ms-vscode.vscode-typescript-next",
-        "bradlc.vscode-tailwindcss",
-        "esbenp.prettier-vscode",
-        "dbaeumer.vscode-eslint",
-        
-        // React 开发
-        "ms-vscode.vscode-react-native",
-        "formulahendry.auto-rename-tag",
-        "christian-kohler.path-intellisense",
-        
         // Python 开发
         "ms-python.python",
-        "ms-python.pylint",
+        "ms-python.flake8",
         "ms-python.black-formatter",
         "ms-python.isort",
-        
-        // 数据库工具
-        "ms-ossdata.vscode-postgresql",
-        "cweijan.vscode-redis-client",
+        "ms-python.mypy-type-checker",
         
         // Git 工具
         "eamodio.gitlens",
         "github.vscode-pull-request-github",
-        
-        // 容器工具
-        "ms-vscode-remote.remote-containers",
-        "ms-azuretools.vscode-docker",
         
         // 代码质量
         "sonarsource.sonarlint-vscode",
@@ -105,44 +68,24 @@
         "redhat.vscode-yaml",
         "ms-vscode.vscode-markdown",
         "yzhang.markdown-all-in-one",
-        "shd101wyy.markdown-preview-enhanced",
         
         // 主题和图标
         "pkief.material-icon-theme",
         "github.github-vscode-theme",
         
-        // API 开发
-        "humao.rest-client",
-        "42crunch.vscode-openapi",
-        
-        // 测试工具
-        "ms-vscode.test-adapter-converter",
-        "hbenl.vscode-test-explorer"
+        // AI开发相关
+        "ms-toolsai.jupyter",
+        "ms-toolsai.vscode-jupyter-cell-tags",
+        "ms-toolsai.vscode-jupyter-slideshow"
       ]
     }
   },
   
   // 端口转发
-  "forwardPorts": [3000, 8000, 5432, 6379, 8025],
+  "forwardPorts": [8000],
   "portsAttributes": {
-    "3000": {
-      "label": "前端应用",
-      "onAutoForward": "notify"
-    },
     "8000": {
-      "label": "后端API",
-      "onAutoForward": "notify"
-    },
-    "5432": {
-      "label": "PostgreSQL",
-      "onAutoForward": "silent"
-    },
-    "6379": {
-      "label": "Redis",
-      "onAutoForward": "silent"
-    },
-    "8025": {
-      "label": "MailHog Web UI",
+      "label": "AI设计助理服务",
       "onAutoForward": "notify"
     }
   },
@@ -153,15 +96,14 @@
   // 挂载配置
   "mounts": [
     "source=${localWorkspaceFolder}/.vscode,target=/workspace/.vscode,type=bind,consistency=cached",
-    "source=${localWorkspaceFolder}/node_modules,target=/workspace/node_modules,type=volume",
-    "source=3ai-venv,target=/workspace/venv,type=volume"
+    "source=pingao-ai-venv,target=/workspace/venv,type=volume"
   ],
   
   // 环境变量
   "containerEnv": {
-    "NODE_ENV": "development",
     "PYTHONPATH": "/workspace",
-    "PATH": "/workspace/venv/bin:${containerEnv:PATH}"
+    "PATH": "/workspace/venv/bin:${containerEnv:PATH}",
+    "CREO_INSTALL_PATH": "/opt/creo"
   },
   
   // 用户设置
@@ -169,8 +111,8 @@
   "updateRemoteUserUID": true,
   
   // 生命周期脚本
-  "initializeCommand": "echo '正在初始化3AI工作室开发环境...'",
-  "onCreateCommand": "echo '开发容器创建完成'",
-  "updateContentCommand": "echo '更新开发环境内容'",
-  "postStartCommand": "echo '开发环境启动完成，可以开始编码了！'"
+  "initializeCommand": "echo '正在初始化PinGao AI设计助理开发环境...'",
+  "onCreateCommand": "echo 'AI设计助理开发容器创建完成'",
+  "updateContentCommand": "echo '更新AI设计助理开发环境内容'",
+  "postStartCommand": "echo 'AI设计助理开发环境启动完成，可以开始编码了！'"
 }

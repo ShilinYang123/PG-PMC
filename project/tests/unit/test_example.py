@@ -27,9 +27,9 @@ class TestExample:
 
     def test_string_operations(self):
         """测试字符串操作"""
-        text = "3AI工作室"
-        assert len(text) == 5
-        assert "3AI" in text
+        text = "PinGao工作室"
+        assert len(text) == 7
+        assert "PinGao" in text
 
     def test_list_operations(self):
         """测试列表操作"""
@@ -57,8 +57,8 @@ class TestExample:
 
 def test_function_example():
     """函数式测试示例"""
-    data = {"name": "3AI", "type": "工作室"}
-    assert data["name"] == "3AI"
+    data = {"name": "PinGao", "type": "工作室"}
+    assert data["name"] == "PinGao"
     assert "type" in data
 
 
