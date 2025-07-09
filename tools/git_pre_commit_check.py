@@ -219,21 +219,21 @@ class GitPreCommitChecker:
         print("="*60)
         
         if self.errors:
-            print(f"\n❌ 发现 {len(self.errors)} 个错误:")
+            print(f"\n[ERROR] 发现 {len(self.errors)} 个错误:")
             for i, error in enumerate(self.errors, 1):
                 print(f"  {i}. {error}")
         
         if self.warnings:
-            print(f"\n⚠️  发现 {len(self.warnings)} 个警告:")
+            print(f"\n[WARNING] 发现 {len(self.warnings)} 个警告:")
             for i, warning in enumerate(self.warnings, 1):
                 print(f"  {i}. {warning}")
         
         if not self.errors and not self.warnings:
-            print("\n✅ 所有检查通过！")
+            print("\n[SUCCESS] 所有检查通过！")
         elif not self.errors:
-            print("\n✅ 主要检查通过，但有警告需要注意")
+            print("\n[SUCCESS] 主要检查通过，但有警告需要注意")
         else:
-            print("\n❌ 检查失败，请修复错误后重新提交")
+            print("\n[FAILED] 检查失败，请修复错误后重新提交")
         
         print("="*60)
 
