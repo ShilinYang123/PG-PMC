@@ -4,13 +4,13 @@ config_version: "1.0.0"
 app:
   api_port: 8000
   api_url: http://localhost:8000/api
-  name: 3AI
+  name: PG-Dev
   port: 3000
   url: http://localhost:3000
 
-backup_dir: "s:/3AI/bak"
+backup_dir: "s:/PG-Dev/bak"
 created_at: '2025-06-19T17:15:34.936127'
-project_name: "3AI"
+project_name: "PG-Dev"
 project_version: "1.0.0"
 
 # 性能配置
@@ -101,18 +101,18 @@ git:
   auto_push: true
   commit_message_prefix: "自动备份"
 database:
-  dev_name: 3AI_dev_db
+  dev_name: PG-Dev_dev_db
   host: localhost
-  name: 3ai_db
+  name: pgdev_db
   password: password
   port: 5432
-  test_name: 3AI_test_db
+  test_name: PG-Dev_test_db
   url_template: postgresql://{username}:{password}@{host}:{port}/{database_name}
   username: postgres
 environment:
   # 基础配置
   app:
-    name: "3AI工作室"
+    name: "江门市品高电器实业有限公司"
     version: 1.0.0
     url: http://localhost:3000
     api_url: http://localhost:8000
@@ -121,16 +121,16 @@ environment:
   
   # 数据库配置
   database:
-    url: postgresql://postgres:password@localhost:5432/3AI_db
+    url: postgresql://postgres:password@localhost:5432/PG-Dev_db
     host: localhost
     port: 5432
-    name: 3AI_db
+    name: PG-Dev_db
     user: postgres
     password: password
     pool_min: 2
     pool_max: 10
     pool_idle_timeout: 30000
-    test_url: postgresql://postgres:password@localhost:5432/3AI_test_db
+    test_url: postgresql://postgres:password@localhost:5432/PG-Dev_test_db
   
   # Redis配置
   redis:
@@ -169,8 +169,8 @@ environment:
     smtp_secure: false
     smtp_user: your-email@gmail.com
     smtp_pass: your-app-password
-    from_name: "3AI工作室"
-    from_address: noreply@3ai.studio
+    from_name: "江门市品高电器实业有限公司"
+    from_address: noreply@pingao.com
   
   # 日志配置已移至顶层
   
@@ -258,11 +258,11 @@ migration:
   - '*.sh'
   - .env*
 paths:
-  root: "s:/3AI"
-  backup_dir: "s:/3AI/bak"
-  docs_dir: "s:/3AI/docs"
-  logs_dir: "s:/3AI/logs"
-  project_dir: "s:/3AI/project"
+  root: "s:/PG-Dev"
+  backup_dir: "s:/PG-Dev/bak"
+  docs_dir: "s:/PG-Dev/docs"
+  logs_dir: "s:/PG-Dev/logs"
+  project_dir: "s:/PG-Dev/project"
   required_dirs:
   - src
   - logs
@@ -273,13 +273,13 @@ paths:
   required_files:
   - README.md
   - requirements.txt
-  tools_dir: "s:/3AI/tools"
+  tools_dir: "s:/PG-Dev/tools"
 project:
   created_at: '2025-06-20T00:11:18.534319'
-  name: 3AI
-  root: "s:/3AI"
+  name: PG-Dev
+  root: "s:/PG-Dev"
   updated_at: '2025-06-20T00:11:18.534332'
-project_description: 3AI项目
+project_description: 江门市品高电器实业有限公司研发管理项目
 project_root: ''
 structure_check:
   # 基本配置
@@ -287,7 +287,92 @@ structure_check:
   report_dir: logs/检查报告
   report_name_format: 目录结构检查报告_{timestamp}.md
   
-  # 检查配置
+  # 目录结构生成器配置
+  generator:
+    # 排除的目录
+    excluded_dirs:
+      - __pycache__
+      - .git
+      - .vscode
+      - .idea
+      - node_modules
+      - .pytest_cache
+      - .coverage
+      - htmlcov
+      - dist
+      - build
+      - "*.egg-info"
+      - .tox
+      - .mypy_cache
+      - .DS_Store
+      - Thumbs.db
+      - .venv
+      - venv
+      - env
+    
+    # 排除的文件
+    excluded_files:
+      - .gitkeep
+      - .DS_Store
+      - Thumbs.db
+      - "*.pyc"
+      - "*.pyo"
+      - "*.pyd"
+      - __pycache__
+      - "*.so"
+      - "*.dylib"
+      - "*.dll"
+      - "*.tmp"
+      - "*.temp"
+      - "*.log"
+    
+    # 允许的隐藏文件/目录
+    allowed_hidden_items:
+      - .env
+      - .env.example
+      - .gitignore
+      - .dockerignore
+      - .eslintrc.js
+      - .prettierrc
+      - .pre-commit-config.yaml
+      - .devcontainer
+      - .github
+      - .venv
+    
+    # 特殊目录配置
+    special_dirs:
+      bak:
+        - github_repo
+        - 迁移备份
+        - 专项备份
+        - 待清理资料
+        - 常规备份
+      logs:
+        - 工作记录
+        - 检查报告
+        - 其他日志
+        - archive
+    
+    # 输出格式配置
+    output_formats:
+      - markdown  # 默认格式
+      - json      # 程序化处理格式
+    
+    # 性能配置
+    performance:
+      max_workers: 4        # 最大工作线程数
+      batch_size: 100       # 批处理大小
+      enable_async: false   # 启用异步扫描
+    
+    # 缓存配置
+    cache:
+      enabled: true         # 启用缓存
+      cache_file: structure_cache.json
+      ttl_hours: 24         # 缓存有效期（小时）
+      cache_dir: .cache/structure
+      check_mtime: true     # 检查文件修改时间
+  
+  # 检查配置（原有配置保持不变）
   excluded_dirs: 
     - .git
     - node_modules
@@ -395,8 +480,8 @@ structure_check:
     tools: "^[a-zA-Z0-9_-]+\\.(py|js|sh|bat|ps1)$"
     config: "^[a-zA-Z0-9_-]+\\.(json|yaml|yml|ini|conf)$"
 template:
-  default_description: AI项目开发框架
-  default_project_name: 3AI
+  default_description: 江门市品高电器实业有限公司研发管理项目
+  default_project_name: PG-Dev
   variables:
   - PROJECT_NAME
   - PROJECT_DESCRIPTION

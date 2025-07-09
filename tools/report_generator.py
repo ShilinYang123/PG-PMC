@@ -182,7 +182,7 @@ class ReportGenerator:
         structure_config = self.config.get('structure_check', {})
         reporting_config = structure_config.get('reporting', {})
         tree_config = reporting_config.get('tree_display', {})
-        root_name = tree_config.get('root_name', '3AI/')
+        root_name = tree_config.get('root_name', 'PinGao/')
 
         return (
             f"## 当前目录结构\n\n"

@@ -7,10 +7,9 @@
 确保通过配置文件统一管理，支持迁移时自动更新。
 
 作者: 3AI工作室
-创建时间: 2024-01-01
+创建时间: 2025-07-08
 """
 
-# import os  # Unused import
 import re
 import json
 from pathlib import Path

@@ -4,7 +4,7 @@
 文件权限控制脚本 - 简化版
 功能：检查核心文件状态、设置权限、自动备份
 作者：雨俊
-日期：2025-01-21
+日期：2025-07-08
 """
 
 import os
@@ -32,7 +32,8 @@ PROTECTED_FILES = [
 
 def load_project_config():
     """加载项目配置"""
-    config_path = Path(__file__).parent.parent / "docs" / "03-管理" / "project_config.yaml"
+    config_path = (Path(__file__).parent.parent / "docs" / "03-管理"
+                   / "project_config.yaml")
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
@@ -41,12 +42,13 @@ def load_project_config():
         print(f"加载配置文件失败: {e}")
         return None
 
+
 def get_project_root():
     """获取项目根目录"""
     config = load_project_config()
     if config and config.get('paths', {}).get('root'):
         return Path(config['paths']['root'])
-    
+
     # 备用方案：向上查找包含docs目录的根目录
     current_dir = Path(__file__).parent
     while current_dir.parent != current_dir:
@@ -120,13 +122,13 @@ def backup_files(project_root, files_to_backup):
     """备份文件到专项备份目录"""
     config = load_project_config()
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    
+
     # 从配置获取备份目录
     if config and config.get('paths', {}).get('backup_dir'):
         backup_base = Path(config['paths']['backup_dir'])
     else:
         backup_base = project_root / "bak"
-    
+
     backup_dir = backup_base / "专项备份" / f"权限变更备份_{timestamp}"
 
     try:
@@ -243,7 +245,7 @@ def main():
                 project_root, existing_files, readonly_mode)
 
             if failed_files:
-                print(f"\n⚠️  部分文件权限设置失败，请检查文件是否被占用")
+                print("\n⚠️  部分文件权限设置失败，请检查文件是否被占用")
             else:
                 print(f"\n🎉 所有文件已成功设置为{action}状态")
 

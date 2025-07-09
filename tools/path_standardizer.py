@@ -7,7 +7,7 @@
 支持项目迁移时自动更新路径引用。
 
 作者: 3AI工作室
-创建时间: 2024-12-31
+创建时间: 2025-07-08
 """
 
 # import os  # unused
@@ -102,23 +102,24 @@ class PathStandardizer:
         # 如果是在注释中的示例或文档说明，跳过
         if line.strip().startswith('#') or line.strip().startswith('//'):
             return True
-            
+
         # 如果是在README或文档中的模板变量示例，跳过
         if '{{PROJECT_ROOT}}' in line and not path.startswith('s:'):
             return True
-            
+
         # 如果是配置文件中的模板变量，跳过
         if 'PROJECT_ROOT' in path and not path.startswith('s:'):
             return True
-            
+
         # 如果是在代码中作为正则表达式模式或字符串字面量，跳过
-        if any(keyword in line for keyword in ['old_path_patterns', 'pattern', 'r\'', 'r"']):
+        keywords = ['old_path_patterns', 'pattern', 'r\'', 'r"']
+        if any(keyword in line for keyword in keywords):
             return True
-            
+
         # 如果是在列表或数组定义中的字符串字面量，跳过
         if line.strip().startswith('r\'') or line.strip().startswith('r"'):
             return True
-            
+
         return False
 
     def scan_file_for_paths(self, file_path: Path) -> List[Dict]:
@@ -153,11 +154,11 @@ class PathStandardizer:
                     matches = re.finditer(pattern, line, re.IGNORECASE)
                     for match in matches:
                         original_path = match.group(0)
-                        
+
                         # 跳过已经正确标准化的路径（避免误报）
                         if self._is_already_standardized(line, original_path):
                             continue
-                            
+
                         replacement = self.replacement_rules.get(
                             path_type, '{{PROJECT_ROOT}}')
 

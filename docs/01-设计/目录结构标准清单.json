@@ -1,0 +1,648 @@
+{
+  "metadata": {
+    "generated_time": "2025-07-09T11:46:56.435900",
+    "title": "项目目录结构",
+    "statistics": {
+      "total_dirs": 34,
+      "total_files": 68
+    }
+  },
+  "structure": [
+    {
+      "type": "directory",
+      "name": ".cache",
+      "path": ".cache",
+      "children": [
+        {
+          "type": "directory",
+          "name": "structure",
+          "path": ".cache/structure",
+          "children": [
+            {
+              "type": "file",
+              "name": "structure_cache.json",
+              "path": ".cache/structure/structure_cache.json",
+              "size": 19032
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "directory",
+      "name": "AI助理生产成果",
+      "path": "AI助理生产成果",
+      "children": []
+    },
+    {
+      "type": "directory",
+      "name": "bak",
+      "path": "bak",
+      "children": [
+        {
+          "type": "directory",
+          "name": "github_repo",
+          "path": "bak/github_repo/",
+          "children": []
+        },
+        {
+          "type": "directory",
+          "name": "专项备份",
+          "path": "bak/专项备份/",
+          "children": []
+        },
+        {
+          "type": "directory",
+          "name": "常规备份",
+          "path": "bak/常规备份/",
+          "children": []
+        },
+        {
+          "type": "directory",
+          "name": "待清理资料",
+          "path": "bak/待清理资料/",
+          "children": []
+        },
+        {
+          "type": "directory",
+          "name": "迁移备份",
+          "path": "bak/迁移备份/",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "directory",
+      "name": "docs",
+      "path": "docs",
+      "children": [
+        {
+          "type": "directory",
+          "name": "01-设计",
+          "path": "docs/01-设计",
+          "children": [
+            {
+              "type": "file",
+              "name": "开发任务书.md",
+              "path": "docs/01-设计/开发任务书.md",
+              "size": 9385
+            },
+            {
+              "type": "file",
+              "name": "技术方案.md",
+              "path": "docs/01-设计/技术方案.md",
+              "size": 7793
+            },
+            {
+              "type": "file",
+              "name": "目录结构标准清单.json",
+              "path": "docs/01-设计/目录结构标准清单.json",
+              "size": 17619
+            },
+            {
+              "type": "file",
+              "name": "目录结构标准清单.md",
+              "path": "docs/01-设计/目录结构标准清单.md",
+              "size": 3471
+            },
+            {
+              "type": "file",
+              "name": "项目架构设计.md",
+              "path": "docs/01-设计/项目架构设计.md",
+              "size": 19018
+            }
+          ]
+        },
+        {
+          "type": "directory",
+          "name": "02-开发",
+          "path": "docs/02-开发",
+          "children": [
+            {
+              "type": "file",
+              "name": "MCP项目隔离实现说明.md",
+              "path": "docs/02-开发/MCP项目隔离实现说明.md",
+              "size": 4757
+            },
+            {
+              "type": "file",
+              "name": "memory.json",
+              "path": "docs/02-开发/memory.json",
+              "size": 7088
+            },
+            {
+              "type": "file",
+              "name": "tasks.json",
+              "path": "docs/02-开发/tasks.json",
+              "size": 10324
+            },
+            {
+              "type": "file",
+              "name": "开发日志.md",
+              "path": "docs/02-开发/开发日志.md",
+              "size": 12395
+            },
+            {
+              "type": "file",
+              "name": "故障排除指南.md",
+              "path": "docs/02-开发/故障排除指南.md",
+              "size": 4142
+            }
+          ]
+        },
+        {
+          "type": "directory",
+          "name": "03-管理",
+          "path": "docs/03-管理",
+          "children": [
+            {
+              "type": "file",
+              "name": "project_config.yaml",
+              "path": "docs/03-管理/project_config.yaml",
+              "size": 11031
+            },
+            {
+              "type": "file",
+              "name": "工具资产清单.md",
+              "path": "docs/03-管理/工具资产清单.md",
+              "size": 7428
+            },
+            {
+              "type": "file",
+              "name": "看板.md",
+              "path": "docs/03-管理/看板.md",
+              "size": 4669
+            },
+            {
+              "type": "file",
+              "name": "规范与流程.md",
+              "path": "docs/03-管理/规范与流程.md",
+              "size": 51179
+            }
+          ]
+        },
+        {
+          "type": "directory",
+          "name": "04-模板",
+          "path": "docs/04-模板",
+          "children": [
+            {
+              "type": "directory",
+              "name": "代码示例库",
+              "path": "docs/04-模板/代码示例库",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "error_handling_usage_example.py",
+                  "path": "docs/04-模板/代码示例库/error_handling_usage_example.py",
+                  "size": 11923
+                },
+                {
+                  "type": "file",
+                  "name": "python_examples.py",
+                  "path": "docs/04-模板/代码示例库/python_examples.py",
+                  "size": 34451
+                }
+              ]
+            },
+            {
+              "type": "file",
+              "name": "错误处理和日志系统规范.md",
+              "path": "docs/04-模板/错误处理和日志系统规范.md",
+              "size": 14733
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "directory",
+      "name": "logs",
+      "path": "logs",
+      "children": [
+        {
+          "type": "directory",
+          "name": "archive",
+          "path": "logs/archive/",
+          "children": []
+        },
+        {
+          "type": "directory",
+          "name": "其他日志",
+          "path": "logs/其他日志/",
+          "children": []
+        },
+        {
+          "type": "directory",
+          "name": "工作记录",
+          "path": "logs/工作记录/",
+          "children": []
+        },
+        {
+          "type": "directory",
+          "name": "检查报告",
+          "path": "logs/检查报告/",
+          "children": []
+        }
+      ]
+    },
+    {
+      "type": "directory",
+      "name": "project",
+      "path": "project",
+      "children": [
+        {
+          "type": "directory",
+          "name": ".devcontainer",
+          "path": "project/.devcontainer",
+          "children": [
+            {
+              "type": "file",
+              "name": "devcontainer.json",
+              "path": "project/.devcontainer/devcontainer.json",
+              "size": 3366
+            },
+            {
+              "type": "file",
+              "name": "post_create.sh",
+              "path": "project/.devcontainer/post_create.sh",
+              "size": 6495
+            }
+          ]
+        },
+        {
+          "type": "directory",
+          "name": "scripts",
+          "path": "project/scripts",
+          "children": [
+            {
+              "type": "file",
+              "name": "quality-check.bat",
+              "path": "project/scripts/quality-check.bat",
+              "size": 1698
+            },
+            {
+              "type": "file",
+              "name": "quality-check.sh",
+              "path": "project/scripts/quality-check.sh",
+              "size": 4381
+            }
+          ]
+        },
+        {
+          "type": "directory",
+          "name": "src",
+          "path": "project/src",
+          "children": [
+            {
+              "type": "directory",
+              "name": "ai",
+              "path": "project/src/ai",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "__init__.py",
+                  "path": "project/src/ai/__init__.py",
+                  "size": 308
+                },
+                {
+                  "type": "file",
+                  "name": "design_interpreter.py",
+                  "path": "project/src/ai/design_interpreter.py",
+                  "size": 21337
+                },
+                {
+                  "type": "file",
+                  "name": "language_processor.py",
+                  "path": "project/src/ai/language_processor.py",
+                  "size": 11930
+                },
+                {
+                  "type": "file",
+                  "name": "parameter_parser.py",
+                  "path": "project/src/ai/parameter_parser.py",
+                  "size": 31102
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "config",
+              "path": "project/src/config",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "__init__.py",
+                  "path": "project/src/config/__init__.py",
+                  "size": 438
+                },
+                {
+                  "type": "file",
+                  "name": "config_manager.py",
+                  "path": "project/src/config/config_manager.py",
+                  "size": 15738
+                },
+                {
+                  "type": "file",
+                  "name": "environment.py",
+                  "path": "project/src/config/environment.py",
+                  "size": 19164
+                },
+                {
+                  "type": "file",
+                  "name": "settings.py",
+                  "path": "project/src/config/settings.py",
+                  "size": 9971
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "core",
+              "path": "project/src/core",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "__init__.py",
+                  "path": "project/src/core/__init__.py",
+                  "size": 170
+                },
+                {
+                  "type": "file",
+                  "name": "app.py",
+                  "path": "project/src/core/app.py",
+                  "size": 4650
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "creo",
+              "path": "project/src/creo",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "__init__.py",
+                  "path": "project/src/creo/__init__.py",
+                  "size": 295
+                },
+                {
+                  "type": "file",
+                  "name": "connector.py",
+                  "path": "project/src/creo/connector.py",
+                  "size": 6935
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "geometry",
+              "path": "project/src/geometry",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "__init__.py",
+                  "path": "project/src/geometry/__init__.py",
+                  "size": 287
+                },
+                {
+                  "type": "file",
+                  "name": "creator.py",
+                  "path": "project/src/geometry/creator.py",
+                  "size": 14117
+                },
+                {
+                  "type": "file",
+                  "name": "features.py",
+                  "path": "project/src/geometry/features.py",
+                  "size": 20194
+                },
+                {
+                  "type": "file",
+                  "name": "primitives.py",
+                  "path": "project/src/geometry/primitives.py",
+                  "size": 18530
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "ui",
+              "path": "project/src/ui",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "__init__.py",
+                  "path": "project/src/ui/__init__.py",
+                  "size": 344
+                },
+                {
+                  "type": "file",
+                  "name": "chat_interface.py",
+                  "path": "project/src/ui/chat_interface.py",
+                  "size": 15881
+                }
+              ]
+            },
+            {
+              "type": "directory",
+              "name": "utils",
+              "path": "project/src/utils",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "__init__.py",
+                  "path": "project/src/utils/__init__.py",
+                  "size": 490
+                },
+                {
+                  "type": "file",
+                  "name": "encryption.py",
+                  "path": "project/src/utils/encryption.py",
+                  "size": 20045
+                },
+                {
+                  "type": "file",
+                  "name": "file_utils.py",
+                  "path": "project/src/utils/file_utils.py",
+                  "size": 20764
+                },
+                {
+                  "type": "file",
+                  "name": "logger.py",
+                  "path": "project/src/utils/logger.py",
+                  "size": 13175
+                },
+                {
+                  "type": "file",
+                  "name": "performance.py",
+                  "path": "project/src/utils/performance.py",
+                  "size": 20544
+                },
+                {
+                  "type": "file",
+                  "name": "validation.py",
+                  "path": "project/src/utils/validation.py",
+                  "size": 24308
+                }
+              ]
+            },
+            {
+              "type": "file",
+              "name": "main.py",
+              "path": "project/src/main.py",
+              "size": 2486
+            }
+          ]
+        },
+        {
+          "type": "directory",
+          "name": "tests",
+          "path": "project/tests",
+          "children": [
+            {
+              "type": "directory",
+              "name": "unit",
+              "path": "project/tests/unit",
+              "children": [
+                {
+                  "type": "file",
+                  "name": "test_example.py",
+                  "path": "project/tests/unit/test_example.py",
+                  "size": 1999
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "file",
+          "name": ".pre-commit-config.yaml",
+          "path": "project/.pre-commit-config.yaml",
+          "size": 3362
+        },
+        {
+          "type": "file",
+          "name": "package.json",
+          "path": "project/package.json",
+          "size": 1342
+        },
+        {
+          "type": "file",
+          "name": "README.md",
+          "path": "project/README.md",
+          "size": 10800
+        },
+        {
+          "type": "file",
+          "name": "requirements.txt",
+          "path": "project/requirements.txt",
+          "size": 1911
+        },
+        {
+          "type": "file",
+          "name": "setup.cfg",
+          "path": "project/setup.cfg",
+          "size": 2718
+        }
+      ]
+    },
+    {
+      "type": "directory",
+      "name": "tools",
+      "path": "tools",
+      "children": [
+        {
+          "type": "file",
+          "name": "check_structure.py",
+          "path": "tools/check_structure.py",
+          "size": 42410
+        },
+        {
+          "type": "file",
+          "name": "control.py",
+          "path": "tools/control.py",
+          "size": 8407
+        },
+        {
+          "type": "file",
+          "name": "exceptions.py",
+          "path": "tools/exceptions.py",
+          "size": 18657
+        },
+        {
+          "type": "file",
+          "name": "finish.py",
+          "path": "tools/finish.py",
+          "size": 5225
+        },
+        {
+          "type": "file",
+          "name": "init_project.py",
+          "path": "tools/init_project.py",
+          "size": 15054
+        },
+        {
+          "type": "file",
+          "name": "logging_config.py",
+          "path": "tools/logging_config.py",
+          "size": 16529
+        },
+        {
+          "type": "file",
+          "name": "path_standardizer.py",
+          "path": "tools/path_standardizer.py",
+          "size": 13979
+        },
+        {
+          "type": "file",
+          "name": "performance_monitor.py",
+          "path": "tools/performance_monitor.py",
+          "size": 13127
+        },
+        {
+          "type": "file",
+          "name": "project_name_standardizer.py",
+          "path": "tools/project_name_standardizer.py",
+          "size": 9844
+        },
+        {
+          "type": "file",
+          "name": "report_generator.py",
+          "path": "tools/report_generator.py",
+          "size": 7468
+        },
+        {
+          "type": "file",
+          "name": "test_check_structure.py",
+          "path": "tools/test_check_structure.py",
+          "size": 2304
+        },
+        {
+          "type": "file",
+          "name": "test_project_root.py",
+          "path": "tools/test_project_root.py",
+          "size": 1386
+        },
+        {
+          "type": "file",
+          "name": "update_structure.py",
+          "path": "tools/update_structure.py",
+          "size": 35334
+        },
+        {
+          "type": "file",
+          "name": "utils.py",
+          "path": "tools/utils.py",
+          "size": 9601
+        },
+        {
+          "type": "file",
+          "name": "项目结构检查工具体系说明.md",
+          "path": "tools/项目结构检查工具体系说明.md",
+          "size": 8530
+        }
+      ]
+    }
+  ]
+}
