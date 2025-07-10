@@ -700,3 +700,29 @@ def hash_data(data: Union[str, bytes], algorithm: str = "sha256") -> str:
         str: 哈希值（十六进制）
     """
     return simple_encryption.hash_data(data, algorithm)
+
+
+def encrypt_data(data: str, key: str) -> str:
+    """加密数据
+
+    Args:
+        data: 待加密数据
+        key: 密钥
+
+    Returns:
+        str: 加密后的数据
+    """
+    return simple_encryption.simple_encrypt(data, key)
+
+
+def decrypt_data(encrypted_data: str, key: str) -> str:
+    """解密数据
+
+    Args:
+        encrypted_data: 加密数据
+        key: 密钥
+
+    Returns:
+        str: 解密后的数据
+    """
+    return simple_encryption.simple_decrypt(encrypted_data, key)

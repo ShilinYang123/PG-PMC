@@ -45,7 +45,8 @@ def execute_command(command, args=None, cwd=None, shell=False, check=True):
     logging.info(
         f"Executing command: {
             ' '.join(command_list)} in {
-            cwd or os.getcwd()}")
+            cwd or os.getcwd()}"
+    )
 
     try:
         result = subprocess.run(
@@ -56,26 +57,28 @@ def execute_command(command, args=None, cwd=None, shell=False, check=True):
             shell=shell,
             check=check,  # This will raise CalledProcessError for non-zero exit codes
         )
-        logging.info(
-            f"Command executed successfully. STDOUT: {result.stdout[:200]}...")
+        logging.info(f"Command executed successfully. STDOUT: {result.stdout[:200]}...")
         if result.stderr:
             logging.warning(f"Command STDERR: {result.stderr[:200]}...")
         return result
     except subprocess.CalledProcessError as e:
         logging.error(
             f"Command '{' '.join(command_list)}' failed with exit code "
-            f"{e.returncode}.")
+            f"{e.returncode}."
+        )
         logging.error(f"STDOUT: {e.stdout}")
         logging.error(f"STDERR: {e.stderr}")
         raise
     except FileNotFoundError:
         logging.error(
             f"Command '{command}' not found. Please check if it's "
-            "installed and in PATH.")
+            "installed and in PATH."
+        )
         raise
     except Exception as e:
         logging.error(
-            f"An unexpected error occurred while executing command '{command}': {e}")
+            f"An unexpected error occurred while executing command '{command}': {e}"
+        )
         raise
 
 
@@ -107,7 +110,8 @@ def get_project_root(marker_filename="project_config.yaml"):
         # Check for .git directory
         if os.path.isdir(os.path.join(search_path, ".git")):
             logging.info(
-                f"Project root found at '{search_path}' (contains .git directory).")
+                f"Project root found at '{search_path}' (contains .git directory)."
+            )
             return search_path
 
         # Check for marker file in 'docs/03-管理/' relative to current search_path
@@ -118,7 +122,8 @@ def get_project_root(marker_filename="project_config.yaml"):
         if os.path.isfile(os.path.join(potential_marker_dir, marker_filename)):
             logging.info(
                 f"Project root found at '{search_path}' "
-                f"(marker '{marker_filename}' found in 'docs/03-管理/').")
+                f"(marker '{marker_filename}' found in 'docs/03-管理/')."
+            )
             return search_path
 
         # Check for marker file directly in the current search_path (more
@@ -126,7 +131,8 @@ def get_project_root(marker_filename="project_config.yaml"):
         if os.path.isfile(os.path.join(search_path, marker_filename)):
             logging.info(
                 f"Project root found at '{search_path}' "
-                f"(marker '{marker_filename}' found).")
+                f"(marker '{marker_filename}' found)."
+            )
             return search_path
 
         parent_path = os.path.dirname(search_path)
@@ -153,7 +159,8 @@ def get_project_root(marker_filename="project_config.yaml"):
                 raise FileNotFoundError(
                     "Project root could not be determined. Ensure the script is "
                     "run from within the project, or that a '.git' directory or "
-                    "marker file (e.g., 'project_config.yaml') exists in the root.")
+                    "marker file (e.g., 'project_config.yaml') exists in the root."
+                )
         search_path = parent_path
 
 
@@ -202,14 +209,15 @@ if __name__ == "__main__":
                 # )
                 logger.info(
                     "(Skipping directory listing example on Windows for simplicity in "
-                    "__main__)")
+                    "__main__)"
+                )
             else:  # Linux/macOS
-                result = execute_command(
-                    "ls", args=["-la"], cwd=get_project_root())
+                result = execute_command("ls", args=["-la"], cwd=get_project_root())
                 logger.info(result.stdout)
         except Exception as e:
-            error_handler.handle_error(ValidationError(
-                f"Error executing command for example: {e}"))
+            error_handler.handle_error(
+                ValidationError(f"Error executing command for example: {e}")
+            )
 
         # Clean up the test directory
         if os.path.exists(test_dir):
@@ -222,6 +230,4 @@ if __name__ == "__main__":
                     "It might not be empty or permission issues."
                 )
     except Exception as e:
-        error_handler.handle_error(
-            ValidationError(
-                f"Utils module test failed: {e}"))
+        error_handler.handle_error(ValidationError(f"Utils module test failed: {e}"))

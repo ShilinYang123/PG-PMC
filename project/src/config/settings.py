@@ -11,87 +11,131 @@ from typing import Any, Dict, List
 
 
 @dataclass
+class AppSettings:
+    """应用基础设置"""
+    name: str = "PG-Dev AI设计助理"
+    version: str = "1.0.0"
+    description: str = "基于AI的Creo参数化设计助理"
+    debug: bool = False
+    log_level: str = "INFO"
+    environment: str = "development"  # development, production, testing
+
+
+@dataclass
+class ServerSettings:
+    """服务器设置"""
+    host: str = "127.0.0.1"
+    port: int = 8000
+    workers: int = 1
+    reload: bool = True
+    access_log: bool = True
+    
+
+@dataclass
+class SQLiteSettings:
+    """SQLite数据库设置"""
+    path: str = "data/pgdev.db"
+    timeout: int = 30
+    check_same_thread: bool = False
+    
+
+@dataclass
+class PostgreSQLSettings:
+    """PostgreSQL数据库设置"""
+    host: str = "localhost"
+    port: int = 5432
+    name: str = "pgdev"
+    user: str = "pgdev_user"
+    password: str = ""
+    pool_size: int = 10
+    max_overflow: int = 20
+    
+
+@dataclass
+class DatabaseSettings:
+    """数据库设置"""
+    type: str = "sqlite"  # sqlite, postgresql
+    sqlite: SQLiteSettings = field(default_factory=SQLiteSettings)
+    postgresql: PostgreSQLSettings = field(default_factory=PostgreSQLSettings)
+    
+
+@dataclass
+class StorageSettings:
+    """文件存储设置"""
+    temp_dir: str = "temp"
+    upload_dir: str = "uploads"
+    backup_dir: str = "backups"
+    max_file_size: int = 100  # MB
+    allowed_extensions: List[str] = field(
+        default_factory=lambda: [".prt", ".asm", ".drw", ".step", ".stp", ".iges", ".igs", ".stl"]
+    )
+    
+
+@dataclass
 class CreoSettings:
     """Creo相关设置"""
-
-    # Creo安装路径
     install_path: str = r"C:\Program Files\PTC\Creo 7.0\Common Files\x86e_win64\bin"
-
-    # Creo可执行文件名
     executable: str = "parametric.exe"
-
-    # 启动参数
     startup_args: List[str] = field(
         default_factory=lambda: ["-g:no_graphics", "-i:rpc_input"]
     )
-
-    # 连接超时时间（秒）
     connection_timeout: int = 30
-
-    # 重试次数
+    operation_timeout: int = 60
     max_retries: int = 3
-
-    # 工作目录
     working_directory: str = r"C:\PG-Dev\CreoWork"
-
-    # 配置文件路径
     config_file: str = "config.pro"
-
-    # 启动模式
     startup_mode: str = "windowed"  # windowed, minimized, hidden
-
-    # API版本
     api_version: str = "7.0"
-
-    # 是否自动保存
+    auto_start: bool = False
     auto_save: bool = True
-
-    # 自动保存间隔（分钟）
     auto_save_interval: int = 5
-
-    # 单位系统
     unit_system: str = "mmNs"  # mmNs, mmKs, inlbm, inlbf
-
-    # 默认材料
     default_material: str = "PTC_SYSTEM_MTRL_STEEL"
+
+
+@dataclass
+class OpenAISettings:
+    """OpenAI相关设置"""
+    api_key: str = ""
+    model: str = "gpt-4"
+    base_url: str = "https://api.openai.com/v1"
+    max_tokens: int = 2048
+    temperature: float = 0.7
+    timeout: int = 30
+    max_retries: int = 3
+    retry_delay: float = 1.0
+
+
+@dataclass
+class AnthropicSettings:
+    """Anthropic相关设置"""
+    api_key: str = ""
+    model: str = "claude-3-sonnet-20240229"
+    base_url: str = "https://api.anthropic.com"
+    max_tokens: int = 2048
+    temperature: float = 0.7
+    timeout: int = 30
+    max_retries: int = 3
+    retry_delay: float = 1.0
 
 
 @dataclass
 class AISettings:
     """AI相关设置"""
-
-    # OpenAI设置
-    openai_api_key: str = ""
-    openai_model: str = "gpt-4"
-    openai_base_url: str = "https://api.openai.com/v1"
-
-    # Claude设置
-    claude_api_key: str = ""
-    claude_model: str = "claude-3-sonnet-20240229"
-
-    # 本地模型设置
-    local_model_path: str = ""
-    use_local_model: bool = False
-
-    # 语言处理设置
+    openai: OpenAISettings = field(default_factory=OpenAISettings)
+    anthropic: AnthropicSettings = field(default_factory=AnthropicSettings)
+    
+    # 通用设置
+    default_provider: str = "openai"  # openai, anthropic
     language: str = "zh-CN"  # zh-CN, en-US
-    max_tokens: int = 2048
-    temperature: float = 0.7
-
+    
     # 设计知识库
     knowledge_base_path: str = "data/knowledge_base"
-
+    
     # 缓存设置
     enable_cache: bool = True
     cache_size: int = 1000
     cache_ttl: int = 3600  # 秒
-
-    # 响应超时
-    response_timeout: int = 30
-
-    # 重试设置
-    max_retries: int = 3
-    retry_delay: float = 1.0
 
 
 @dataclass
@@ -205,65 +249,102 @@ class SecuritySettings:
 
 
 @dataclass
+class CacheSettings:
+    """缓存设置"""
+    enabled: bool = True
+    ttl: int = 3600  # 秒
+    max_size: int = 1000
+    
+
+@dataclass
+class ConcurrencySettings:
+    """并发设置"""
+    max_workers: int = 4
+    thread_pool_size: int = 4
+    enable_async: bool = True
+    
+
+@dataclass
 class PerformanceSettings:
     """性能设置"""
-
-    # 最大并发任务数
-    max_concurrent_tasks: int = 4
-
-    # 内存限制（MB）
-    memory_limit: int = 2048
-
-    # 缓存大小（MB）
-    cache_size: int = 512
-
-    # 几何体简化阈值
+    cache: CacheSettings = field(default_factory=CacheSettings)
+    concurrency: ConcurrencySettings = field(default_factory=ConcurrencySettings)
+    
+    # 内存和资源限制
+    memory_limit: int = 2048  # MB
+    max_file_size: int = 100  # MB
+    
+    # 几何处理
     geometry_simplification_threshold: float = 0.01
-
-    # 渲染质量
     render_quality: str = "medium"  # low, medium, high, ultra
-
-    # 是否启用多线程
-    enable_multithreading: bool = True
-
-    # 线程池大小
-    thread_pool_size: int = 4
-
+    
     # 预加载设置
     preload_models: bool = False
     preload_textures: bool = False
+    
+
+@dataclass
+class FeaturesSettings:
+    """功能开关设置"""
+    chat_interface: bool = True
+    design_interpreter: bool = True
+    parameter_parser: bool = True
+    geometry_creator: bool = True
+    real_time_preview: bool = True
+    file_upload: bool = True
+    batch_processing: bool = False
+    
+
+@dataclass
+class DevelopmentSettings:
+    """开发设置"""
+    hot_reload: bool = True
+    debug_toolbar: bool = True
+    profiling: bool = False
+    mock_creo: bool = False
+    test_mode: bool = False
 
 
 @dataclass
 class Settings:
     """主配置类"""
-
-    # 应用信息
-    app_name: str = "PG-Dev AI设计助理"
-    app_version: str = "1.0.0"
-
-    # 配置文件路径
-    config_file: str = "config/settings.yaml"
-
+    
     # 各模块设置
-    creo: CreoSettings = field(default_factory=CreoSettings)
+    app: AppSettings = field(default_factory=AppSettings)
+    server: ServerSettings = field(default_factory=ServerSettings)
     ai: AISettings = field(default_factory=AISettings)
-    ui: UISettings = field(default_factory=UISettings)
+    creo: CreoSettings = field(default_factory=CreoSettings)
+    database: DatabaseSettings = field(default_factory=DatabaseSettings)
+    storage: StorageSettings = field(default_factory=StorageSettings)
     logging: LoggingSettings = field(default_factory=LoggingSettings)
     security: SecuritySettings = field(default_factory=SecuritySettings)
     performance: PerformanceSettings = field(default_factory=PerformanceSettings)
-
-    # 开发模式
-    debug_mode: bool = False
-
-    # 数据目录
+    features: FeaturesSettings = field(default_factory=FeaturesSettings)
+    development: DevelopmentSettings = field(default_factory=DevelopmentSettings)
+    ui: UISettings = field(default_factory=UISettings)
+    
+    # 配置文件路径（向后兼容）
+    config_file: str = "config/settings.yaml"
+    
+    # 目录设置（向后兼容）
     data_directory: str = "data"
-
-    # 临时目录
     temp_directory: str = "temp"
-
-    # 插件目录
     plugins_directory: str = "plugins"
+    
+    @property
+    def app_name(self) -> str:
+        """应用名称（向后兼容）"""
+        return self.app.name
+        
+    @property
+    def app_version(self) -> str:
+        """应用版本（向后兼容）"""
+        return self.app.version
+        
+    @property
+    def debug_mode(self) -> bool:
+        """调试模式（向后兼容）"""
+        return self.app.debug
 
     def __post_init__(self):
         """初始化后处理"""
@@ -327,34 +408,67 @@ class Settings:
         """
         errors = []
 
+        # 验证应用设置
+        if not self.app.name:
+            errors.append("应用名称不能为空")
+        if not self.app.version:
+            errors.append("应用版本不能为空")
+
+        # 验证服务器设置
+        if self.server.port <= 0 or self.server.port > 65535:
+            errors.append("服务器端口必须在1-65535范围内")
+        if self.server.workers <= 0:
+            errors.append("服务器工作进程数必须大于0")
+
         # 验证Creo设置
         if not self.is_creo_available():
             errors.append(f"Creo可执行文件不存在: {self.get_creo_executable_path()}")
-
         if self.creo.connection_timeout <= 0:
             errors.append("Creo连接超时时间必须大于0")
+        if self.creo.operation_timeout <= 0:
+            errors.append("Creo操作超时时间必须大于0")
 
         # 验证AI设置
         if (
-            not self.ai.openai_api_key
-            and not self.ai.claude_api_key
-            and not self.ai.use_local_model
+            not self.ai.openai.api_key
+            and not self.ai.anthropic.api_key
         ):
-            errors.append("必须配置至少一个AI服务")
+            errors.append("必须配置至少一个AI服务的API密钥")
+        if self.ai.openai.max_tokens <= 0:
+            errors.append("OpenAI最大令牌数必须大于0")
+        if self.ai.anthropic.max_tokens <= 0:
+            errors.append("Anthropic最大令牌数必须大于0")
 
-        if self.ai.max_tokens <= 0:
-            errors.append("AI最大令牌数必须大于0")
+        # 验证数据库设置
+        if self.database.type not in ["sqlite", "postgresql"]:
+            errors.append("数据库类型必须是sqlite或postgresql")
+        if self.database.type == "postgresql":
+            if not self.database.postgresql.host:
+                errors.append("PostgreSQL主机地址不能为空")
+            if not self.database.postgresql.name:
+                errors.append("PostgreSQL数据库名不能为空")
+            if not self.database.postgresql.user:
+                errors.append("PostgreSQL用户名不能为空")
+
+        # 验证存储设置
+        if self.storage.max_file_size <= 0:
+            errors.append("最大文件大小必须大于0")
 
         # 验证UI设置
         if self.ui.window_width <= 0 or self.ui.window_height <= 0:
             errors.append("窗口尺寸必须大于0")
 
         # 验证性能设置
-        if self.performance.max_concurrent_tasks <= 0:
-            errors.append("最大并发任务数必须大于0")
-
+        if self.performance.concurrency.max_workers <= 0:
+            errors.append("最大工作线程数必须大于0")
         if self.performance.memory_limit <= 0:
             errors.append("内存限制必须大于0")
+        if self.performance.cache.ttl <= 0:
+            errors.append("缓存TTL必须大于0")
+
+        # 验证安全设置
+        if self.security.session_timeout <= 0:
+            errors.append("会话超时时间必须大于0")
 
         return errors
 

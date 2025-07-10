@@ -14,6 +14,7 @@ Date: 2024
 """
 
 import os
+
 # import sys  # 未使用，注释掉
 import logging
 import logging.config
@@ -24,6 +25,7 @@ from datetime import datetime, timedelta
 import json
 import threading
 from functools import wraps
+
 # from collections import defaultdict  # 未使用，注释掉
 import time
 import glob
@@ -33,68 +35,62 @@ class LoggingConfig:
     """统一日志配置管理器"""
 
     DEFAULT_CONFIG = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': {
-            'standard': {
-                'format': ('%(asctime)s [%(levelname)s] %(name)s:%(lineno)d '
-                           '- %(message)s'),
-                'datefmt': '%Y-%m-%d %H:%M:%S'
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "standard": {
+                "format": (
+                    "%(asctime)s [%(levelname)s] %(name)s:%(lineno)d " "- %(message)s"
+                ),
+                "datefmt": "%Y-%m-%d %H:%M:%S",
             },
-            'detailed': {
-                'format': ('%(asctime)s [%(levelname)s] %(name)s:%(lineno)d '
-                           '[%(funcName)s] - %(message)s '
-                           '[PID:%(process)d TID:%(thread)d]'),
-                'datefmt': '%Y-%m-%d %H:%M:%S'
+            "detailed": {
+                "format": (
+                    "%(asctime)s [%(levelname)s] %(name)s:%(lineno)d "
+                    "[%(funcName)s] - %(message)s "
+                    "[PID:%(process)d TID:%(thread)d]"
+                ),
+                "datefmt": "%Y-%m-%d %H:%M:%S",
             },
-            'simple': {
-                'format': '%(levelname)s - %(message)s'
-            }
+            "simple": {"format": "%(levelname)s - %(message)s"},
         },
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'level': 'INFO',
-                'formatter': 'standard',
-                'stream': 'ext://sys.stdout'
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "level": "INFO",
+                "formatter": "standard",
+                "stream": "ext://sys.stdout",
             },
-            'file': {
-                'class': 'logging.handlers.RotatingFileHandler',
-                'level': 'DEBUG',
-                'formatter': 'detailed',
-                'filename': 'logs/其他日志/application.log',
-                'maxBytes': 10485760,  # 10MB
-                'backupCount': 5,
-                'encoding': 'utf-8'
+            "file": {
+                "class": "logging.handlers.RotatingFileHandler",
+                "level": "DEBUG",
+                "formatter": "detailed",
+                "filename": "logs/其他日志/application.log",
+                "maxBytes": 10485760,  # 10MB
+                "backupCount": 5,
+                "encoding": "utf-8",
             },
-            'error_file': {
-                'class': 'logging.handlers.RotatingFileHandler',
-                'level': 'ERROR',
-                'formatter': 'detailed',
-                'filename': 'logs/其他日志/errors.log',
-                'maxBytes': 10485760,
-                'backupCount': 10,
-                'encoding': 'utf-8'
-            }
+            "error_file": {
+                "class": "logging.handlers.RotatingFileHandler",
+                "level": "ERROR",
+                "formatter": "detailed",
+                "filename": "logs/其他日志/errors.log",
+                "maxBytes": 10485760,
+                "backupCount": 10,
+                "encoding": "utf-8",
+            },
         },
-        'loggers': {
-            '': {  # root logger
-                'handlers': ['console', 'file'],
-                'level': 'DEBUG',
-                'propagate': False
+        "loggers": {
+            "": {  # root logger
+                "handlers": ["console"],
+                "level": "DEBUG",
+                "propagate": False,
             },
-            'error': {
-                'handlers': ['error_file'],
-                'level': 'ERROR',
-                'propagate': False
-            }
-        }
+            "error": {"handlers": ["error_file"], "level": "ERROR", "propagate": False},
+        },
     }
 
-    def __init__(
-            self,
-            config_path: Optional[str] = None,
-            logs_dir: str = 'logs'):
+    def __init__(self, config_path: Optional[str] = None, logs_dir: str = "logs"):
         self.config_path = config_path
         self.logs_dir = Path(logs_dir)
         self.config = self._load_config()
@@ -106,27 +102,74 @@ class LoggingConfig:
         """加载日志配置"""
         if self.config_path and os.path.exists(self.config_path):
             try:
-                with open(self.config_path, 'r', encoding='utf-8') as f:
-                    if self.config_path.endswith('.json'):
+                with open(self.config_path, "r", encoding="utf-8") as f:
+                    if self.config_path.endswith(".json"):
                         return json.load(f)
                     # 可以扩展支持YAML等格式
             except Exception as e:
                 print(
                     f"Warning: Failed to load logging config from {
-                        self.config_path}: {e}")
+                        self.config_path}: {e}"
+                )
 
         return self.DEFAULT_CONFIG.copy()
 
     def _ensure_logs_directory(self):
-        """确保日志目录存在"""
-        self.logs_dir.mkdir(parents=True, exist_ok=True)
-        (self.logs_dir / 'archive').mkdir(exist_ok=True)
-        (self.logs_dir / 'temp').mkdir(exist_ok=True)
+        """确保日志目录存在，但只在项目根目录下创建"""
+        # 获取当前工作目录
+        current_dir = Path.cwd()
 
-    def configure(self, level: Optional[str] = None,
-                  console_enabled: bool = True,
-                  file_enabled: bool = True,
-                  performance_mode: bool = False):
+        # 检查是否在备份目录或github_repo目录下
+        forbidden_paths = ["bak", "github_repo", "backup", "备份"]
+        current_path_str = str(current_dir).lower()
+
+        # 强制使用项目根目录 S:\PG-Dev，无论当前在哪里
+        project_root = Path("S:\\PG-Dev")
+
+        # 检查logs_dir路径是否包含禁止的路径
+        logs_dir_str = str(self.logs_dir).lower()
+        if any(forbidden in logs_dir_str for forbidden in forbidden_paths):
+            self.logs_dir = project_root / "logs"
+            print(f"警告：检测到日志目录指向备份区域，已重定向到: {self.logs_dir}")
+
+        # 如果当前目录包含禁止的路径，也强制重定向
+        if any(forbidden in current_path_str for forbidden in forbidden_paths):
+            self.logs_dir = project_root / "logs"
+            print(f"警告：检测到在备份目录中运行，日志目录已重定向到: {self.logs_dir}")
+
+        # 确保logs目录是绝对路径且在正确位置
+        if not self.logs_dir.is_absolute():
+            # 如果是相对路径，确保基于项目根目录
+            if "pg-dev" in str(Path.cwd()).lower():
+                # 找到PG-Dev根目录
+                current = Path.cwd()
+                while current.name.lower() != "pg-dev" and current.parent != current:
+                    current = current.parent
+                if current.name.lower() == "pg-dev":
+                    self.logs_dir = current / self.logs_dir
+                else:
+                    self.logs_dir = project_root / self.logs_dir
+            else:
+                self.logs_dir = project_root / self.logs_dir
+
+        # 最终安全检查：确保logs目录不在备份区域
+        final_logs_str = str(self.logs_dir).lower()
+        if any(forbidden in final_logs_str for forbidden in forbidden_paths):
+            self.logs_dir = project_root / "logs"
+            print(f"最终安全检查：强制重定向日志目录到: {self.logs_dir}")
+
+        # 创建目录
+        self.logs_dir.mkdir(parents=True, exist_ok=True)
+        (self.logs_dir / "archive").mkdir(exist_ok=True)
+        (self.logs_dir / "temp").mkdir(exist_ok=True)
+
+    def configure(
+        self,
+        level: Optional[str] = None,
+        console_enabled: bool = True,
+        file_enabled: bool = True,
+        performance_mode: bool = False,
+    ):
         """配置日志系统"""
         with self._lock:
             if self._configured:
@@ -134,16 +177,16 @@ class LoggingConfig:
 
             # 更新配置
             if level:
-                self.config['loggers']['']['level'] = level.upper()
+                self.config["loggers"][""]["level"] = level.upper()
 
             # 更新文件路径为绝对路径
-            for handler_name, handler_config in self.config['handlers'].items(
-            ):
-                if 'filename' in handler_config:
-                    filename = handler_config['filename']
+            for handler_name, handler_config in self.config["handlers"].items():
+                if "filename" in handler_config:
+                    filename = handler_config["filename"]
                     if not os.path.isabs(filename):
-                        handler_config['filename'] = str(
-                            self.logs_dir / os.path.basename(filename))
+                        handler_config["filename"] = str(
+                            self.logs_dir / os.path.basename(filename)
+                        )
 
             # 根据性能模式调整配置
             if performance_mode:
@@ -152,11 +195,11 @@ class LoggingConfig:
             # 配置处理器
             handlers = []
             if console_enabled:
-                handlers.append('console')
+                handlers.append("console")
             if file_enabled:
-                handlers.append('file')
+                handlers.append("file")
 
-            self.config['loggers']['']['handlers'] = handlers
+            self.config["loggers"][""]["handlers"] = handlers
 
             # 应用配置
             logging.config.dictConfig(self.config)
@@ -165,15 +208,15 @@ class LoggingConfig:
     def _optimize_for_performance(self):
         """性能模式优化"""
         # 减少文件日志级别
-        if 'file' in self.config['handlers']:
-            self.config['handlers']['file']['level'] = 'WARNING'
+        if "file" in self.config["handlers"]:
+            self.config["handlers"]["file"]["level"] = "WARNING"
 
         # 使用简单格式
-        for handler_name in ['console', 'file']:
-            if handler_name in self.config['handlers']:
-                self.config['handlers'][handler_name]['formatter'] = 'simple'
+        for handler_name in ["console", "file"]:
+            if handler_name in self.config["handlers"]:
+                self.config["handlers"][handler_name]["formatter"] = "simple"
 
-    def get_logger(self, name: str) -> 'StandardLogger':
+    def get_logger(self, name: str) -> "StandardLogger":
         """获取标准日志器"""
         if not self._configured:
             self.configure()
@@ -201,10 +244,10 @@ class StandardLogger:
     def _format_message(self, message: str, **kwargs) -> str:
         """格式化日志消息"""
         if self.trace_id:
-            kwargs['trace_id'] = self.trace_id
+            kwargs["trace_id"] = self.trace_id
 
         if kwargs:
-            context = ' '.join([f'{k}={v}' for k, v in kwargs.items()])
+            context = " ".join([f"{k}={v}" for k, v in kwargs.items()])
             return f"{message} [{context}]"
         return message
 
@@ -229,32 +272,26 @@ class StandardLogger:
     def error(self, message: str, error: Exception = None, **kwargs):
         """记录错误信息"""
         if error:
-            kwargs['error_type'] = error.__class__.__name__
-            kwargs['error_message'] = str(error)
-        self.logger.error(
-            self._format_message(
-                message,
-                **kwargs),
-            exc_info=error)
+            kwargs["error_type"] = error.__class__.__name__
+            kwargs["error_message"] = str(error)
+        self.logger.error(self._format_message(message, **kwargs), exc_info=error)
 
     def critical(self, message: str, error: Exception = None, **kwargs):
         """记录严重错误"""
         if error:
-            kwargs['error_type'] = error.__class__.__name__
-            kwargs['error_message'] = str(error)
-        self.logger.critical(
-            self._format_message(
-                message,
-                **kwargs),
-            exc_info=error)
+            kwargs["error_type"] = error.__class__.__name__
+            kwargs["error_message"] = str(error)
+        self.logger.critical(self._format_message(message, **kwargs), exc_info=error)
 
     def bulk_log(self, level: int, messages: List[str]):
         """批量日志记录"""
         if self.logger.isEnabledFor(level):
-            combined_message = '\n'.join(messages)
+            combined_message = "\n".join(messages)
             self.logger.log(
-                level, f"Bulk log ({
-                    len(messages)} entries):\n{combined_message}")
+                level,
+                f"Bulk log ({
+                    len(messages)} entries):\n{combined_message}",
+            )
 
 
 class PerformanceLogger(StandardLogger):
@@ -270,8 +307,10 @@ class PerformanceLogger(StandardLogger):
 
     def _should_flush(self) -> bool:
         """判断是否应该刷新缓冲区"""
-        return (len(self.buffer) >= self.buffer_size
-                or time.time() - self.last_flush >= self.flush_interval)
+        return (
+            len(self.buffer) >= self.buffer_size
+            or time.time() - self.last_flush >= self.flush_interval
+        )
 
     def _flush_buffer(self):
         """刷新缓冲区"""
@@ -298,13 +337,13 @@ class PerformanceLogger(StandardLogger):
 class LogCleaner:
     """日志清理器"""
 
-    def __init__(self, logs_dir: str = 'logs'):
+    def __init__(self, logs_dir: str = "logs"):
         self.logs_dir = Path(logs_dir)
-        self.logger = StandardLogger('LogCleaner')
+        self.logger = StandardLogger("LogCleaner")
         self.retention_config = {
-            'application': 30,  # 保留30天
-            'errors': 90,       # 保留90天
-            'performance': 7,   # 保留7天
+            "application": 30,  # 保留30天
+            "errors": 90,  # 保留90天
+            "performance": 7,  # 保留7天
         }
 
     def cleanup_old_logs(self, dry_run: bool = False):
@@ -316,21 +355,20 @@ class LogCleaner:
 
         for log_type, retention_days in self.retention_config.items():
             cleaned, size_freed = self._cleanup_log_type(
-                log_type, retention_days, dry_run)
+                log_type, retention_days, dry_run
+            )
             total_cleaned += cleaned
             total_size_freed += size_freed
 
         self.logger.info(
             "日志清理完成",
             files_cleaned=total_cleaned,
-            size_freed_mb=f"{total_size_freed / 1024 / 1024:.2f}"
+            size_freed_mb=f"{total_size_freed / 1024 / 1024:.2f}",
         )
 
     def _cleanup_log_type(
-            self,
-            log_type: str,
-            retention_days: int,
-            dry_run: bool) -> tuple:
+        self, log_type: str, retention_days: int, dry_run: bool
+    ) -> tuple:
         """清理特定类型的过期日志"""
         cutoff_date = datetime.now() - timedelta(days=retention_days)
         log_pattern = str(self.logs_dir / f"{log_type}*.log*")
@@ -372,12 +410,14 @@ _global_config = None
 _config_lock = threading.Lock()
 
 
-def initialize_logging(config_path: Optional[str] = None,
-                       logs_dir: str = 'logs',
-                       level: str = 'INFO',
-                       console_enabled: bool = True,
-                       file_enabled: bool = True,
-                       performance_mode: bool = False):
+def initialize_logging(
+    config_path: Optional[str] = None,
+    logs_dir: str = "logs",
+    level: str = "INFO",
+    console_enabled: bool = True,
+    file_enabled: bool = True,
+    performance_mode: bool = False,
+):
     """初始化全局日志配置"""
     global _global_config
 
@@ -389,7 +429,7 @@ def initialize_logging(config_path: Optional[str] = None,
             level=level,
             console_enabled=console_enabled,
             file_enabled=file_enabled,
-            performance_mode=performance_mode
+            performance_mode=performance_mode,
         )
 
 
@@ -401,9 +441,7 @@ def get_logger(name: str) -> StandardLogger:
     return _global_config.get_logger(name)
 
 
-def get_performance_logger(
-        name: str,
-        buffer_size: int = 100) -> PerformanceLogger:
+def get_performance_logger(name: str, buffer_size: int = 100) -> PerformanceLogger:
     """获取性能优化的日志器"""
     if _global_config is None:
         initialize_logging()
@@ -418,11 +456,14 @@ def cleanup_logs(dry_run: bool = False):
 
 
 # 日志装饰器
-def log_function_call(logger: Optional[StandardLogger] = None,
-                      level: int = logging.INFO,
-                      include_args: bool = False,
-                      include_result: bool = False):
+def log_function_call(
+    logger: Optional[StandardLogger] = None,
+    level: int = logging.INFO,
+    include_args: bool = False,
+    include_result: bool = False,
+):
     """函数调用日志装饰器"""
+
     def decorator(func):
         nonlocal logger
         if logger is None:
@@ -433,14 +474,12 @@ def log_function_call(logger: Optional[StandardLogger] = None,
             func_name = f"{func.__module__}.{func.__name__}"
 
             # 记录函数开始
-            log_data = {'function': func_name}
+            log_data = {"function": func_name}
             if include_args:
-                log_data['args'] = str(args)
-                log_data['kwargs'] = str(kwargs)
+                log_data["args"] = str(args)
+                log_data["kwargs"] = str(kwargs)
 
-            logger.logger.log(
-                level, logger._format_message(
-                    "函数调用开始", **log_data))
+            logger.logger.log(level, logger._format_message("函数调用开始", **log_data))
 
             start_time = time.time()
             try:
@@ -448,34 +487,35 @@ def log_function_call(logger: Optional[StandardLogger] = None,
                 duration = time.time() - start_time
 
                 # 记录函数完成
-                log_data['duration'] = f"{duration:.3f}s"
+                log_data["duration"] = f"{duration:.3f}s"
                 if include_result:
-                    log_data['result'] = str(result)[:200]  # 限制结果长度
+                    log_data["result"] = str(result)[:200]  # 限制结果长度
 
                 logger.logger.log(
-                    level, logger._format_message(
-                        "函数调用完成", **log_data))
+                    level, logger._format_message("函数调用完成", **log_data)
+                )
                 return result
 
             except Exception as e:
                 duration = time.time() - start_time
-                log_data['duration'] = f"{duration:.3f}s"
-                log_data['error'] = str(e)
+                log_data["duration"] = f"{duration:.3f}s"
+                log_data["error"] = str(e)
 
                 logger.logger.log(
-                    logging.ERROR, logger._format_message(
-                        "函数调用异常", **log_data))
+                    logging.ERROR, logger._format_message("函数调用异常", **log_data)
+                )
                 raise
 
         return wrapper
+
     return decorator
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # 测试代码
-    initialize_logging(level='DEBUG')
+    initialize_logging(level="DEBUG")
 
-    logger = get_logger('test')
+    logger = get_logger("test")
     logger.info("测试日志记录", test_param="value")
     logger.debug("调试信息")
     logger.warning("警告信息")
@@ -486,7 +526,7 @@ if __name__ == '__main__':
         logger.error("捕获异常", error=e)
 
     # 测试性能日志器
-    perf_logger = get_performance_logger('performance_test')
+    perf_logger = get_performance_logger("performance_test")
     for i in range(10):
         perf_logger.buffered_log(f"性能测试消息 {i}")
     perf_logger.flush()

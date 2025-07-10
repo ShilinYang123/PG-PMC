@@ -17,25 +17,25 @@ import yaml
 # 受保护的核心文件列表
 PROTECTED_FILES = [
     "docs/01-设计/开发任务书.md",
-    "docs/01-设计/技术路线.md",
+    "docs/01-设计/技术方案.md",
     "docs/01-设计/项目架构设计.md",
     "docs/01-设计/目录结构标准清单.md",
     "docs/03-管理/规范与流程.md",
     "docs/03-管理/project_config.yaml",
-
     "tools/finish.py",
     "tools/control.py",
     "tools/check_structure.py",
-    "tools/update_structure.py"
+    "tools/update_structure.py",
 ]
 
 
 def load_project_config():
     """加载项目配置"""
-    config_path = (Path(__file__).parent.parent / "docs" / "03-管理"
-                   / "project_config.yaml")
+    config_path = (
+        Path(__file__).parent.parent / "docs" / "03-管理" / "project_config.yaml"
+    )
     try:
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
         return config
     except Exception as e:
@@ -46,8 +46,8 @@ def load_project_config():
 def get_project_root():
     """获取项目根目录"""
     config = load_project_config()
-    if config and config.get('paths', {}).get('root'):
-        return Path(config['paths']['root'])
+    if config and config.get("paths", {}).get("root"):
+        return Path(config["paths"]["root"])
 
     # 备用方案：向上查找包含docs目录的根目录
     current_dir = Path(__file__).parent
@@ -113,7 +113,8 @@ def check_files_status(project_root):
         f"统计: 只读 {
             len(readonly_files)} 个, 可写 {
             len(writable_files)} 个, 缺失 {
-                len(missing_files)} 个")
+                len(missing_files)} 个"
+    )
 
     return readonly_files, writable_files, missing_files
 
@@ -124,8 +125,8 @@ def backup_files(project_root, files_to_backup):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # 从配置获取备份目录
-    if config and config.get('paths', {}).get('backup_dir'):
-        backup_base = Path(config['paths']['backup_dir'])
+    if config and config.get("paths", {}).get("backup_dir"):
+        backup_base = Path(config["paths"]["backup_dir"])
     else:
         backup_base = project_root / "bak"
 
@@ -188,8 +189,7 @@ def main():
     project_root = get_project_root()
 
     # 1. 检查当前文件状态
-    readonly_files, writable_files, missing_files = check_files_status(
-        project_root)
+    readonly_files, writable_files, missing_files = check_files_status(project_root)
 
     if missing_files:
         print(f"\n⚠️  警告: 发现 {len(missing_files)} 个文件缺失，请检查项目完整性")
@@ -215,13 +215,16 @@ def main():
             return
 
         elif choice in ["1", "2"]:
-            readonly_mode = (choice == "1")
+            readonly_mode = choice == "1"
             action = "只读" if readonly_mode else "可写"
 
             # 确认操作
-            confirm = input(
-                f"确认要将所有核心文件设置为{action}状态吗? (y/N): ").strip().lower()
-            if confirm not in ['y', 'yes', '是']:
+            confirm = (
+                input(f"确认要将所有核心文件设置为{action}状态吗? (y/N): ")
+                .strip()
+                .lower()
+            )
+            if confirm not in ["y", "yes", "是"]:
                 print("操作已取消")
                 continue
 
@@ -229,20 +232,18 @@ def main():
             if not readonly_mode:
                 print("\n正在备份文件...")
                 existing_files = [
-                    f for f in PROTECTED_FILES if (
-                        project_root / f).exists()]
-                backup_success, backup_dir = backup_files(
-                    project_root, existing_files)
+                    f for f in PROTECTED_FILES if (project_root / f).exists()
+                ]
+                backup_success, backup_dir = backup_files(project_root, existing_files)
                 if not backup_success:
                     print("备份失败，操作已取消")
                     continue
 
             # 设置权限
-            existing_files = [
-                f for f in PROTECTED_FILES if (
-                    project_root / f).exists()]
+            existing_files = [f for f in PROTECTED_FILES if (project_root / f).exists()]
             success_files, failed_files = set_files_permission(
-                project_root, existing_files, readonly_mode)
+                project_root, existing_files, readonly_mode
+            )
 
             if failed_files:
                 print("\n⚠️  部分文件权限设置失败，请检查文件是否被占用")

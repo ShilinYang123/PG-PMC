@@ -27,60 +27,60 @@ class ProjectNameStandardizer:
         Args:
             project_root: 项目根目录，如果为None则自动获取
         """
-        self.project_root = Path(
-            project_root) if project_root else get_project_root()
+        self.project_root = Path(project_root) if project_root else get_project_root()
         if isinstance(self.project_root, str):
             self.project_root = Path(self.project_root)
         self.config = get_config()
 
         # 需要标准化的文件模式
         self.file_patterns = [
-            '*.md', '*.py', '*.js', '*.json', '*.yaml', '*.yml',
-            '*.html', '*.css', '*.sh', '*.sql', '*.cfg', '*.ini',
-            '*.txt', '*.dockerfile', 'Dockerfile*'
+            "*.md",
+            "*.py",
+            "*.js",
+            "*.json",
+            "*.yaml",
+            "*.yml",
+            "*.html",
+            "*.css",
+            "*.sh",
+            "*.sql",
+            "*.cfg",
+            "*.ini",
+            "*.txt",
+            "*.dockerfile",
+            "Dockerfile*",
         ]
 
         # 排除的目录
-        self.exclude_dirs = {
-            'bak',
-            'logs',
-            '__pycache__',
-            '.git',
-            'node_modules'}
+        self.exclude_dirs = {"bak", "logs", "__pycache__", ".git", "node_modules"}
 
         # 从统一配置获取项目名称
-        project_name = self.config.get('project_name', '3AI')
+        project_name = self.config.get("project_name", "3AI")
 
         # 项目名称替换规则
         self.replacement_rules = [
             # 直接的项目名称引用
-            (r'\b3AI\b', project_name),
-            (r'\b3ai\b', project_name),
-
+            (r"\b3AI\b", project_name),
+            (r"\b3ai\b", project_name),
             # 容器名称
             (r'container_name:\s*"3ai-([\w-]+)"', r'container_name: "3AI-\1"'),
-
             # 数据库名称
-            (r'3ai_db', '3AI_db'),
-            (r'3ai_test_db', '3AI_test_db'),
-            (r'3ai_dev_db', '3AI_dev_db'),
-
+            (r"3ai_db", "3AI_db"),
+            (r"3ai_test_db", "3AI_test_db"),
+            (r"3ai_dev_db", "3AI_dev_db"),
             # 网络名称
-            (r'3ai-network', '3AI-network'),
-            (r'3ai-dev-network', '3AI-dev-network'),
-
+            (r"3ai-network", "3AI-network"),
+            (r"3ai-dev-network", "3AI-dev-network"),
             # 项目描述和标题
-            (r'3AI工作室', '3AI工作室'),
-            (r'3AI项目', '3AI项目'),
-            (r'3AI\s*工作室', '3AI工作室'),
-
+            (r"3AI工作室", "3AI工作室"),
+            (r"3AI项目", "3AI项目"),
+            (r"3AI\s*工作室", "3AI工作室"),
             # 邮箱和域名
-            (r'@3ai\.studio', '@3AI.studio'),
-            (r'3ai-studio', '3AI-studio'),
-
+            (r"@3ai\.studio", "@3AI.studio"),
+            (r"3ai-studio", "3AI-studio"),
             # 包名和模块名
             (r'"name":\s*"3ai-([\w-]+)"', r'"name": "3AI-\1"'),
-            (r'name\s*=\s*3ai-([\w-]+)', r'name = 3AI-\1'),
+            (r"name\s*=\s*3ai-([\w-]+)", r"name = 3AI-\1"),
         ]
 
     def scan_files(self) -> List[Path]:
@@ -94,8 +94,9 @@ class ProjectNameStandardizer:
         for pattern in self.file_patterns:
             for file_path in self.project_root.rglob(pattern):
                 # 检查是否在排除目录中
-                if any(exclude_dir in file_path.parts
-                       for exclude_dir in self.exclude_dirs):
+                if any(
+                    exclude_dir in file_path.parts for exclude_dir in self.exclude_dirs
+                ):
                     continue
 
                 if file_path.is_file():
@@ -113,7 +114,7 @@ class ProjectNameStandardizer:
             (行号, 原始内容, 建议替换内容) 的列表
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
         except (UnicodeDecodeError, PermissionError):
             return []
@@ -128,20 +129,15 @@ class ProjectNameStandardizer:
             for pattern, replacement in self.replacement_rules:
                 if re.search(pattern, modified_line, re.IGNORECASE):
                     new_line = re.sub(
-                        pattern,
-                        replacement,
-                        modified_line,
-                        flags=re.IGNORECASE)
+                        pattern, replacement, modified_line, flags=re.IGNORECASE
+                    )
                     if new_line != modified_line:
                         suggestions.append((line_num, original_line, new_line))
                         modified_line = new_line
 
         return suggestions
 
-    def apply_standardization(
-            self,
-            file_path: Path,
-            dry_run: bool = True) -> bool:
+    def apply_standardization(self, file_path: Path, dry_run: bool = True) -> bool:
         """应用项目名称标准化
 
         Args:
@@ -152,7 +148,7 @@ class ProjectNameStandardizer:
             是否有修改
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
         except (UnicodeDecodeError, PermissionError):
             return False
@@ -161,11 +157,7 @@ class ProjectNameStandardizer:
 
         # 应用替换规则
         for pattern, replacement in self.replacement_rules:
-            content = re.sub(
-                pattern,
-                replacement,
-                content,
-                flags=re.IGNORECASE)
+            content = re.sub(pattern, replacement, content, flags=re.IGNORECASE)
 
         # 检查是否有修改
         if content == original_content:
@@ -173,7 +165,7 @@ class ProjectNameStandardizer:
 
         # 如果不是试运行，写入文件
         if not dry_run:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
 
         return True
@@ -189,14 +181,11 @@ class ProjectNameStandardizer:
         """
         files = self.scan_files()
         report = {
-            'scan_time': str(Path().cwd()),
-            'project_root': str(self.project_root),
-            'total_files_scanned': len(files),
-            'files_with_issues': [],
-            'summary': {
-                'total_issues': 0,
-                'files_affected': 0
-            }
+            "scan_time": str(Path().cwd()),
+            "project_root": str(self.project_root),
+            "total_files_scanned": len(files),
+            "files_with_issues": [],
+            "summary": {"total_issues": 0, "files_affected": 0},
         }
 
         for file_path in files:
@@ -204,25 +193,21 @@ class ProjectNameStandardizer:
             if suggestions:
                 relative_path = file_path.relative_to(self.project_root)
                 file_report = {
-                    'file': str(relative_path),
-                    'issues_count': len(suggestions),
-                    'suggestions': [
-                        {
-                            'line': line_num,
-                            'original': original,
-                            'suggested': suggested
-                        }
+                    "file": str(relative_path),
+                    "issues_count": len(suggestions),
+                    "suggestions": [
+                        {"line": line_num, "original": original, "suggested": suggested}
                         for line_num, original, suggested in suggestions
-                    ]
+                    ],
                 }
-                report['files_with_issues'].append(file_report)
-                report['summary']['total_issues'] += len(suggestions)
+                report["files_with_issues"].append(file_report)
+                report["summary"]["total_issues"] += len(suggestions)
 
-        report['summary']['files_affected'] = len(report['files_with_issues'])
+        report["summary"]["files_affected"] = len(report["files_with_issues"])
 
         # 保存报告
         if output_file:
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(report, f, ensure_ascii=False, indent=2)
 
         return report
@@ -238,16 +223,16 @@ class ProjectNameStandardizer:
         """
         files = self.scan_files()
         results = {
-            'total_files': len(files),
-            'modified_files': 0,
-            'modified_file_list': []
+            "total_files": len(files),
+            "modified_files": 0,
+            "modified_file_list": [],
         }
 
         for file_path in files:
             if self.apply_standardization(file_path, dry_run):
-                results['modified_files'] += 1
+                results["modified_files"] += 1
                 relative_path = file_path.relative_to(self.project_root)
-                results['modified_file_list'].append(str(relative_path))
+                results["modified_file_list"].append(str(relative_path))
 
         return results
 
@@ -256,15 +241,13 @@ def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='项目名称标准化工具')
-    parser.add_argument('--scan', action='store_true', help='扫描并生成报告')
-    parser.add_argument('--apply', action='store_true', help='应用标准化修改')
+    parser = argparse.ArgumentParser(description="项目名称标准化工具")
+    parser.add_argument("--scan", action="store_true", help="扫描并生成报告")
+    parser.add_argument("--apply", action="store_true", help="应用标准化修改")
     parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        default=True,
-        help='试运行模式（默认）')
-    parser.add_argument('--output', type=str, help='报告输出文件路径')
+        "--dry-run", action="store_true", default=True, help="试运行模式（默认）"
+    )
+    parser.add_argument("--output", type=str, help="报告输出文件路径")
 
     args = parser.parse_args()
 
@@ -294,14 +277,14 @@ def main():
         print(f"总文件数: {results['total_files']}")
         print(f"修改文件数: {results['modified_files']}")
 
-        if results['modified_file_list']:
+        if results["modified_file_list"]:
             print("\n修改的文件:")
-            for file_path in results['modified_file_list']:
+            for file_path in results["modified_file_list"]:
                 print(f"  - {file_path}")
 
     else:
         parser.print_help()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

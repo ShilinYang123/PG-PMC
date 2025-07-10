@@ -119,9 +119,7 @@ class GeometryCreator:
 
             # 1. 创建外部圆柱体
             self.logger.info("创建外部圆柱体")
-            self._create_cylinder(
-                diameter=diameter, height=height, name="外壳"
-            )
+            self._create_cylinder(diameter=diameter, height=height, name="外壳")
             features.append("外部圆柱体")
 
             # 2. 创建内部空腔
@@ -234,9 +232,7 @@ class GeometryCreator:
 
             # 2. 创建支撑柱
             self.logger.info("创建支撑柱")
-            self._create_cylinder(
-                diameter=thickness * 2, height=height, name="支撑柱"
-            )
+            self._create_cylinder(diameter=thickness * 2, height=height, name="支撑柱")
             features.append("支撑柱")
 
             # 3. 创建托盘

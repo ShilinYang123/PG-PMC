@@ -27,7 +27,7 @@ try:
     print("拼接路径是否存在:", test_path.exists())
 
     # 测试 get_project_root 函数
-    if hasattr(finish, 'get_project_root'):
+    if hasattr(finish, "get_project_root"):
         direct_root = finish.get_project_root()
         print("\n=== get_project_root() 测试 ===")
         print("直接调用结果:", direct_root)
@@ -39,5 +39,6 @@ try:
 except Exception as e:
     print(f"导入或测试失败: {e}")
     import traceback
+
     traceback.print_exc()
     sys.exit(1)

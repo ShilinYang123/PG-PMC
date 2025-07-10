@@ -56,7 +56,7 @@ class ReportGenerator:
 
             # 构建每一级的缩进
             for i, part in enumerate(parts):
-                current_path = Path(*parts[:i + 1])
+                current_path = Path(*parts[: i + 1])
                 if current_path not in processed_dirs:
                     indent = "│   " * i
                     if i == len(parts) - 1:
@@ -86,8 +86,9 @@ class ReportGenerator:
 
         return content + "\n"
 
-    def format_directory_list(self, directories: List[Path],
-                              title: str = "目录列表") -> str:
+    def format_directory_list(
+        self, directories: List[Path], title: str = "目录列表"
+    ) -> str:
         """格式化目录列表"""
         if not directories:
             return f"## {title}\n\n(无目录)\n\n"
@@ -102,15 +103,16 @@ class ReportGenerator:
 
         return content + "\n"
 
-    def save_report(self, content: str, output_file: Path,
-                    message: str = "报告已保存") -> None:
+    def save_report(
+        self, content: str, output_file: Path, message: str = "报告已保存"
+    ) -> None:
         """保存报告到文件"""
         try:
             # 确保输出目录存在
             output_file.parent.mkdir(parents=True, exist_ok=True)
 
             # 写入文件
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(content)
 
             self._print_file_link(message, output_file)
@@ -127,15 +129,18 @@ class ReportGenerator:
             return f"{message}: {clickable_link}"
         return message
 
-    def generate_standard_report_header(self, tool_name: str,
-                                        directories_count: int,
-                                        files_count: int,
-                                        template_files_count: int = 0) -> str:
+    def generate_standard_report_header(
+        self,
+        tool_name: str,
+        directories_count: int,
+        files_count: int,
+        template_files_count: int = 0,
+    ) -> str:
         """生成标准报告头部"""
         # 从配置文件读取时间戳格式
-        structure_config = self.config.get('structure_check', {})
-        reporting_config = structure_config.get('reporting', {})
-        timestamp_format = reporting_config.get('timestamp_format', '%Y-%m-%d %H:%M:%S')
+        structure_config = self.config.get("structure_check", {})
+        reporting_config = structure_config.get("reporting", {})
+        timestamp_format = reporting_config.get("timestamp_format", "%Y-%m-%d %H:%M:%S")
 
         timestamp = datetime.now().strftime(timestamp_format)
 
@@ -153,15 +158,14 @@ class ReportGenerator:
         header += "\n\n"
         return header
 
-    def _generate_header(self, tool_name: str,
-                         whitelist_count: int,
-                         actual_count: int,
-                         result: str) -> str:
+    def _generate_header(
+        self, tool_name: str, whitelist_count: int, actual_count: int, result: str
+    ) -> str:
         """生成检查报告头部"""
         # 从配置文件读取时间戳格式
-        structure_config = self.config.get('structure_check', {})
-        reporting_config = structure_config.get('reporting', {})
-        timestamp_format = reporting_config.get('timestamp_format', '%Y-%m-%d %H:%M:%S')
+        structure_config = self.config.get("structure_check", {})
+        reporting_config = structure_config.get("reporting", {})
+        timestamp_format = reporting_config.get("timestamp_format", "%Y-%m-%d %H:%M:%S")
 
         timestamp = datetime.now().strftime(timestamp_format)
 
@@ -174,15 +178,17 @@ class ReportGenerator:
             f"> 检查结果: {result}\n\n"
         )
 
-    def generate_directory_section(self, paths: Set[str], title: str = "完整目录树") -> str:
+    def generate_directory_section(
+        self, paths: Set[str], title: str = "完整目录树"
+    ) -> str:
         """生成目录结构部分"""
         tree_content = self.generate_directory_tree(paths)
 
         # 从配置文件读取目录树根节点名称
-        structure_config = self.config.get('structure_check', {})
-        reporting_config = structure_config.get('reporting', {})
-        tree_config = reporting_config.get('tree_display', {})
-        root_name = tree_config.get('root_name', 'PinGao/')
+        structure_config = self.config.get("structure_check", {})
+        reporting_config = structure_config.get("reporting", {})
+        tree_config = reporting_config.get("tree_display", {})
+        root_name = tree_config.get("root_name", "PinGao/")
 
         return (
             f"## 当前目录结构\n\n"

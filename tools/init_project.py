@@ -8,6 +8,7 @@ import os
 import shutil
 import argparse
 import logging
+
 # from datetime import datetime  # unused
 
 from config_loader import get_config
@@ -67,9 +68,7 @@ def create_core_directories(target_project_root):
     #     - "bak"
 
     # 优先从配置的 init_project.core_directories 获取
-    core_directories = CONFIG.get(
-        "init_project", {}).get(
-        "core_directories", [])
+    core_directories = CONFIG.get("init_project", {}).get("core_directories", [])
 
     if not core_directories:
         # 如果配置中没有，则尝试从目录结构标准清单中提取（简化版）
@@ -78,7 +77,9 @@ def create_core_directories(target_project_root):
             "配置中未找到 'init_project.core_directories'，将使用预设核心目录列表。"
         )
         # 从配置文件获取报告目录
-        report_dir = CONFIG.get('structure_check', {}).get('report_dir', 'logs/检查报告')
+        report_dir = CONFIG.get("structure_check", {}).get(
+            "report_dir", "logs/检查报告"
+        )
 
         core_directories = [
             "docs/01-设计",
@@ -230,33 +231,33 @@ def create_core_files(target_project_root):
         )
         # 预设一些基本文件
         project_name_placeholder = os.path.basename(target_project_root)
-        core_files_config = [{"path": "README.md",
-                              "content": f"# {project_name_placeholder}\n\n这是一个新的项目。",
-                              },
-                             {"path": ".gitignore",
-                              "content": (
-                                  "# Common .gitignore\n__pycache__/\n*.pyc\n*.pyo\n"
-                                  "*.pyd\n.Python\nbuild/\ndist/\n*.egg-info/\n.env\n"
-                                  ".vscode/\n.idea/\nlogs/\nbak/\n*.log\n*.sqlite3\n"
-                                  "*.db\n*.tmp\n*.swp\n.DS_Store"),
-                              },
-                             {"path": "docs/03-管理/.env.example",
-                              "copy_from_project_root": (
-                                  "docs/03-管理/.env.example"),
-                              },
-                             {"path": "docs/03-管理/project_config.yaml",
-                              "copy_from_project_root": (
-                                  "docs/03-管理/project_config.yaml"),
-                              },
-                             {"path": "project/src/__init__.py",
-                              "content": ""},
-                             {"path": "project/tests/__init__.py",
-                              "content": ""},
-                             {"path": "tools/__init__.py",
-                              "content": ""},
-                             {"path": "tools/tests/__init__.py",
-                              "content": ""},
-                             ]
+        core_files_config = [
+            {
+                "path": "README.md",
+                "content": f"# {project_name_placeholder}\n\n这是一个新的项目。",
+            },
+            {
+                "path": ".gitignore",
+                "content": (
+                    "# Common .gitignore\n__pycache__/\n*.pyc\n*.pyo\n"
+                    "*.pyd\n.Python\nbuild/\ndist/\n*.egg-info/\n.env\n"
+                    ".vscode/\n.idea/\nlogs/\nbak/\n*.log\n*.sqlite3\n"
+                    "*.db\n*.tmp\n*.swp\n.DS_Store"
+                ),
+            },
+            {
+                "path": "docs/03-管理/.env.example",
+                "copy_from_project_root": ("docs/03-管理/.env.example"),
+            },
+            {
+                "path": "docs/03-管理/project_config.yaml",
+                "copy_from_project_root": ("docs/03-管理/project_config.yaml"),
+            },
+            {"path": "project/src/__init__.py", "content": ""},
+            {"path": "project/tests/__init__.py", "content": ""},
+            {"path": "tools/__init__.py", "content": ""},
+            {"path": "tools/tests/__init__.py", "content": ""},
+        ]
 
     created_count = 0
     for file_entry in core_files_config:
@@ -279,7 +280,8 @@ def create_core_files(target_project_root):
                     logger.info(f"已从 {source_abs_path} 复制文件到: {abs_file_path}")
                 else:
                     logger.warning(
-                        f"源文件 {source_abs_path} 不存在，无法复制。将创建空文件于 {abs_file_path}")
+                        f"源文件 {source_abs_path} 不存在，无法复制。将创建空文件于 {abs_file_path}"
+                    )
                     with open(
                         abs_file_path,
                         "w",
@@ -292,8 +294,7 @@ def create_core_files(target_project_root):
                 content = file_entry["content"]
                 # 简单替换项目名占位符
                 project_name_actual = os.path.basename(target_project_root)
-                content = content.replace(
-                    "{project_name}", project_name_actual)
+                content = content.replace("{project_name}", project_name_actual)
                 with open(
                     abs_file_path,
                     "w",
@@ -334,11 +335,7 @@ def initialize_git_repository(target_project_root):
             logger.info(f"路径 {target_project_root} 下已存在 .git 目录，跳过初始化。")
             return True
 
-        result = execute_command(
-            "git",
-            ["init"],
-            cwd=target_project_root,
-            check=False)
+        result = execute_command("git", ["init"], cwd=target_project_root, check=False)
         completed_process = (
             result  # Keep variable name if other logic depends on it,
             # or adapt

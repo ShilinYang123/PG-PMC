@@ -21,8 +21,7 @@ def test_structure_checker():
     # 获取项目根目录和白名单文件路径
     script_dir = Path(__file__).parent
     root_dir = script_dir.parent
-    whitelist_file = (root_dir / "docs" / "01-设计"
-                      / "目录结构标准清单.md")
+    whitelist_file = root_dir / "docs" / "01-设计" / "目录结构标准清单.md"
 
     # 检查白名单文件是否存在
     if not whitelist_file.exists():
@@ -36,21 +35,19 @@ def test_structure_checker():
 
         # 测试白名单解析
         whitelist_structure = checker.parse_whitelist()
-        dirs_count = len(whitelist_structure['directories'])
-        files_count = len(whitelist_structure['files'])
-        print(f"✅ 白名单解析成功，目录: {dirs_count} 个，"
-              f"文件: {files_count} 个")
+        dirs_count = len(whitelist_structure["directories"])
+        files_count = len(whitelist_structure["files"])
+        print(f"✅ 白名单解析成功，目录: {dirs_count} 个，" f"文件: {files_count} 个")
 
         # 测试当前结构扫描
         current_structure = checker.scan_current_structure()
-        curr_dirs = len(current_structure['directories'])
-        curr_files = len(current_structure['files'])
-        print(f"✅ 当前结构扫描成功，目录: {curr_dirs} 个，"
-              f"文件: {curr_files} 个")
+        curr_dirs = len(current_structure["directories"])
+        curr_files = len(current_structure["files"])
+        print(f"✅ 当前结构扫描成功，目录: {curr_dirs} 个，" f"文件: {curr_files} 个")
 
         # 测试结构对比
         checker.compare_structures(whitelist_structure, current_structure)
-        compliance = checker.stats['compliance_rate']
+        compliance = checker.stats["compliance_rate"]
         print(f"✅ 结构对比完成，合规率: {compliance:.1f}%")
 
         # 测试报告生成

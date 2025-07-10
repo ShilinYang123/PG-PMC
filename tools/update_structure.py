@@ -21,6 +21,7 @@ from datetime import datetime
 import argparse
 import yaml
 import asyncio
+
 # import aiofiles  # 暂时不使用异步文件操作
 from concurrent.futures import ThreadPoolExecutor
 import time
@@ -49,86 +50,134 @@ class DirectoryStructureGenerator:
         self.config = self._load_config()
 
         # 从配置文件中获取生成器配置
-        structure_config = self.config.get('structure_check', {})
-        generator_config = structure_config.get('generator', {})
+        structure_config = self.config.get("structure_check", {})
+        generator_config = structure_config.get("generator", {})
 
         # 排除规则配置
-        self.excluded_dirs = set(generator_config.get('excluded_dirs', [
-            '__pycache__', '.git', '.vscode', '.idea', 'node_modules',
-            '.pytest_cache', '.coverage', 'htmlcov', 'dist', 'build',
-            '*.egg-info', '.tox', '.mypy_cache', '.DS_Store',
-            'Thumbs.db', '.venv', 'venv', 'env'
-        ]))
+        self.excluded_dirs = set(
+            generator_config.get(
+                "excluded_dirs",
+                [
+                    "__pycache__",
+                    ".git",
+                    ".vscode",
+                    ".idea",
+                    "node_modules",
+                    ".pytest_cache",
+                    ".coverage",
+                    "htmlcov",
+                    "dist",
+                    "build",
+                    "*.egg-info",
+                    ".tox",
+                    ".mypy_cache",
+                    ".DS_Store",
+                    "Thumbs.db",
+                    ".venv",
+                    "venv",
+                    "env",
+                ],
+            )
+        )
 
-        self.excluded_files = set(generator_config.get('excluded_files', [
-            '.gitkeep', '.DS_Store', 'Thumbs.db',
-            '*.pyc', '*.pyo', '*.pyd', '__pycache__',
-            '*.so', '*.dylib', '*.dll'
-        ]))
+        self.excluded_files = set(
+            generator_config.get(
+                "excluded_files",
+                [
+                    ".gitkeep",
+                    ".DS_Store",
+                    "Thumbs.db",
+                    "*.pyc",
+                    "*.pyo",
+                    "*.pyd",
+                    "__pycache__",
+                    "*.so",
+                    "*.dylib",
+                    "*.dll",
+                ],
+            )
+        )
 
         # 允许的隐藏文件/目录
         self.allowed_hidden_items = set(
-            generator_config.get('allowed_hidden_items', [
-                '.env', '.env.example', '.gitignore', '.dockerignore',
-                '.eslintrc.js', '.prettierrc', '.pre-commit-config.yaml',
-                '.devcontainer', '.github', '.venv'
-            ]))
+            generator_config.get(
+                "allowed_hidden_items",
+                [
+                    ".env",
+                    ".env.example",
+                    ".gitignore",
+                    ".dockerignore",
+                    ".eslintrc.js",
+                    ".prettierrc",
+                    ".pre-commit-config.yaml",
+                    ".devcontainer",
+                    ".github",
+                    ".venv",
+                ],
+            )
+        )
 
         # 特殊目录配置
-        self.special_dirs = generator_config.get('special_dirs', {
-            'bak': ['github_repo', '迁移备份', '专项备份', '待清理资料', '常规备份'],
-            'logs': ['工作记录', '检查报告', '其他日志', 'archive']
-        })
+        self.special_dirs = generator_config.get(
+            "special_dirs",
+            {
+                "bak": [
+                    "github_repo",
+                    "迁移备份",
+                    "专项备份",
+                    "待清理资料",
+                    "常规备份",
+                ],
+                "logs": ["工作记录", "检查报告", "其他日志", "archive"],
+            },
+        )
 
         # 输出格式配置
-        self.output_formats = generator_config.get(
-            'output_formats', ['markdown'])
+        self.output_formats = generator_config.get("output_formats", ["markdown"])
 
         # 性能配置
-        self.performance = generator_config.get('performance', {
-            'max_workers': 4,
-            'batch_size': 100,
-            'enable_async': True
-        })
+        self.performance = generator_config.get(
+            "performance", {"max_workers": 4, "batch_size": 100, "enable_async": True}
+        )
 
         # 缓存配置
-        self.cache = generator_config.get('cache', {
-            'enabled': False,
-            'cache_file': 'structure_cache.json',
-            'ttl_hours': 24,
-            'cache_dir': '.cache/structure',
-            'check_mtime': True
-        })
+        self.cache = generator_config.get(
+            "cache",
+            {
+                "enabled": False,
+                "cache_file": "structure_cache.json",
+                "ttl_hours": 24,
+                "cache_dir": ".cache/structure",
+                "check_mtime": True,
+            },
+        )
 
         # 初始化缓存目录
-        if self.cache.get('enabled', False):
+        if self.cache.get("enabled", False):
             self._init_cache_dir()
 
         # 性能统计
         self.perf_stats = {
-            'scan_start_time': None,
-            'scan_end_time': None,
-            'total_scan_time': 0,
-            'async_enabled': self.performance.get('enable_async', True)
+            "scan_start_time": None,
+            "scan_end_time": None,
+            "total_scan_time": 0,
+            "async_enabled": self.performance.get("enable_async", True),
         }
 
         # 统计信息
-        self.stats = {
-            'total_dirs': 0,
-            'total_files': 0
-        }
+        self.stats = {"total_dirs": 0, "total_files": 0}
 
     def _init_cache_dir(self) -> None:
         """初始化缓存目录"""
-        cache_dir_str = self.cache.get('cache_dir', '.cache/structure')
+        cache_dir_str = self.cache.get("cache_dir", ".cache/structure")
         cache_dir = self.project_root / Path(cache_dir_str)
         cache_dir.mkdir(parents=True, exist_ok=True)
 
     def _get_cache_file_path(self) -> Path:
         """获取缓存文件路径"""
-        cache_dir_str = self.cache.get('cache_dir', '.cache/structure')
+        cache_dir_str = self.cache.get("cache_dir", ".cache/structure")
         cache_dir = self.project_root / Path(cache_dir_str)
-        cache_file = self.cache.get('cache_file', 'structure_cache.json')
+        cache_file = self.cache.get("cache_file", "structure_cache.json")
         return cache_dir / cache_file
 
     def _get_directory_hash(self, dir_path: Path) -> str:
@@ -156,7 +205,7 @@ class DirectoryStructureGenerator:
         Returns:
             缓存数据字典
         """
-        if not self.cache.get('enabled', False):
+        if not self.cache.get("enabled", False):
             return {}
 
         cache_file = self._get_cache_file_path()
@@ -164,12 +213,12 @@ class DirectoryStructureGenerator:
             return {}
 
         try:
-            with open(cache_file, 'r', encoding='utf-8') as f:
+            with open(cache_file, "r", encoding="utf-8") as f:
                 cache_data = json.load(f)
 
             # 检查缓存是否过期
-            cache_time = cache_data.get('timestamp', 0)
-            ttl_seconds = self.cache.get('ttl_hours', 24) * 3600
+            cache_time = cache_data.get("timestamp", 0)
+            ttl_seconds = self.cache.get("ttl_hours", 24) * 3600
             current_time = time.time()
 
             if current_time - cache_time > ttl_seconds:
@@ -181,28 +230,29 @@ class DirectoryStructureGenerator:
             print(f"⚠️  加载缓存失败: {e}")
             return {}
 
-    def _save_cache(self, structure: List[Dict],
-                    directory_hashes: Dict[str, str]) -> None:
+    def _save_cache(
+        self, structure: List[Dict], directory_hashes: Dict[str, str]
+    ) -> None:
         """保存缓存数据
 
         Args:
             structure: 目录结构数据
             directory_hashes: 目录哈希值映射
         """
-        if not self.cache.get('enabled', False):
+        if not self.cache.get("enabled", False):
             return
 
         cache_file = self._get_cache_file_path()
 
         try:
             cache_data = {
-                'timestamp': time.time(),
-                'structure': structure,
-                'directory_hashes': directory_hashes,
-                'stats': self.stats.copy()
+                "timestamp": time.time(),
+                "structure": structure,
+                "directory_hashes": directory_hashes,
+                "stats": self.stats.copy(),
             }
 
-            with open(cache_file, 'w', encoding='utf-8') as f:
+            with open(cache_file, "w", encoding="utf-8") as f:
                 json.dump(cache_data, f, ensure_ascii=False, indent=2)
 
             print(f"💾 缓存已保存: {cache_file}")
@@ -219,14 +269,15 @@ class DirectoryStructureGenerator:
         Returns:
             目录是否发生变化
         """
-        if not self.cache.get('check_mtime', True):
+        if not self.cache.get("check_mtime", True):
             return False
 
         current_hash = self._get_directory_hash(dir_path)
         return current_hash != cached_hash
 
-    def _merge_cached_structure(self, cached_structure: List[Dict],
-                                new_structure: List[Dict]) -> List[Dict]:
+    def _merge_cached_structure(
+        self, cached_structure: List[Dict], new_structure: List[Dict]
+    ) -> List[Dict]:
         """合并缓存的结构和新扫描的结构
 
         Args:
@@ -237,8 +288,8 @@ class DirectoryStructureGenerator:
             合并后的结构数据
         """
         # 创建路径到结构项的映射
-        cached_map = {item['path']: item for item in cached_structure}
-        new_map = {item['path']: item for item in new_structure}
+        cached_map = {item["path"]: item for item in cached_structure}
+        new_map = {item["path"]: item for item in new_structure}
 
         # 合并结构
         merged = []
@@ -258,11 +309,12 @@ class DirectoryStructureGenerator:
         """加载项目配置文件"""
         try:
             project_root = get_project_root()
-            config_file = Path(project_root) / "docs" / \
-                "03-管理" / "project_config.yaml"
+            config_file = (
+                Path(project_root) / "docs" / "03-管理" / "project_config.yaml"
+            )
 
             if config_file.exists():
-                with open(config_file, 'r', encoding='utf-8') as f:
+                with open(config_file, "r", encoding="utf-8") as f:
                     return yaml.safe_load(f) or {}
             else:
                 print(f"⚠️  配置文件不存在: {config_file}")
@@ -284,81 +336,78 @@ class DirectoryStructureGenerator:
 
         return False
 
-    def should_filter_special_directory(
-            self, relative_path: str, entry: Path) -> bool:
+    def should_filter_special_directory(self, relative_path: str, entry: Path) -> bool:
         """判断是否应该过滤特殊目录中的项目"""
 
         # 从配置中获取允许的子目录
-        allowed_bak_dirs = set(self.special_dirs.get('bak', []))
-        allowed_logs_dirs = set(self.special_dirs.get('logs', []))
+        allowed_bak_dirs = set(self.special_dirs.get("bak", []))
+        allowed_logs_dirs = set(self.special_dirs.get("logs", []))
 
         # 检查是否在bak/目录下
-        if relative_path.startswith('bak/'):
+        if relative_path.startswith("bak/"):
             # 如果是bak/下的直接子项，检查是否在允许列表中
-            if relative_path.count('/') == 1:  # bak/xxx 格式
-                dir_name = relative_path.split('/')[-1]
+            if relative_path.count("/") == 1:  # bak/xxx 格式
+                dir_name = relative_path.split("/")[-1]
                 if entry.is_dir() and dir_name not in allowed_bak_dirs:
                     return True  # 过滤掉不在允许列表中的目录
                 elif entry.is_file():
                     return True  # 过滤掉bak/下的所有文件
-            elif relative_path.count('/') > 1:  # bak/xxx/yyy 格式
+            elif relative_path.count("/") > 1:  # bak/xxx/yyy 格式
                 return True  # 过滤掉bak/子目录下的所有内容
 
         # 检查是否在logs/目录下
-        elif relative_path.startswith('logs/'):
+        elif relative_path.startswith("logs/"):
             # 如果是logs/下的直接子项，检查是否在允许列表中
-            if relative_path.count('/') == 1:  # logs/xxx 格式
-                dir_name = relative_path.split('/')[-1]
+            if relative_path.count("/") == 1:  # logs/xxx 格式
+                dir_name = relative_path.split("/")[-1]
                 if entry.is_dir() and dir_name not in allowed_logs_dirs:
                     return True  # 过滤掉不在允许列表中的目录
                 elif entry.is_file():
                     return True  # 过滤掉logs/下的所有文件
-            elif relative_path.count('/') > 1:  # logs/xxx/yyy 格式
+            elif relative_path.count("/") > 1:  # logs/xxx/yyy 格式
                 return True  # 过滤掉logs/子目录下的所有内容
 
         return False
 
-    def scan_filtered_directory(
-            self,
-            dir_path: Path,
-            relative_path: str) -> List[Dict]:
+    def scan_filtered_directory(self, dir_path: Path, relative_path: str) -> List[Dict]:
         """扫描经过特殊过滤的目录（bak/和logs/）"""
         items = []
 
         # 从配置中获取允许的子目录
         if relative_path == "bak":
-            allowed_dirs = set(self.special_dirs.get('bak', []))
+            allowed_dirs = set(self.special_dirs.get("bak", []))
         elif relative_path == "logs":
-            allowed_dirs = set(self.special_dirs.get('logs', []))
+            allowed_dirs = set(self.special_dirs.get("logs", []))
         else:
             return items
 
         try:
             # 只扫描允许的子目录
-            entries = sorted(
-                dir_path.iterdir(), key=lambda x: x.name.lower()
-            )
+            entries = sorted(dir_path.iterdir(), key=lambda x: x.name.lower())
             for entry in entries:
                 if entry.is_dir() and entry.name in allowed_dirs:
                     # 添加允许的子目录，但不递归扫描其内容
-                    items.append({
-                        'type': 'directory',
-                        'name': entry.name,
-                        'path': f"{relative_path}/{entry.name}/",
-                        'children': []  # 不扫描子目录内容
-                    })
-                    self.stats['total_dirs'] += 1
+                    items.append(
+                        {
+                            "type": "directory",
+                            "name": entry.name,
+                            "path": f"{relative_path}/{entry.name}/",
+                            "children": [],  # 不扫描子目录内容
+                        }
+                    )
+                    self.stats["total_dirs"] += 1
         except Exception as e:
             print(f"❌ 扫描过滤目录时出错: {dir_path} - {type(e).__name__}: {e}")
 
         return items
 
     async def scan_directory_async(
-            self,
-            dir_path: Path,
-            relative_path: str = "",
-            semaphore: asyncio.Semaphore = None,
-            executor: ThreadPoolExecutor = None) -> List[Dict]:
+        self,
+        dir_path: Path,
+        relative_path: str = "",
+        semaphore: asyncio.Semaphore = None,
+        executor: ThreadPoolExecutor = None,
+    ) -> List[Dict]:
         """异步扫描目录结构
 
         Args:
@@ -370,13 +419,11 @@ class DirectoryStructureGenerator:
             目录结构列表
         """
         if semaphore is None:
-            semaphore = asyncio.Semaphore(
-                self.performance.get('max_workers', 4)
-            )
+            semaphore = asyncio.Semaphore(self.performance.get("max_workers", 4))
 
         if executor is None:
             executor = ThreadPoolExecutor(
-                max_workers=self.performance.get('max_workers', 4)
+                max_workers=self.performance.get("max_workers", 4)
             )
             should_close_executor = True
         else:
@@ -387,17 +434,15 @@ class DirectoryStructureGenerator:
         try:
             # 使用线程池执行同步的目录读取操作
             loop = asyncio.get_event_loop()
-            entries = await loop.run_in_executor(
-                executor, list, dir_path.iterdir()
-            )
+            entries = await loop.run_in_executor(executor, list, dir_path.iterdir())
 
             # 按名称排序，目录在前
             entries.sort(key=lambda x: (x.is_file(), x.name.lower()))
 
             # 分批处理条目以避免过多并发
-            batch_size = self.performance.get('batch_size', 100)
+            batch_size = self.performance.get("batch_size", 100)
             for i in range(0, len(entries), batch_size):
-                batch = entries[i:i + batch_size]
+                batch = entries[i : i + batch_size]
                 batch_tasks = []
 
                 for entry in batch:
@@ -411,9 +456,7 @@ class DirectoryStructureGenerator:
                         item_relative_path = entry.name
 
                     # 特殊处理bak/和logs/目录
-                    if self.should_filter_special_directory(
-                        item_relative_path, entry
-                    ):
+                    if self.should_filter_special_directory(item_relative_path, entry):
                         continue
 
                     # 创建异步任务
@@ -443,11 +486,12 @@ class DirectoryStructureGenerator:
         return items
 
     async def _process_entry_async(
-            self,
-            entry: Path,
-            item_relative_path: str,
-            semaphore: asyncio.Semaphore,
-            executor: ThreadPoolExecutor) -> Dict:
+        self,
+        entry: Path,
+        item_relative_path: str,
+        semaphore: asyncio.Semaphore,
+        executor: ThreadPoolExecutor,
+    ) -> Dict:
         """异步处理单个条目
 
         Args:
@@ -463,11 +507,10 @@ class DirectoryStructureGenerator:
             try:
                 if entry.is_dir():
                     # 目录处理
-                    self.stats['total_dirs'] += 1
+                    self.stats["total_dirs"] += 1
 
                     # 对于bak/和logs/目录，使用同步方法
-                    if (item_relative_path == "bak" or
-                            item_relative_path == "logs"):
+                    if item_relative_path == "bak" or item_relative_path == "logs":
                         children = self.scan_filtered_directory(
                             entry, item_relative_path
                         )
@@ -477,35 +520,32 @@ class DirectoryStructureGenerator:
                         )
 
                     return {
-                        'type': 'directory',
-                        'name': entry.name,
-                        'path': item_relative_path,
-                        'children': children
+                        "type": "directory",
+                        "name": entry.name,
+                        "path": item_relative_path,
+                        "children": children,
                     }
                 else:
                     # 文件处理
-                    self.stats['total_files'] += 1
+                    self.stats["total_files"] += 1
 
                     # 异步获取文件大小
-                    file_size = await self._get_file_size_async(
-                        entry, executor
-                    )
+                    file_size = await self._get_file_size_async(entry, executor)
 
                     return {
-                        'type': 'file',
-                        'name': entry.name,
-                        'path': item_relative_path,
-                        'size': file_size
+                        "type": "file",
+                        "name": entry.name,
+                        "path": item_relative_path,
+                        "size": file_size,
                     }
 
             except Exception as e:
-                print(
-                    f"⚠️  处理条目时出错: {entry} - {type(e).__name__}: {e}"
-                )
+                print(f"⚠️  处理条目时出错: {entry} - {type(e).__name__}: {e}")
                 return None
 
     async def _get_file_size_async(
-            self, file_path: Path, executor: ThreadPoolExecutor) -> int:
+        self, file_path: Path, executor: ThreadPoolExecutor
+    ) -> int:
         """异步获取文件大小
 
         Args:
@@ -518,18 +558,14 @@ class DirectoryStructureGenerator:
         try:
             loop = asyncio.get_event_loop()
             stat_result = await loop.run_in_executor(
-                executor,
-                lambda: file_path.stat() if file_path.exists() else None
+                executor, lambda: file_path.stat() if file_path.exists() else None
             )
             return stat_result.st_size if stat_result else -1
         except Exception as e:
             print(f"⚠️  异步获取文件大小失败: {file_path} - {e}")
             return -1
 
-    def scan_directory(
-            self,
-            dir_path: Path,
-            relative_path: str = "") -> List[Dict]:
+    def scan_directory(self, dir_path: Path, relative_path: str = "") -> List[Dict]:
         """扫描目录结构
 
         Args:
@@ -558,35 +594,33 @@ class DirectoryStructureGenerator:
                     item_relative_path = entry.name
 
                 # 特殊处理bak/和logs/目录，只显示指定的子目录名
-                if self.should_filter_special_directory(
-                        item_relative_path, entry):
+                if self.should_filter_special_directory(item_relative_path, entry):
                     continue
 
                 if entry.is_dir():
                     # 目录
-                    self.stats['total_dirs'] += 1
+                    self.stats["total_dirs"] += 1
 
                     # 对于bak/和logs/目录，只扫描允许的子目录
                     children = []
-                    if (item_relative_path == "bak" or
-                            item_relative_path == "logs"):
+                    if item_relative_path == "bak" or item_relative_path == "logs":
                         children = self.scan_filtered_directory(
-                            entry, item_relative_path)
+                            entry, item_relative_path
+                        )
                     else:
-                        children = self.scan_directory(
-                            entry, item_relative_path)
+                        children = self.scan_directory(entry, item_relative_path)
 
                     item = {
-                        'type': 'directory',
-                        'name': entry.name,
-                        'path': item_relative_path,
-                        'children': children
+                        "type": "directory",
+                        "name": entry.name,
+                        "path": item_relative_path,
+                        "children": children,
                     }
                     items.append(item)
 
                 else:
                     # 文件
-                    self.stats['total_files'] += 1
+                    self.stats["total_files"] += 1
 
                     # 安全获取文件大小
                     file_size = 0
@@ -597,15 +631,17 @@ class DirectoryStructureGenerator:
                         print(f"⚠️  无法获取文件大小: {entry} - {e}")
                         file_size = -1  # 标记为无法获取
                     except Exception as e:
-                        print(f"⚠️  获取文件信息时出错: {entry} - "
-                              f"{type(e).__name__}: {e}")
+                        print(
+                            f"⚠️  获取文件信息时出错: {entry} - "
+                            f"{type(e).__name__}: {e}"
+                        )
                         file_size = -1
 
                     item = {
-                        'type': 'file',
-                        'name': entry.name,
-                        'path': item_relative_path,
-                        'size': file_size
+                        "type": "file",
+                        "name": entry.name,
+                        "path": item_relative_path,
+                        "size": file_size,
                     }
                     items.append(item)
 
@@ -633,9 +669,7 @@ class DirectoryStructureGenerator:
 
         return items
 
-    async def scan_directory_with_performance(
-            self,
-            dir_path: Path) -> List[Dict]:
+    async def scan_directory_with_performance(self, dir_path: Path) -> List[Dict]:
         """带性能优化的目录扫描入口方法
 
         Args:
@@ -645,12 +679,12 @@ class DirectoryStructureGenerator:
             目录结构列表
         """
         # 记录开始时间
-        self.perf_stats['scan_start_time'] = time.time()
+        self.perf_stats["scan_start_time"] = time.time()
 
         # 尝试加载缓存
         cache_data = self._load_cache()
-        cached_structure = cache_data.get('structure', [])
-        cached_hashes = cache_data.get('directory_hashes', {})
+        cached_structure = cache_data.get("structure", [])
+        cached_hashes = cache_data.get("directory_hashes", {})
 
         if cache_data and cached_structure:
             print("📦 发现缓存数据，检查是否需要增量更新...")
@@ -660,27 +694,30 @@ class DirectoryStructureGenerator:
             if not self._is_directory_changed(dir_path, root_hash):
                 print("✅ 缓存有效，直接使用缓存数据")
                 # 恢复统计信息
-                if 'stats' in cache_data:
-                    self.stats.update(cache_data['stats'])
+                if "stats" in cache_data:
+                    self.stats.update(cache_data["stats"])
 
                 end_time = time.time()
-                scan_start = self.perf_stats['scan_start_time']
+                scan_start = self.perf_stats["scan_start_time"]
                 print(f"⏱️  缓存加载耗时: {end_time - scan_start:.2f}秒")
                 print(
                     f"📊 缓存统计: {self.stats['total_dirs']}个目录, "
-                    f"{self.stats['total_files']}个文件")
+                    f"{self.stats['total_files']}个文件"
+                )
                 return cached_structure
             else:
                 print("🔄 检测到目录变化，执行增量扫描...")
 
-        print(f"🚀 启动{'异步' if self.perf_stats['async_enabled'] else '同步'}扫描模式")
+        print(
+            f"🚀 启动{'异步' if self.perf_stats['async_enabled'] else '同步'}扫描模式"
+        )
         print(
             f"⚙️  配置: 最大工作线程={self.performance.get('max_workers', 4)}, "
             f"批处理大小={self.performance.get('batch_size', 100)}"
         )
 
         try:
-            if self.perf_stats['async_enabled']:
+            if self.perf_stats["async_enabled"]:
                 # 使用异步扫描
                 structure = await self.scan_directory_async(dir_path)
             else:
@@ -688,10 +725,10 @@ class DirectoryStructureGenerator:
                 structure = self.scan_directory(dir_path)
 
             # 记录结束时间
-            self.perf_stats['scan_end_time'] = time.time()
-            self.perf_stats['total_scan_time'] = (
-                self.perf_stats['scan_end_time'] -
-                self.perf_stats['scan_start_time'])
+            self.perf_stats["scan_end_time"] = time.time()
+            self.perf_stats["total_scan_time"] = (
+                self.perf_stats["scan_end_time"] - self.perf_stats["scan_start_time"]
+            )
 
             print(f"⏱️  扫描耗时: {self.perf_stats['total_scan_time']:.2f}秒")
             print(
@@ -700,9 +737,8 @@ class DirectoryStructureGenerator:
             )
 
             # 保存缓存
-            if self.cache.get('enabled', False):
-                directory_hashes = {
-                    str(dir_path): self._get_directory_hash(dir_path)}
+            if self.cache.get("enabled", False):
+                directory_hashes = {str(dir_path): self._get_directory_hash(dir_path)}
                 self._save_cache(structure, directory_hashes)
 
             return structure
@@ -712,9 +748,8 @@ class DirectoryStructureGenerator:
             raise
 
     def generate_markdown(
-            self,
-            structure: List[Dict],
-            title: str = "项目目录结构") -> str:
+        self, structure: List[Dict], title: str = "项目目录结构"
+    ) -> str:
         """生成Markdown格式的目录结构
 
         Args:
@@ -734,9 +769,8 @@ class DirectoryStructureGenerator:
         lines.append("```")
 
         def generate_tree(
-                items: List[Dict],
-                prefix: str = "",
-                is_last_list: List[bool] = None) -> None:
+            items: List[Dict], prefix: str = "", is_last_list: List[bool] = None
+        ) -> None:
             """生成目录树结构"""
             if is_last_list is None:
                 is_last_list = []
@@ -756,14 +790,13 @@ class DirectoryStructureGenerator:
                     current_prefix += "└── " if is_last else "├── "
 
                 # 输出当前项
-                if item['type'] == 'directory':
+                if item["type"] == "directory":
                     lines.append(f"{current_prefix}{item['name']}/")
                     # 递归处理子目录
-                    children = item.get('children', [])
+                    children = item.get("children", [])
                     if children:
                         new_is_last_list = is_last_list + [is_last]
-                        generate_tree(
-                            children, current_prefix, new_is_last_list)
+                        generate_tree(children, current_prefix, new_is_last_list)
                 else:
                     lines.append(f"{current_prefix}{item['name']}")
 
@@ -804,11 +837,11 @@ class DirectoryStructureGenerator:
                 "generated_time": datetime.now().isoformat(),
                 "title": "项目目录结构",
                 "statistics": {
-                    "total_dirs": self.stats['total_dirs'],
-                    "total_files": self.stats['total_files']
-                }
+                    "total_dirs": self.stats["total_dirs"],
+                    "total_files": self.stats["total_files"],
+                },
             },
-            "structure": structure
+            "structure": structure,
         }
         return json.dumps(output_data, ensure_ascii=False, indent=2)
 
@@ -826,14 +859,13 @@ class DirectoryStructureGenerator:
                 "generated_time": datetime.now().isoformat(),
                 "title": "项目目录结构",
                 "statistics": {
-                    "total_dirs": self.stats['total_dirs'],
-                    "total_files": self.stats['total_files']
-                }
+                    "total_dirs": self.stats["total_dirs"],
+                    "total_files": self.stats["total_files"],
+                },
             },
-            "structure": structure
+            "structure": structure,
         }
-        return yaml.dump(output_data, allow_unicode=True,
-                         default_flow_style=False)
+        return yaml.dump(output_data, allow_unicode=True, default_flow_style=False)
 
     def generate_xml(self, structure: List[Dict]) -> str:
         """生成XML格式的目录结构
@@ -848,15 +880,12 @@ class DirectoryStructureGenerator:
 
         # 添加元数据
         metadata = ET.SubElement(root, "metadata")
-        ET.SubElement(metadata, "generated_time").text = (
-            datetime.now().isoformat())
+        ET.SubElement(metadata, "generated_time").text = datetime.now().isoformat()
         ET.SubElement(metadata, "title").text = "项目目录结构"
 
         statistics = ET.SubElement(metadata, "statistics")
-        ET.SubElement(statistics, "total_dirs").text = str(
-            self.stats['total_dirs'])
-        ET.SubElement(statistics, "total_files").text = str(
-            self.stats['total_files'])
+        ET.SubElement(statistics, "total_dirs").text = str(self.stats["total_dirs"])
+        ET.SubElement(statistics, "total_files").text = str(self.stats["total_files"])
 
         # 添加结构数据
         structure_elem = ET.SubElement(root, "structure")
@@ -865,29 +894,27 @@ class DirectoryStructureGenerator:
             """递归添加项目到XML"""
             for item in items:
                 item_elem = ET.SubElement(parent_elem, "item")
-                item_elem.set("type", item['type'])
-                item_elem.set("name", item['name'])
-                item_elem.set("path", item['path'])
+                item_elem.set("type", item["type"])
+                item_elem.set("name", item["name"])
+                item_elem.set("path", item["path"])
 
-                if item['type'] == 'file' and 'size' in item:
-                    item_elem.set("size", str(item['size']))
+                if item["type"] == "file" and "size" in item:
+                    item_elem.set("size", str(item["size"]))
 
-                if 'children' in item and item['children']:
+                if "children" in item and item["children"]:
                     children_elem = ET.SubElement(item_elem, "children")
-                    add_items_to_xml(children_elem, item['children'])
+                    add_items_to_xml(children_elem, item["children"])
 
         add_items_to_xml(structure_elem, structure)
 
         # 格式化XML
-        rough_string = ET.tostring(root, encoding='unicode')
+        rough_string = ET.tostring(root, encoding="unicode")
         reparsed = minidom.parseString(rough_string)
         return reparsed.toprettyxml(indent="  ")
 
     def save_structure(
-            self,
-            structure: List[Dict],
-            output_file: Path,
-            formats: List[str] = None) -> None:
+        self, structure: List[Dict], output_file: Path, formats: List[str] = None
+    ) -> None:
         """保存目录结构到文件
 
         Args:
@@ -901,29 +928,29 @@ class DirectoryStructureGenerator:
 
             # 获取输出格式
             if formats is None:
-                formats = self.config.get('output_formats', ['markdown'])
+                formats = self.config.get("output_formats", ["markdown"])
 
             generated_files = []
 
             for format_type in formats:
-                if format_type == 'markdown':
+                if format_type == "markdown":
                     content = self.generate_markdown(structure)
                     file_path = output_file
-                elif format_type == 'json':
+                elif format_type == "json":
                     content = self.generate_json(structure)
-                    file_path = output_file.with_suffix('.json')
-                elif format_type == 'yaml':
+                    file_path = output_file.with_suffix(".json")
+                elif format_type == "yaml":
                     content = self.generate_yaml(structure)
-                    file_path = output_file.with_suffix('.yaml')
-                elif format_type == 'xml':
+                    file_path = output_file.with_suffix(".yaml")
+                elif format_type == "xml":
                     content = self.generate_xml(structure)
-                    file_path = output_file.with_suffix('.xml')
+                    file_path = output_file.with_suffix(".xml")
                 else:
                     print(f"⚠️  不支持的输出格式: {format_type}")
                     continue
 
                 # 写入文件
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
 
                 generated_files.append(file_path)
@@ -954,14 +981,10 @@ async def main_async(formats: List[str] = None):
 
         # 扫描目录结构（带性能优化）
         print("🔍 正在扫描目录结构...")
-        structure = await generator.scan_directory_with_performance(
-            project_root)
+        structure = await generator.scan_directory_with_performance(project_root)
 
         # 生成输出文件路径
-        output_file = (
-            project_root / "docs" / "01-设计" /
-            "目录结构标准清单.md"
-        )
+        output_file = project_root / "docs" / "01-设计" / "目录结构标准清单.md"
 
         # 保存结构
         generator.save_structure(structure, output_file, formats)
@@ -978,7 +1001,7 @@ async def main_async(formats: List[str] = None):
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(
-        description='生成项目目录结构标准清单',
+        description="生成项目目录结构标准清单",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""支持的输出格式:
   markdown  - Markdown格式 (默认)
@@ -990,14 +1013,15 @@ def main():
   python update_structure.py                    # 使用配置文件中的格式
   python update_structure.py -f markdown        # 仅生成Markdown格式
   python update_structure.py -f json yaml       # 生成JSON和YAML格式
-  python update_structure.py -f all             # 生成所有支持的格式"""
+  python update_structure.py -f all             # 生成所有支持的格式""",
     )
 
     parser.add_argument(
-        '-f', '--formats',
-        nargs='*',
-        choices=['markdown', 'json', 'yaml', 'xml', 'all'],
-        help='指定输出格式 (可指定多个)'
+        "-f",
+        "--formats",
+        nargs="*",
+        choices=["markdown", "json", "yaml", "xml", "all"],
+        help="指定输出格式 (可指定多个)",
     )
 
     args = parser.parse_args()
@@ -1005,8 +1029,8 @@ def main():
     # 处理格式参数
     formats = None
     if args.formats:
-        if 'all' in args.formats:
-            formats = ['markdown', 'json', 'yaml', 'xml']
+        if "all" in args.formats:
+            formats = ["markdown", "json", "yaml", "xml"]
         else:
             formats = args.formats
 

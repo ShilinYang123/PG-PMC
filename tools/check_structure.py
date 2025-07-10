@@ -16,7 +16,7 @@ import re
 import sys
 import logging
 import yaml
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Set
 
@@ -49,31 +49,33 @@ class EnhancedStructureChecker:
         # 从配置文件中获取排除规则
         structure_config = self.config.get("structure_check", {})
 
-        self.excluded_dirs = set(
-            structure_config.get(
-                "excluded_dirs",
-                [
-                    "__pycache__",
-                    ".git",
-                    ".vscode",
-                    ".idea",
-                    "node_modules",
-                    ".pytest_cache",
-                    ".coverage",
-                    "htmlcov",
-                    "dist",
-                    "build",
-                    "*.egg-info",
-                    ".tox",
-                    ".mypy_cache",
-                    ".DS_Store",
-                    "Thumbs.db",
-                    ".venv",
-                    "venv",
-                    "env",
-                ],
-            )
+        excluded_dirs_list = structure_config.get(
+            "excluded_dirs",
+            [
+                "__pycache__",
+                ".git",
+                ".vscode",
+                ".idea",
+                "node_modules",
+                ".pytest_cache",
+                ".coverage",
+                "htmlcov",
+                "dist",
+                "build",
+                "*.egg-info",
+                ".tox",
+                ".mypy_cache",
+                ".DS_Store",
+                "Thumbs.db",
+                ".venv",
+                "venv",
+                # 注意：移除"env"以避免.env文件被错误排除
+            ],
         )
+        # 强制移除.env以避免.env文件被错误排除
+        if ".env" in excluded_dirs_list:
+            excluded_dirs_list.remove(".env")
+        self.excluded_dirs = set(excluded_dirs_list)
 
         self.excluded_files = set(
             structure_config.get(
@@ -159,23 +161,19 @@ class EnhancedStructureChecker:
             # 从当前脚本位置向上查找项目根目录
             script_dir = Path(__file__).parent
             project_root = script_dir.parent
-            config_file = (
-                project_root / "docs" / "03-管理" / "project_config.yaml"
-            )
+            config_file = project_root / "docs" / "03-管理" / "project_config.yaml"
 
             if config_file.exists():
                 with open(config_file, "r", encoding="utf-8") as f:
                     return yaml.safe_load(f) or {}
             else:
-                print(f"⚠️  配置文件不存在: {config_file}")
+                self.logger.debug(f"配置文件不存在: {config_file}")
                 return {}
         except Exception as e:
-            print(f"⚠️  加载配置文件失败: {e}")
+            self.logger.debug(f"加载配置文件失败: {e}")
             return {}
 
-    def should_filter_special_directory(
-        self, relative_path: str, entry: Path
-    ) -> bool:
+    def should_filter_special_directory(self, relative_path: str, entry: Path) -> bool:
         """判断是否应该过滤特殊目录中的项目（与update_structure.py保持一致）"""
 
         # 从配置中获取允许的子目录
@@ -207,6 +205,73 @@ class EnhancedStructureChecker:
                 return True  # 过滤掉logs/子目录下的所有内容
 
         return False
+    
+    def _is_valid_directory_name(self, dir_name: str) -> bool:
+        """验证目录名称是否符合规范
+        
+        遵循规范与流程.md第八章命名规范
+        
+        Args:
+            dir_name: 目录名称
+            
+        Returns:
+            True 如果名称符合规范，False 否则
+        """
+        if not dir_name or not dir_name.strip():
+            return False
+            
+        # 检查是否包含非法字符
+        illegal_chars = ['<', '>', ':', '"', '|', '?', '*']
+        if any(char in dir_name for char in illegal_chars):
+            return False
+            
+        # 检查长度限制
+        if len(dir_name) > 255:
+            return False
+            
+        return True
+    
+    def _validate_structure_compliance(self, structure: Dict[str, Set[str]]) -> bool:
+        """验证结构是否符合项目规范要求
+        
+        遵循规范与流程.md第七章目录文件及清单管理规定
+        
+        Args:
+            structure: 目录结构数据
+            
+        Returns:
+            True 如果符合规范，False 否则
+        """
+        try:
+            # 检查核心目录是否存在
+            required_dirs = {'docs', 'project', 'tools'}
+            existing_dirs = structure.get('directories', set())
+            
+            missing_core_dirs = required_dirs - existing_dirs
+            if missing_core_dirs:
+                self.logger.error(f"缺少核心目录: {missing_core_dirs}")
+                return False
+                
+            # 检查特殊目录结构
+            if 'bak' in existing_dirs:
+                bak_subdirs = {d for d in existing_dirs if d.startswith('bak/')}
+                required_bak_subdirs = {'bak/github_repo', 'bak/迁移备份', 'bak/专项备份', 'bak/待清理资料', 'bak/常规备份'}
+                if bak_subdirs and not bak_subdirs.issuperset(required_bak_subdirs):
+                    self.logger.warning(f"bak目录结构不完整: 期望 {required_bak_subdirs}, 实际 {bak_subdirs}")
+                    
+            if 'logs' in existing_dirs:
+                logs_subdirs = {d for d in existing_dirs if d.startswith('logs/')}
+                required_logs_subdirs = {'logs/工作记录', 'logs/检查报告', 'logs/其他日志', 'logs/archive'}
+                if logs_subdirs and not logs_subdirs.issuperset(required_logs_subdirs):
+                    self.logger.warning(f"logs目录结构不完整: 期望 {required_logs_subdirs}, 实际 {logs_subdirs}")
+                    
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"结构合规性验证失败: {e}")
+            return False
+
+
 
     def _setup_logging(self):
         """设置日志记录"""
@@ -253,12 +318,48 @@ class EnhancedStructureChecker:
         # 添加处理器
         self.logger.addHandler(file_handler)
         self.logger.addHandler(console_handler)
-
+        
+        # 清理7天前的debug日志文件（遵守规范与流程.md中的清理策略）
+        self._cleanup_old_debug_logs(log_dir)
+        
         self.logger.info(f"日志记录已启用，日志文件: {log_file}")
 
-    def _validate_and_resolve_path(
-        self, path_str: str, description: str
-    ) -> Path:
+    def _cleanup_old_debug_logs(self, log_dir: Path) -> None:
+        """清理7天前的debug日志文件（遵守规范与流程.md中的清理策略）
+        
+        Args:
+            log_dir: 日志目录路径
+        """
+        try:
+            current_time = datetime.now()
+            cutoff_time = current_time - timedelta(days=7)
+            
+            # 查找所有debug日志文件
+            debug_log_pattern = "enhanced_check_debug_*.log"
+            debug_logs = list(log_dir.glob(debug_log_pattern))
+            
+            cleaned_count = 0
+            for log_file in debug_logs:
+                try:
+                    # 获取文件修改时间
+                    file_mtime = datetime.fromtimestamp(log_file.stat().st_mtime)
+                    
+                    # 如果文件超过7天，则删除
+                    if file_mtime < cutoff_time:
+                        log_file.unlink()
+                        cleaned_count += 1
+                        self.logger.debug(f"已清理过期debug日志: {log_file.name}")
+                        
+                except Exception as e:
+                    self.logger.warning(f"清理日志文件失败 {log_file.name}: {e}")
+                    
+            if cleaned_count > 0:
+                self.logger.info(f"已清理 {cleaned_count} 个过期debug日志文件")
+                
+        except Exception as e:
+            self.logger.warning(f"debug日志清理过程出错: {e}")
+
+    def _validate_and_resolve_path(self, path_str: str, description: str) -> Path:
         """验证并解析路径
 
         Args:
@@ -365,6 +466,9 @@ class EnhancedStructureChecker:
         # 排除隐藏目录和文件（除了特定的配置文件）
         if path.name.startswith(".") and path.name not in {
             ".env",
+            ".env.local",
+            ".env.production",
+            ".env.template",
             ".env.example",
             ".gitignore",
             ".dockerignore",
@@ -375,13 +479,16 @@ class EnhancedStructureChecker:
             ".github",
             ".venv",
             ".cache",
+            ".coverage",
+            ".pytest_cache",
+            ".vscode",
         }:
             self.logger.debug(f"排除隐藏路径: {path}")
             return True
 
         # 排除特定目录
         if path.name in self.excluded_dirs:
-            self.logger.debug(f"排除特定目录: {path}")
+            self.logger.debug(f"排除特定目录: {path} (名称: {path.name}, 是否为目录: {path.is_dir()}, excluded_dirs: {self.excluded_dirs})")
             return True
 
         # 排除特定文件
@@ -446,10 +553,7 @@ class EnhancedStructureChecker:
 
                         # 对于bak和logs目录，使用与update_structure.py
                         # 相同的过滤逻辑
-                        if (
-                            item_relative_path == "bak"
-                            or item_relative_path == "logs"
-                        ):
+                        if item_relative_path == "bak" or item_relative_path == "logs":
                             # 只扫描允许的子目录，不扫描其内容
                             allowed_dirs = {
                                 "bak": {
@@ -478,17 +582,11 @@ class EnhancedStructureChecker:
                                         continue
 
                                     # 只处理允许的目录，忽略所有文件
-                                    if (
-                                        entry.is_dir()
-                                        and entry.name in allowed_dirs
-                                    ):
+                                    if entry.is_dir() and entry.name in allowed_dirs:
                                         subdir_relative = (
-                                            f"{item_relative_path}/"
-                                            f"{entry.name}"
+                                            f"{item_relative_path}/" f"{entry.name}"
                                         )
-                                        structure["directories"].add(
-                                            subdir_relative
-                                        )
+                                        structure["directories"].add(subdir_relative)
                                         self.logger.debug(
                                             f"添加特殊目录: {subdir_relative}"
                                         )
@@ -623,8 +721,7 @@ class EnhancedStructureChecker:
                         if (
                             line.strip().endswith("/")
                             and not any(
-                                symbol in line
-                                for symbol in ["├──", "└──", "│"]
+                                symbol in line for symbol in ["├──", "└──", "│"]
                             )
                             and not line.startswith(" ")
                             and not line.startswith("\t")
@@ -634,8 +731,7 @@ class EnhancedStructureChecker:
                             if dir_name:
                                 structure["directories"].add(dir_name)
                                 current_top_level = dir_name
-                                path_stack = [dir_name]
-                                self.logger.debug(f"添加顶级目录: {dir_name}")
+                                path_stack = [dir_name]  # 重置路径栈
                             continue
 
                         # 如果没有当前顶级目录，跳过
@@ -668,9 +764,7 @@ class EnhancedStructureChecker:
                             # 目录
                             structure["directories"].add(full_path.rstrip("/"))
                             path_stack.append(name.rstrip("/"))
-                            self.logger.debug(
-                                f"添加标准目录: {full_path.rstrip('/')}"
-                            )
+                            self.logger.debug(f"添加标准目录: {full_path.rstrip('/')}")
                         else:
                             # 文件
                             structure["files"].add(full_path)
@@ -804,9 +898,7 @@ class EnhancedStructureChecker:
             # 查找多余的文件
             extra_files = current["files"] - whitelist["files"]
             for file_path in extra_files:
-                self.results["extra_items"].append(
-                    {"type": "file", "path": file_path}
-                )
+                self.results["extra_items"].append({"type": "file", "path": file_path})
                 self.logger.debug(f"多余文件: {file_path}")
 
             # 查找符合的项目
@@ -831,8 +923,7 @@ class EnhancedStructureChecker:
 
             # 计算合规率 - 考虑多余项目的影响
             total_expected = (
-                self.stats["total_dirs_expected"]
-                + self.stats["total_files_expected"]
+                self.stats["total_dirs_expected"] + self.stats["total_files_expected"]
             )
             total_compliant = len(compliant_dirs) + len(compliant_files)
             total_extra = len(extra_dirs) + len(extra_files)
@@ -846,15 +937,9 @@ class EnhancedStructureChecker:
             else:
                 self.stats["compliance_rate"] = 0.0
 
-            self.logger.info(
-                f"对比完成 - 合规率: {self.stats['compliance_rate']:.1f}%"
-            )
-            self.logger.info(
-                f"缺失项目: {len(missing_dirs) + len(missing_files)} 个"
-            )
-            self.logger.info(
-                f"多余项目: {len(extra_dirs) + len(extra_files)} 个"
-            )
+            self.logger.info(f"对比完成 - 合规率: {self.stats['compliance_rate']:.1f}%")
+            self.logger.info(f"缺失项目: {len(missing_dirs) + len(missing_files)} 个")
+            self.logger.info(f"多余项目: {len(extra_dirs) + len(extra_files)} 个")
 
         except Exception as e:
             error_msg = f"结构对比失败: {e}"
@@ -923,7 +1008,7 @@ class EnhancedStructureChecker:
             status_icon = "⚠️"
         else:
             status = "需要改进"
-            status_icon = "❌"
+            status_icon = "[X]"
 
         report_lines = [
             "# 增强版目录结构合规性检查报告",
@@ -967,9 +1052,7 @@ class EnhancedStructureChecker:
         # 添加缺失项目
         if self.results["missing_items"]:
             report_lines.extend(["## 📋 缺失项目", ""])
-            for item in sorted(
-                self.results["missing_items"], key=lambda x: x["path"]
-            ):
+            for item in sorted(self.results["missing_items"], key=lambda x: x["path"]):
                 item_type = "📁" if item["type"] == "directory" else "📄"
                 report_lines.append(f"- {item_type} `{item['path']}`")
             report_lines.append("")
@@ -977,9 +1060,7 @@ class EnhancedStructureChecker:
         # 添加多余项目
         if self.results["extra_items"]:
             report_lines.extend(["## 🗑️ 多余项目", ""])
-            for item in sorted(
-                self.results["extra_items"], key=lambda x: x["path"]
-            ):
+            for item in sorted(self.results["extra_items"], key=lambda x: x["path"]):
                 item_type = "📁" if item["type"] == "directory" else "📄"
                 report_lines.append(f"- {item_type} `{item['path']}`")
             report_lines.append("")
@@ -1021,24 +1102,57 @@ class EnhancedStructureChecker:
 
 
 def main():
-    """主函数"""
+    """主函数
+    
+    严格遵循规范与流程.md第五章工作结束事项中的目录结构合规性检查要求
+    按照第七章目录文件及清单管理规定执行标准化检查流程
+    """
+    print("\n🔍 启动目录结构合规性检查")
+    print("📋 遵循《规范与流程.md》第七章目录文件及清单管理规定")
+    
+    # 标准化路径配置（遵循第十章开发环境规范）
     try:
         # 获取项目根目录和白名单文件路径
         script_dir = Path(__file__).parent
         root_dir = script_dir.parent
         whitelist_file = root_dir / "docs" / "01-设计" / "目录结构标准清单.md"
+        print(f"✅ 配置加载成功，项目根目录: {root_dir}")
+    except Exception as e:
+        print(f"⚠️  配置加载失败，使用默认路径: {e}")
+        root_dir = Path.cwd()
+        whitelist_file = (
+            root_dir / "docs" / "01-设计" / "目录结构标准清单.md"
+        )
+        print(f"📁 使用默认项目根目录: {root_dir}")
 
-        print("🚀 启动增强版目录结构检查工具")
-        print(f"📁 项目根目录: {root_dir}")
-        print(f"📋 白名单文件: {whitelist_file}")
-        print("-" * 60)
+    # 验证关键文件存在性（遵循第二章文件权限管理规范）
+    if not whitelist_file.exists():
+        print(f"❌ 标准清单文件不存在: {whitelist_file}")
+        print("💡 请确保《目录结构标准清单.md》文件存在于正确位置")
+        sys.exit(3)
 
-        # 创建检查器实例
-        checker = EnhancedStructureChecker(str(root_dir), str(whitelist_file))
+    # 创建检查器实例（标准化初始化）
+    try:
+        checker = EnhancedStructureChecker(
+            root_path=str(root_dir), 
+            whitelist_file=str(whitelist_file)
+        )
+        print("✅ 检查器初始化成功")
+    except Exception as e:
+        print(f"❌ 检查器初始化失败: {e}")
+        sys.exit(4)
 
-        # 执行增强版检查
+    # 执行标准化检查流程
+    print("\n🔄 开始执行结构合规性检查...")
+    try:
         report_content = checker.run_enhanced_check()
+        print("✅ 检查执行完成")
+    except Exception as e:
+        print(f"❌ 检查执行失败: {e}")
+        sys.exit(5)
 
+    # 生成标准化报告（遵循第五章工作结束事项要求）
+    try:
         # 生成报告文件
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_filename = f"增强版检查报告_{timestamp}.md"
@@ -1050,69 +1164,77 @@ def main():
         # 写入报告文件
         with open(report_file, "w", encoding="utf-8") as f:
             f.write(report_content)
-
-        # 输出结果
-        print("\n" + "=" * 60)
-        print("✅ 增强版检查报告已生成:")
-        print(f"   {report_file}")
-        print("📊 检查统计:")
-        print(f"   - 检查目录数量: {checker.stats['total_dirs_actual']} 个")
-        print(f"   - 检查文件数量: {checker.stats['total_files_actual']} 个")
-        print(f"   - 标准目录数量: {checker.stats['total_dirs_expected']} 个")
-        print(f"   - 标准文件数量: {checker.stats['total_files_expected']} 个")
-        print("📊 检查结果:")
-        print(f"   - 合规率: {checker.stats['compliance_rate']:.1f}%")
-        missing_count = (
-            checker.stats["missing_dirs"] + checker.stats["missing_files"]
-        )
-        print(f"   - 缺失项目: {missing_count} 个")
-        extra_count = (
-            checker.stats["extra_dirs"] + checker.stats["extra_files"]
-        )
-        print(f"   - 多余项目: {extra_count} 个")
-
-        if checker.results["errors"]:
-            print(f"   - 错误数量: {len(checker.results['errors'])} 个")
-
-        # 显示违规项清单
-        if missing_count > 0 or extra_count > 0:
-            print("\n📋 违规项清单:")
-
-            if checker.results["missing_items"]:
-                print("\n🔍 缺失项目:")
-                for item in sorted(
-                    checker.results["missing_items"], key=lambda x: x["path"]
-                ):
-                    item_type = "📁目录" if item["type"] == "directory" else "📄文件"
-                    print(f"   - {item_type}: {item['path']}")
-
-            if checker.results["extra_items"]:
-                print("\n🗑️ 多余项目:")
-                for item in sorted(
-                    checker.results["extra_items"], key=lambda x: x["path"]
-                ):
-                    item_type = "📁目录" if item["type"] == "directory" else "📄文件"
-                    print(f"   - {item_type}: {item['path']}")
-
-        # 根据合规率设置退出码
-        if checker.stats["compliance_rate"] < 70:
-            print("\n⚠️  目录结构存在严重问题，建议立即整改")
-            sys.exit(2)
-        elif checker.stats["compliance_rate"] < 95:
-            print("\n⚠️  目录结构存在一些问题，建议及时处理")
-            sys.exit(1)
-        else:
-            print("\n✅ 目录结构符合规范要求")
-            sys.exit(0)
-
+            
+        print(f"\n📋 检查报告已生成: {report_file}")
     except Exception as e:
-        print(f"❌ 增强版检查失败: {e}")
-        sys.exit(1)
+        print(f"\n❌ 报告生成异常: {e}")
 
-    finally:
-        print("\n" + "=" * 60)
-        print("增强版检查完成")
-        print("=" * 60)
+    # 输出标准化统计信息（遵循第八章命名规范）
+    compliance_rate = checker.stats.get("compliance_rate", 0)
+    missing_items = checker.results.get("missing_items", [])
+    extra_items = checker.results.get("extra_items", [])
+    
+    print(f"\n📊 检查统计信息:")
+    print(f"   📁 目录数量: {checker.stats['total_dirs_actual']} (标准: {checker.stats['total_dirs_expected']})")
+    print(f"   📄 文件数量: {checker.stats['total_files_actual']} (标准: {checker.stats['total_files_expected']})")
+    print(f"   ✅ 合规率: {compliance_rate:.1f}%")
+    print(f"   ❌ 缺失数量: {len(missing_items)}")
+    print(f"   ⚠️  多余数量: {len(extra_items)}")
+
+    # 输出违规项清单（标准化格式）
+    if missing_items:
+        print(f"\n❌ 缺失项目清单 (共{len(missing_items)}项)：")
+        for i, item in enumerate(sorted(missing_items, key=lambda x: x["path"])[:10], 1):
+            item_type = "📁" if item["type"] == "directory" else "📄"
+            print(f"   {i:2d}. {item_type} {item['path']}")
+        if len(missing_items) > 10:
+            print(f"   ... 还有 {len(missing_items) - 10} 个缺失项目")
+
+    if extra_items:
+        print(f"\n⚠️  多余项目清单 (共{len(extra_items)}项)：")
+        for i, item in enumerate(sorted(extra_items, key=lambda x: x["path"])[:10], 1):
+            item_type = "📁" if item["type"] == "directory" else "📄"
+            print(f"   {i:2d}. {item_type} {item['path']}")
+        if len(extra_items) > 10:
+            print(f"   ... 还有 {len(extra_items) - 10} 个多余项目")
+
+    # 标准化合规性评估（遵循项目质量标准）
+    print(f"\n📈 合规性评估:")
+    if compliance_rate >= 98:
+        status = "优秀"
+        icon = "🏆"
+        exit_code = 0
+    elif compliance_rate >= 95:
+        status = "良好"
+        icon = "✅"
+        exit_code = 0
+    elif compliance_rate >= 90:
+        status = "合格"
+        icon = "⚠️"
+        exit_code = 1
+    elif compliance_rate >= 80:
+        status = "需要改进"
+        icon = "🔧"
+        exit_code = 1
+    else:
+        status = "不合格"
+        icon = "❌"
+        exit_code = 2
+    
+    print(f"   {icon} 项目结构合规状态: {status} ({compliance_rate:.1f}%)")
+    
+    # 提供改进建议（遵循规范要求）
+    if compliance_rate < 100:
+        print(f"\n💡 改进建议:")
+        if missing_items:
+            print(f"   • 补充缺失的 {len(missing_items)} 个项目")
+        if extra_items:
+            print(f"   • 清理多余的 {len(extra_items)} 个项目")
+        print(f"   • 参考《规范与流程.md》第七章进行整改")
+        print(f"   • 使用update_structure.py更新标准清单")
+    
+    print(f"\n🎯 检查完成，退出码: {exit_code}")
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":
