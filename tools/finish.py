@@ -246,6 +246,39 @@ def run_pre_commit_check():
         return False
 
 
+def sync_to_backup_repo():
+    """同步当前内容到备份仓库目录"""
+    logger.info("开始同步当前内容到备份仓库...")
+    
+    try:
+        # 需要同步的目录
+        sync_dirs = ['docs', 'project', 'tools']
+        
+        for dir_name in sync_dirs:
+            source_dir = PROJECT_ROOT / dir_name
+            target_dir = GIT_REPO_DIR / dir_name
+            
+            if source_dir.exists():
+                logger.info(f"同步目录: {dir_name}")
+                
+                # 删除目标目录（如果存在）
+                if target_dir.exists():
+                    shutil.rmtree(target_dir)
+                
+                # 复制源目录到目标位置
+                shutil.copytree(source_dir, target_dir)
+                logger.info(f"✅ {dir_name} 目录同步完成")
+            else:
+                logger.warning(f"源目录不存在，跳过: {dir_name}")
+        
+        logger.info("内容同步到备份仓库完成")
+        return True
+        
+    except Exception as e:
+        logger.error(f"同步内容到备份仓库时出错: {e}")
+        return False
+
+
 def run_git_push():
     """执行Git推送"""
     logger.info("开始Git推送...")
@@ -258,6 +291,11 @@ def run_git_push():
     # 检查是否为git仓库
     if not (GIT_REPO_DIR / ".git").exists():
         logger.error(f"目录不是Git仓库: {GIT_REPO_DIR}")
+        return False
+    
+    # 先同步当前内容到备份仓库
+    if not sync_to_backup_repo():
+        logger.error("同步内容到备份仓库失败，取消Git推送")
         return False
 
     try:
