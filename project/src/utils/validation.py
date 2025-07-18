@@ -723,7 +723,7 @@ class GeometryValidator:
                     ValidationResult(
                         is_valid=False,
                         level=ValidationLevel.WARNING,
-                        message=f"尺寸比例过大: {max_dim/min_dim:.1f}，可能导致显示或计算问题",
+                        message=f"尺寸比例过大: {max_dim / min_dim:.1f}，可能导致显示或计算问题",
                         field="ratio",
                         value=max_dim / min_dim,
                         suggestion="建议最大尺寸与最小尺寸的比例不超过1000",

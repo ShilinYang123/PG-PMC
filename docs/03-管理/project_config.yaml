@@ -1,105 +1,192 @@
-# 项目配置文件
-config_version: "1.0.0"
-
 app:
   api_port: 8000
   api_url: http://localhost:8000/api
   name: PG-Dev
   port: 3000
   url: http://localhost:3000
-
-backup_dir: "s:/PG-Dev/bak"
-created_at: '2025-06-19T17:15:34.936127'
-project_name: "PG-Dev"
-project_version: "1.0.0"
-
-# 性能配置
-performance:
-  max_concurrent_requests: 100
-  request_timeout: 30000
-  memory_limit: "512MB"
-  cpu_limit: "1000m"
-  cache_size: 100
-  connection_pool_size: 10
-  worker_processes: 4
-  enable_compression: true
-  static_cache_ttl: 86400
-
-# 文件类型配置
-file_types:
-  allowed_extensions:
-    - ".py"
-    - ".js"
-    - ".ts"
-    - ".jsx"
-    - ".tsx"
-    - ".md"
-    - ".txt"
-    - ".json"
-    - ".yaml"
-    - ".yml"
-    - ".html"
-    - ".css"
-    - ".scss"
-    - ".less"
-    - ".sql"
-    - ".sh"
-    - ".bat"
-    - ".ps1"
-  max_file_size: 10485760  # 10MB
-  encoding: "utf-8"
-  line_ending: "auto"  # auto, lf, crlf
-  exclude_patterns:
-    - "*.pyc"
-    - "*.pyo"
-    - "*.pyd"
-    - "__pycache__"
-    - "node_modules"
-    - ".git"
-    - "*.log"
-    - "*.tmp"
-
-# 规则配置
-rules:
-  validation:
-    strict_mode: false
-    allow_empty_files: true
-    require_documentation: true
-    enforce_naming_conventions: true
-  code_quality:
-    max_line_length: 120
-    max_function_length: 50
-    max_file_length: 1000
-    require_type_hints: true
-    enforce_docstrings: true
-  security:
-    scan_for_secrets: true
-    require_https: false
-    validate_inputs: true
-    sanitize_outputs: true
-  compliance:
-    license_check: false
-    dependency_audit: true
-    vulnerability_scan: true
-
-# 日志配置
-logging:
-  level: info
-  dir: ./logs
-  max_size: 10m
-  max_files: 5
-  date_pattern: YYYY-MM-DD
-  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  rotation: daily
-  compress: true
-  backup_count: 30
-
-# Git配置
-git:
-  repo_dir_name: "github_repo"
-  default_branch: "main"
-  auto_push: true
-  commit_message_prefix: "自动备份"
+backup_dir: s:/PG-Dev/bak
+compliance:
+  auto_start_monitoring: true
+  enforce_checks: true
+  enhanced_pre_check:
+    auto_correction:
+      auto_move_files: false
+      enabled: true
+      suggest_alternatives: true
+    auto_fix_rules:
+      date_fixes:
+        2024-12-: 2025-07-
+        2024年12月: 2025年7月
+        2025-01-: 2025-07-
+        2025年01月: 2025年07月
+        2025年1月: 2025年7月
+    date_consistency:
+      auto_fix:
+        backup_original: true
+        confirm_before_fix: true
+        enabled: true
+      date_fields:
+      - 创建日期
+      - 编制日期
+      - 更新日期
+      - 修改日期
+      - 发布日期
+      - 检查日期
+      - 报告日期
+      - 分析完成时间
+      - 最后更新
+      - 文档日期
+      - 版本日期
+      - 审核日期
+      enabled: true
+      forbidden_dates:
+      - 2025年1月
+      - 2025年01月
+      - 2025-01-
+      - 2024年12月
+      - 2024-12-
+      - 2025年1月13日
+      - '2025-01-13'
+      - 2024年12月31日
+      - '2024-12-31'
+      - 2024年
+      - 2023年
+      - 2022年
+      - 2021年
+      - 2020年
+      - 2019年
+      - 2018年
+      - 2017年
+      - 2016年
+      - 2015年
+      - 2014年
+      - 2013年
+      - 2012年
+      - 2011年
+      - 2010年
+      - 2009年
+      - 2008年
+      - 2007年
+      - 2006年
+    file_location_rules:
+      '*.json':
+      - docs/03-管理
+      - config
+      - data
+      '*.log':
+      - logs
+      '*.md':
+      - docs
+      - AI助理生产成果
+      '*.py':
+      - tools
+      - src
+      - scripts
+      '*.txt':
+      - logs
+      - docs
+      '*.yaml':
+      - docs/03-管理
+      - config
+      '*.yml':
+      - docs/03-管理
+      - config
+    forbidden_patterns:
+    - '*/temp/*'
+    - '*/tmp/*'
+    - '*/.git/*'
+    - '*/node_modules/*'
+    - '*/__pycache__/*'
+    - '*/.venv/*'
+    - '*/venv/*'
+    - '*/env/*'
+    - '*/.env/*'
+    - '*.log'
+    - '*.tmp'
+    - '*.bak'
+    - '*.swp'
+    - '*~'
+    - '*.pyc'
+    - '*.pyo'
+    - '*.cache'
+    - '*/build/*'
+    - '*/dist/*'
+    monitoring:
+      alert_threshold: 3
+      block_operations: true
+      enabled: true
+      log_violations: true
+    naming_rules:
+      chinese_docs: ^[\u4e00-\u9fa5][\u4e00-\u9fa5\w\-_]*\.md$
+      config_files: ^[a-z][a-z0-9_]*\.(yaml|yml|json)$
+      log_files: ^[a-z0-9_]+_\d{8}\.(log|txt)$
+      python_files: ^[a-z][a-z0-9_]*\.py$
+    protected_files:
+    - docs/01-设计/开发任务书.md
+    - docs/01-设计/技术方案.md
+    - docs/01-设计/项目架构设计.md
+    - docs/03-管理/规范与流程.md
+    - docs/03-管理/project_config.yaml
+    - tools/check_structure.py
+    - tools/update_structure.py
+    - tools/init_project.py
+    required_structure:
+    - docs/01-设计
+    - docs/02-开发
+    - docs/03-管理
+    - tools
+    - logs
+    - AI助理生产成果
+    strict_mode:
+      enabled: false
+      protected_patterns:
+      - '*.md'
+      - '*.yaml'
+      - '*.py'
+      require_approval:
+      - delete
+      - modify
+    violation_severity:
+      critical:
+      - forbidden_path
+      - protected_file_delete
+      - invalid_structure
+      high:
+      - wrong_location
+      - forbidden_date
+      - missing_required_field
+      low:
+      - style_suggestion
+      - optimization_hint
+      medium:
+      - invalid_naming
+      - invalid_date_format
+      - deprecated_pattern
+  monitoring:
+    auto_restart: true
+    check_interval: 300
+    enabled: true
+    log_violations: true
+    startup_check: true
+  pre_operation_check:
+    enabled: true
+    mandatory: true
+    script_path: tools/pre_operation_check.py
+  startup_scripts:
+  - args:
+    - --start
+    description: 启动实时合规性监控系统
+    script: tools/compliance_monitor.py
+  - args:
+    - --enable
+    description: 启用项目规范强制遵守机制
+    script: tools/enable_compliance.py
+  violation_handling:
+    auto_fix: true
+    block_operation: true
+    log_level: ERROR
+    require_approval: true
+config_version: 1.1.0
 database:
   dev_name: PG-Dev_dev_db
   host: localhost
@@ -109,134 +196,260 @@ database:
   test_name: PG-Dev_test_db
   url_template: postgresql://{username}:{password}@{host}:{port}/{database_name}
   username: postgres
+directory_structure:
+  root_directory_restrictions:
+    allowed_files:
+    - README.md
+    - .gitignore
+    - requirements.txt
+    - package.json
+    - pyproject.toml
+    - setup.py
+    - LICENSE
+    - CHANGELOG.md
+    forbidden_extensions:
+    - .txt
+    - .log
+    - .tmp
+    - .temp
+    - .bak
+    - .old
+    - .pro
+    - .prt
+    - .asm
+    - .drw
+    - .py
+    - .js
+    - .ts
+    - .html
+    - .css
+    - .doc
+    - .docx
+    - .pdf
+  standard_directories:
+    .cache:
+      auto_cleanup: true
+      description: 项目性能优化的缓存系统
+      purpose: 存放缓存文件，提升系统性能
+    AI助理生产成果:
+      allowed_extensions:
+      - .prt
+      - .asm
+      - .drw
+      - .pro
+      - .txt
+      - .md
+      description: 利用项目开发成果进行现实生产的产出
+      purpose: 存放AI助理生成的Creo文件、生产文档等
+    bak:
+      description: 项目备份目录
+      purpose: 存放各种备份文件和待清理资料
+      subdirectories:
+      - 常规备份
+      - 待清理资料
+      - 历史版本
+    docs:
+      allowed_extensions:
+      - .md
+      - .yaml
+      - .yml
+      - .json
+      - .txt
+      description: 项目开发依据的重要文档
+      purpose: 存放设计文档、管理文档、开发文档等
+    logs:
+      description: 开发及调试使用过程各种记录
+      purpose: 存放日志文件、工作记录等
+      subdirectories:
+      - 系统日志
+      - 工作记录
+      - 其他日志
+    project:
+      description: 项目开发成果
+      purpose: 存放源代码、配置文件、构建脚本等
+      subdirectories:
+      - src
+      - config
+      - scripts
+      - tests
+      - docs
+    tools:
+      allowed_extensions:
+      - .py
+      - .js
+      - .sh
+      - .bat
+      - .ps1
+      - .md
+      description: 项目开发过程中使用到的工具与资源
+      purpose: 存放开发工具、脚本、资源文件等
 environment:
-  # 基础配置
   app:
-    name: "江门市品高电器实业有限公司"
-    version: 1.0.0
-    url: http://localhost:3000
-    api_url: http://localhost:8000
-    port: 3000
     api_port: 8000
-  
-  # 数据库配置
-  database:
-    url: postgresql://postgres:password@localhost:5432/PG-Dev_db
-    host: localhost
-    port: 5432
-    name: PG-Dev_db
-    user: postgres
-    password: password
-    pool_min: 2
-    pool_max: 10
-    pool_idle_timeout: 30000
-    test_url: postgresql://postgres:password@localhost:5432/PG-Dev_test_db
-  
-  # Redis配置
-  redis:
-    url: redis://localhost:6379/0
-    host: localhost
-    port: 6379
-    db: 0
-    password: ""
-    session_db: 1
-  
-  # 安全配置
-  security:
-    session_secret: your-session-secret-key-change-this
-    session_max_age: 86400000
-    jwt_secret: your-super-secret-jwt-key-change-this-in-production
-    jwt_expires_in: 7d
-    jwt_refresh_expires_in: 30d
-    encryption_key: your-32-character-encryption-key
-    cors_origin: http://localhost:3000
-    cors_credentials: true
-  
-  # 文件存储配置
-  storage:
-    upload_dir: ./uploads
-    max_file_size: 10485760
-    allowed_file_types: jpg,jpeg,png,gif,pdf,doc,docx,txt
-    # aws_access_key_id: your-aws-access-key
-    # aws_secret_access_key: your-aws-secret-key
-    # aws_region: us-east-1
-    # aws_s3_bucket: your-s3-bucket
-  
-  # 邮件配置
-  mail:
-    smtp_host: smtp.gmail.com
-    smtp_port: 587
-    smtp_secure: false
-    smtp_user: your-email@gmail.com
-    smtp_pass: your-app-password
-    from_name: "江门市品高电器实业有限公司"
-    from_address: noreply@pingao.com
-  
-  # 日志配置已移至顶层
-  
-  # 外部服务配置
-  external_services:
-    openai_api_key: your-openai-api-key
-    openai_model: gpt-4
-    openai_max_tokens: 2000
-    # anthropic_api_key: your-anthropic-api-key
-    # google_ai_api_key: your-google-ai-api-key
-  
-  # 监控配置
-  monitoring:
-    # sentry_dsn: your-sentry-dsn
-    # new_relic_license_key: your-newrelic-key
-    # ga_tracking_id: your-ga-tracking-id
-    health_check_endpoint: /health
-    health_check_interval: 30000
-  
-  # 网络配置
-  network:
-    host: localhost
-    preview_host: localhost
-    default_ports:
-      frontend: 3000
-      api: 8000
-      preview: 3000
-      dev_server: 3000
-  
-  # 缓存配置
+    api_url: http://localhost:8000
+    name: 江门市品高电器实业有限公司
+    port: 3000
+    url: http://localhost:3000
+    version: 1.0.0
   cache:
-    ttl: 3600
     max_items: 1000
     static_max_age: 31536000
-  
-  # 限流配置
-  rate_limit:
-    window_ms: 900000
-    max_requests: 100
-    upload_limit: 10
-  
-  # 环境特定配置
+    ttl: 3600
+  database:
+    host: localhost
+    name: PG-Dev_db
+    password: password
+    pool_idle_timeout: 30000
+    pool_max: 10
+    pool_min: 2
+    port: 5432
+    test_url: postgresql://postgres:password@localhost:5432/PG-Dev_test_db
+    url: postgresql://postgres:password@localhost:5432/PG-Dev_db
+    user: postgres
   development:
+    api_docs_enabled: true
+    api_docs_path: /docs
     debug: true
+    debug_mode: true
     log_level: DEBUG
+    verbose_logging: false
     webpack_dev_server_host: localhost
     webpack_dev_server_port: 3000
     webpack_hot_reload: true
-    api_docs_enabled: true
-    api_docs_path: /docs
-    debug_mode: true
-    verbose_logging: false
-  
+  external_services:
+    openai_api_key: your-openai-api-key
+    openai_max_tokens: 2000
+    openai_model: gpt-4
+  mail:
+    from_address: noreply@pingao.com
+    from_name: 江门市品高电器实业有限公司
+    smtp_host: smtp.gmail.com
+    smtp_pass: your-app-password
+    smtp_port: 587
+    smtp_secure: false
+    smtp_user: your-email@gmail.com
+  monitoring:
+    health_check_endpoint: /health
+    health_check_interval: 30000
+  network:
+    default_ports:
+      api: 8000
+      dev_server: 3000
+      frontend: 3000
+      preview: 3000
+    host: localhost
+    preview_host: localhost
   production:
     debug: false
     log_level: INFO
-    # ssl_cert_path: /path/to/cert.pem
-    # ssl_key_path: /path/to/key.pem
-    # cluster_workers: auto
-  
+  rate_limit:
+    max_requests: 100
+    upload_limit: 10
+    window_ms: 900000
+  redis:
+    db: 0
+    host: localhost
+    password: ''
+    port: 6379
+    session_db: 1
+    url: redis://localhost:6379/0
+  security:
+    cors_credentials: true
+    cors_origin: http://localhost:3000
+    encryption_key: your-32-character-encryption-key
+    jwt_expires_in: 7d
+    jwt_refresh_expires_in: 30d
+    jwt_secret: your-super-secret-jwt-key-change-this-in-production
+    session_max_age: 86400000
+    session_secret: your-session-secret-key-change-this
+  storage:
+    allowed_file_types: jpg,jpeg,png,gif,pdf,doc,docx,txt
+    max_file_size: 10485760
+    upload_dir: ./uploads
   test:
+    coverage_threshold: 80
     debug: true
     log_level: DEBUG
     timeout: 30000
-    coverage_threshold: 80
-# Git配置已在上方定义，此处重复配置已删除
+file_types:
+  allowed_extensions:
+  - .py
+  - .js
+  - .ts
+  - .jsx
+  - .tsx
+  - .md
+  - .txt
+  - .json
+  - .yaml
+  - .yml
+  - .html
+  - .css
+  - .scss
+  - .less
+  - .sql
+  - .sh
+  - .bat
+  - .ps1
+  - .pro
+  - .prt
+  - .asm
+  - .drw
+  encoding: utf-8
+  exclude_patterns:
+  - '*.pyc'
+  - '*.pyo'
+  - '*.pyd'
+  - __pycache__
+  - node_modules
+  - .git
+  - '*.log'
+  - '*.tmp'
+  line_ending: auto
+  max_file_size: 10485760
+  naming_conventions:
+    creo:
+      description: 使用英文、数字、下划线、连字符
+      pattern: ^[a-zA-Z0-9_\-]+\.(pro|prt|asm|drw)$
+    general:
+      case_sensitive: false
+      illegal_characters:
+      - <
+      - '>'
+      - ':'
+      - '"'
+      - '|'
+      - '?'
+      - '*'
+      max_length: 255
+    markdown:
+      description: 支持中文、英文、数字、下划线、连字符和空格
+      pattern: ^[\u4e00-\u9fa5a-zA-Z0-9_\-\s]+\.md$
+    python:
+      description: 使用snake_case命名
+      pattern: ^[a-z][a-z0-9_]*\.py$
+git:
+  auto_push: true
+  commit_message_prefix: 自动备份
+  default_branch: main
+  repo_dir_name: github_repo
+logging:
+  backup_count: 30
+  compress: true
+  date_pattern: YYYY-MM-DD
+  dir: ./logs
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  level: info
+  max_files: 5
+  max_size: 10m
+  rotation: daily
+mcp:
+  memory:
+    isolation_mode: project
+    storage_path: docs/02-开发/memory.json
+  task_manager:
+    isolation_mode: project
+    storage_path: docs/02-开发/tasks.json
 migration:
   cleanup_dirs:
   - __pycache__
@@ -258,11 +471,10 @@ migration:
   - '*.sh'
   - .env*
 paths:
-  root: "s:/PG-Dev"
-  backup_dir: "s:/PG-Dev/bak"
-  docs_dir: "s:/PG-Dev/docs"
-  logs_dir: "s:/PG-Dev/logs"
-  project_dir: "s:/PG-Dev/project"
+  backup_dir: s:/PG-Dev/bak
+  docs_dir: s:/PG-Dev/docs
+  logs_dir: s:/PG-Dev/logs
+  project_dir: s:/PG-Dev/project
   required_dirs:
   - src
   - logs
@@ -273,136 +485,140 @@ paths:
   required_files:
   - README.md
   - requirements.txt
-  tools_dir: "s:/PG-Dev/tools"
+  root: s:/PG-Dev
+  tools_dir: s:/PG-Dev/tools
+performance:
+  cache_size: 100
+  connection_pool_size: 10
+  cpu_limit: 1000m
+  enable_compression: true
+  max_concurrent_requests: 100
+  memory_limit: 512MB
+  request_timeout: 30000
+  static_cache_ttl: 86400
+  worker_processes: 4
+permissions:
+  permission_levels:
+    admin:
+      description: 管理员权限（杨老师）
+      operations:
+      - read
+      - create
+      - modify
+      - delete
+      restrictions: []
+    developer:
+      description: 开发者权限
+      operations:
+      - read
+      - create
+      - modify
+      restrictions:
+      - 不能修改受保护文件
+      - 不能在根目录创建文件
+    read_only:
+      description: 只读权限
+      operations:
+      - read
+  protected_files:
+  - docs/01-设计/开发任务书.md
+  - docs/01-设计/技术方案.md
+  - docs/01-设计/项目架构设计.md
+  - docs/03-管理/规范与流程.md
+  - docs/03-管理/project_config.yaml
+  - tools/finish.py
+  - tools/control.py
+  - tools/check_structure.py
+  - tools/update_structure.py
+  - tools/pre_operation_check.py
 project:
-  created_at: '2025-06-20T00:11:18.534319'
-  name: PG-Dev
-  root: "s:/PG-Dev"
+  created_at: '2025-06-19T17:15:34.936127'
+  description: 基于自然语言的Creo参数化建模AI助理
+  full_description: 江门市品高电器实业有限公司研发管理项目
+  name: AI设计助理系统
+  root: s:/PG-Dev
+  root_directory: s:/PG-Dev
   updated_at: '2025-06-20T00:11:18.534332'
-project_description: 江门市品高电器实业有限公司研发管理项目
-project_root: ''
+  version: 1.0.0
+rules:
+  code_quality:
+    enforce_docstrings: true
+    max_file_length: 1000
+    max_function_length: 50
+    max_line_length: 120
+    require_type_hints: true
+  compliance:
+    dependency_audit: true
+    license_check: false
+    vulnerability_scan: true
+  security:
+    require_https: false
+    sanitize_outputs: true
+    scan_for_secrets: true
+    validate_inputs: true
+  validation:
+    allow_empty_files: true
+    enforce_naming_conventions: true
+    require_documentation: true
+    strict_mode: false
 structure_check:
-  # 基本配置
-  standard_list_file: docs/01-设计/目录结构标准清单.md
-  report_dir: logs/检查报告
-  report_name_format: 目录结构检查报告_{timestamp}.md
-  
-  # 目录结构生成器配置
-  generator:
-    # 排除的目录
-    excluded_dirs:
-      - __pycache__
-      - .git
-      - .vscode
-      - .idea
-      - node_modules
-      - .pytest_cache
-      - .coverage
-      - htmlcov
-      - dist
-      - build
-      - "*.egg-info"
-      - .tox
-      - .mypy_cache
-      - .DS_Store
-      - Thumbs.db
-      - .venv
-      - venv
-      - env
-    
-    # 排除的文件
-    excluded_files:
-      - .gitkeep
-      - .DS_Store
-      - Thumbs.db
-      - "*.pyc"
-      - "*.pyo"
-      - "*.pyd"
-      - __pycache__
-      - "*.so"
-      - "*.dylib"
-      - "*.dll"
-      - "*.tmp"
-      - "*.temp"
-      - "*.log"
-    
-    # 允许的隐藏文件/目录
-    allowed_hidden_items:
-      - .env
-      - .env.example
-      - .gitignore
-      - .dockerignore
-      - .eslintrc.js
-      - .prettierrc
-      - .pre-commit-config.yaml
-      - .devcontainer
-      - .github
-      - .venv
-    
-    # 特殊目录配置
-    special_dirs:
-      bak:
-        - github_repo
-        - 迁移备份
-        - 专项备份
-        - 待清理资料
-        - 常规备份
-      logs:
-        - 工作记录
-        - 检查报告
-        - 其他日志
-        - archive
-    
-    # 输出格式配置
-    output_formats:
-      - markdown  # 默认格式
-      - json      # 程序化处理格式
-    
-    # 性能配置
-    performance:
-      max_workers: 4        # 最大工作线程数
-      batch_size: 100       # 批处理大小
-      enable_async: false   # 启用异步扫描
-    
-    # 缓存配置
-    cache:
-      enabled: true         # 启用缓存
-      cache_file: structure_cache.json
-      ttl_hours: 24         # 缓存有效期（小时）
-      cache_dir: .cache/structure
-      check_mtime: true     # 检查文件修改时间
-  
-  # 检查配置（原有配置保持不变）
-  excluded_dirs: 
-    - .git
-    - node_modules
-    - __pycache__
-    - .pytest_cache
-    - venv
-    - .venv
-    - env
-    - .env
-    - dist
-    - build
-    - .idea
-    - .vscode
-    - .DS_Store
-    - Thumbs.db
-  
-  excluded_files:
-    - .DS_Store
-    - Thumbs.db
-    - "*.pyc"
-    - "*.pyo"
-    - "*.pyd"
-    - .gitkeep
-    - .keep
-    - "*.tmp"
-    - "*.temp"
-    - "*.log"
-  
-  # 允许的隐藏文件/目录
   allowed_hidden_items:
+  - .env
+  - .env.example
+  - .gitignore
+  - .dockerignore
+  - .eslintrc.js
+  - .prettierrc
+  - .pre-commit-config.yaml
+  - .devcontainer
+  - .github
+  - .venv
+  default_forbidden_patterns:
+  - '*.tmp'
+  - '*.bak'
+  - '*.swp'
+  - '*.log'
+  - '*~'
+  - Thumbs.db
+  - .DS_Store
+  - Everything.db
+  - '*.db'
+  - '*.sqlite'
+  default_naming_rules:
+    config: ^[a-zA-Z0-9_-]+\.(json|yaml|yml|ini|conf)$
+    docs: ^[一-龥a-zA-Z0-9_ -]+\.(md|txt)$
+    tools: ^[a-zA-Z0-9_-]+\.(py|js|sh|bat|ps1)$
+  excluded_dirs:
+  - .git
+  - node_modules
+  - __pycache__
+  - .pytest_cache
+  - venv
+  - .venv
+  - env
+  - .env
+  - dist
+  - build
+  - .idea
+  - .vscode
+  - .DS_Store
+  - Thumbs.db
+  excluded_dirs_for_redundancy:
+  - bak
+  - logs
+  excluded_files:
+  - .DS_Store
+  - Thumbs.db
+  - '*.pyc'
+  - '*.pyo'
+  - '*.pyd'
+  - .gitkeep
+  - .keep
+  - '*.tmp'
+  - '*.temp'
+  - '*.log'
+  generator:
+    allowed_hidden_items:
     - .env
     - .env.example
     - .gitignore
@@ -413,72 +629,103 @@ structure_check:
     - .devcontainer
     - .github
     - .venv
-  
-  # 特殊目录配置
-  special_dirs:
-    bak:
+    cache:
+      cache_dir: .cache/structure
+      cache_file: structure_cache.json
+      check_mtime: true
+      enabled: true
+      ttl_hours: 24
+    excluded_dirs:
+    - __pycache__
+    - .git
+    - .vscode
+    - .idea
+    - node_modules
+    - .pytest_cache
+    - .coverage
+    - htmlcov
+    - dist
+    - build
+    - '*.egg-info'
+    - .tox
+    - .mypy_cache
+    - .DS_Store
+    - Thumbs.db
+    - .venv
+    - venv
+    - env
+    - AI助理生产成果
+    excluded_files:
+    - .gitkeep
+    - .DS_Store
+    - Thumbs.db
+    - '*.pyc'
+    - '*.pyo'
+    - '*.pyd'
+    - __pycache__
+    - '*.so'
+    - '*.dylib'
+    - '*.dll'
+    - '*.tmp'
+    - '*.temp'
+    - '*.log'
+    output_formats:
+    - markdown
+    - json
+    performance:
+      batch_size: 100
+      enable_async: false
+      max_workers: 4
+    special_dirs:
+      bak:
       - github_repo
       - 迁移备份
       - 专项备份
       - 待清理资料
       - 常规备份
-    logs:
+      logs:
       - 工作记录
       - 检查报告
       - 其他日志
       - archive
-  
-  excluded_dirs_for_redundancy: [bak, logs]
-  
-  # 性能优化配置
   max_depth: 10
-  skip_deep_nested_dirs: true
-  
-  # 默认规则（当标准文件解析失败时使用）
-  default_forbidden_patterns:
-    - "*.tmp"
-    - "*.bak"
-    - "*.swp"
-    - "*.log"
-    - "*~"
-    - "Thumbs.db"
-    - ".DS_Store"
-    - "Everything.db"
-    - "*.db"
-    - "*.sqlite"
-  
-  # 项目根目录严格检查
+  report_dir: logs/检查报告
+  report_name_format: 目录结构检查报告_{timestamp}.md
   root_directory_rules:
-    # 只允许存在的标准目录
     allowed_directories:
-      - "bak"
-      - "docs"
-      - "logs"
-      - "project"
-      - "tools"
-    
-    # 严格禁止的目录模式
+    - bak
+    - docs
+    - logs
+    - project
+    - tools
     forbidden_directory_patterns:
-      - "config*"
-      - "example*"
-      - "sample*"
-      - "temp*"
-      - "tmp*"
-      - "cache*"
-      - "test*"
-    
-    # 严格禁止的文件模式
+    - config*
+    - example*
+    - sample*
+    - temp*
+    - tmp*
+    - cache*
+    - test*
     forbidden_file_patterns:
-      - "*.db"
-      - "*.sqlite"
-      - "Everything.db"
-      - "*.log"
-      - "*.tmp"
-  
-  default_naming_rules:
-    docs: "^[\u4e00-\u9fa5a-zA-Z0-9_ -]+\\.(md|txt)$"
-    tools: "^[a-zA-Z0-9_-]+\\.(py|js|sh|bat|ps1)$"
-    config: "^[a-zA-Z0-9_-]+\\.(json|yaml|yml|ini|conf)$"
+    - '*.db'
+    - '*.sqlite'
+    - Everything.db
+    - '*.log'
+    - '*.tmp'
+  skip_deep_nested_dirs: true
+  special_dirs:
+    bak:
+    - github_repo
+    - 迁移备份
+    - 专项备份
+    - 待清理资料
+    - 常规备份
+    logs:
+    - 工作记录
+    - 检查报告
+    - 其他日志
+    - archive
+  standard_list_file: docs/01-设计/目录结构标准清单.md
 template:
   default_description: 江门市品高电器实业有限公司研发管理项目
   default_project_name: PG-Dev
@@ -488,10 +735,3 @@ template:
   - CREATED_AT
   - UPDATED_AT
 updated_at: '2025-06-19T17:15:34.936137'
-mcp:
-  memory:
-    storage_path: "docs/02-开发/memory.json"  # 相对于项目根目录
-    isolation_mode: "project"  # project | global | custom
-  task_manager:
-    storage_path: "docs/02-开发/tasks.json"
-    isolation_mode: "project"

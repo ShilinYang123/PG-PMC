@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PG-Dev AI设计助理 - 配置管理器
+PG-Dev AI设计助理 - 配置管理器（兼容层）
+
+本模块提供与旧版配置管理器的兼容性，同时使用新的统一配置管理中心。
+
+注意：此模块已被弃用，建议使用 project.src.core.config_center 模块。
+
+作者: 雨俊
+创建时间: 2025-01-09
+更新时间: 2025-01-10
 """
 
 import json
@@ -13,54 +21,98 @@ from typing import Any, Dict, Optional
 import yaml
 from dotenv import load_dotenv
 
-from src.utils.encryption import decrypt_data, encrypt_data
-from src.utils.logger import get_logger
+try:
+    from core.config_center import ConfigCenter, get_config_center
+    from core.unified_logging import get_logger
+except ImportError:
+    # 简单的logger替代
+    class SimpleLogger:
+        def error(self, msg):
+            print(f"ERROR: {msg}")
+
+        def info(self, msg):
+            print(f"INFO: {msg}")
+
+        def warning(self, msg):
+            print(f"WARNING: {msg}")
+
+        def debug(self, msg):
+            print(f"DEBUG: {msg}")
+
+    def get_logger(name):
+        return SimpleLogger()
+
+    # 如果无法导入，则跳过这些功能
+    get_config_center = None
+    ConfigCenter = None
+try:
+    from utils.encryption import decrypt_data, encrypt_data
+except ImportError:
+    # 简单的加密解密替代
+    def decrypt_data(data):
+        return data
+
+    def encrypt_data(data):
+        return data
+
 
 from .settings import Settings
 
 
 class ConfigManager:
-    """配置管理器
+    """配置管理器（兼容层）
 
-    负责配置文件的加载、保存、验证和管理
+    提供与旧版配置管理器的兼容性，内部使用新的统一配置管理中心。
+
+    注意：此类已被弃用，建议直接使用 ConfigCenter 类。
     """
 
     def __init__(self, config_file: Optional[str] = None):
         """初始化配置管理器
 
         Args:
-            config_file: 配置文件路径
+            config_file: 配置文件路径（已弃用，由ConfigCenter管理）
         """
         self.logger = get_logger(self.__class__.__name__)
 
-        # 默认配置文件路径
-        self.config_file = config_file or "config/settings.yaml"
-        self.config_dir = Path(self.config_file).parent
+        # 发出弃用警告
+        self.logger.warning(
+            "ConfigManager已被弃用，建议使用 project.src.core.config_center.ConfigCenter"
+        )
 
-        # 配置文件路径
-        self.default_config_file = self.config_dir / "default.yaml"
-        self.backup_file = self.config_dir / "settings_backup.yaml"
-        self.user_config_file = self.config_dir / "user_settings.yaml"
+        # 使用新的配置中心
+        if config_file:
+            config_dir = Path(config_file).parent
+            project_root = (
+                config_dir.parent if config_dir.name == "config" else config_dir
+            )
+            self._config_center = get_config_center(project_root)
+        else:
+            self._config_center = get_config_center()
 
-        # 环境变量文件路径
+        # 兼容性属性
+        self.config_dir = self._config_center.paths.config_dir
+        self.config_file = self._config_center.paths.get_config_file("main")
+        self.default_config_file = self._config_center.paths.get_config_file("default")
+        self.backup_file = self._config_center.paths.backup_dir / "settings_backup.yaml"
+        self.user_config_file = self._config_center.paths.get_config_file("user")
+
+        # 环境变量文件路径（兼容性）
         self.env_files = [
-            ".env.local",
-            ".env",
-            f".env.{os.getenv('ENVIRONMENT', 'development')}"
+            self._config_center.paths.project_root / ".env.local",
+            self._config_center.paths.project_root / ".env",
+            self._config_center.paths.project_root
+            / f".env.{os.getenv('ENVIRONMENT', 'development')}",
         ]
 
-        # 当前设置
+        # 当前设置（兼容性）
         self._settings: Optional[Settings] = None
 
-        # 确保配置目录存在
-        self.config_dir.mkdir(parents=True, exist_ok=True)
-        
-        # 加载环境变量
-        self._load_environment_variables()
+        self.logger.info(f"配置管理器（兼容层）已初始化，配置目录: {self.config_dir}")
 
     def _load_environment_variables(self) -> None:
         """加载环境变量文件
-        
+
         按优先级顺序加载环境变量文件：
         1. .env.local (最高优先级)
         2. .env
@@ -73,90 +125,36 @@ class ConfigManager:
                 if env_path.exists():
                     self.logger.info(f"加载环境变量文件: {env_file}")
                     load_dotenv(env_path, override=True)
-                    
+
         except Exception as e:
             self.logger.warning(f"加载环境变量文件失败: {e}")
 
     def load_settings(self) -> Settings:
-        """加载配置设置
-        
-        配置加载优先级：
-        1. 用户配置文件 (user_settings.yaml)
-        2. 主配置文件 (settings.yaml)
-        3. 默认配置文件 (default.yaml)
-        4. 内置默认配置
-        
-        环境变量会覆盖配置文件中的对应设置
+        """加载配置设置（兼容方法）
 
         Returns:
             Settings: 配置设置对象
         """
         try:
-            self.logger.info("开始加载配置设置")
-            
-            # 重新加载环境变量（确保最新）
-            self._load_environment_variables()
+            # 使用新配置中心加载配置
+            config_data = self._config_center.load_config()
 
-            # 按优先级加载配置文件
-            config_data = {}
-            
-            # 1. 加载默认配置
-            if self.default_config_file.exists():
-                self.logger.info(f"加载默认配置: {self.default_config_file}")
-                default_data = self._load_yaml_file(self.default_config_file)
-                if default_data:
-                    config_data.update(default_data)
-            
-            # 2. 加载主配置文件
-            if Path(self.config_file).exists():
-                self.logger.info(f"加载主配置: {self.config_file}")
-                main_data = self._load_yaml_file(self.config_file)
-                if main_data:
-                    config_data = self._deep_merge_dict(config_data, main_data)
-            
-            # 3. 加载用户配置
-            if self.user_config_file.exists():
-                self.logger.info(f"加载用户配置: {self.user_config_file}")
-                user_data = self._load_yaml_file(self.user_config_file)
-                if user_data:
-                    config_data = self._deep_merge_dict(config_data, user_data)
-            
-            # 4. 如果没有任何配置文件，使用默认配置
-            if not config_data:
-                self.logger.info("使用内置默认配置")
-                settings = Settings()
-                # 保存默认配置文件
-                self._save_default_config(settings)
-            else:
-                # 从配置数据创建Settings对象
-                settings = Settings.from_dict(config_data)
-            
-            # 5. 应用环境变量覆盖
-            settings = self._apply_environment_overrides(settings)
+            # 创建Settings对象
+            settings = Settings.from_dict(config_data)
 
-            # 验证配置
-            errors = settings.validate()
-            if errors:
-                self.logger.warning(f"配置验证发现问题: {errors}")
-                for error in errors:
-                    self.logger.warning(f"  - {error}")
-
-            # 解密敏感信息
-            self._decrypt_sensitive_data(settings)
-
+            # 缓存配置
             self._settings = settings
-            self.logger.info("✅ 配置加载完成")
 
             return settings
 
         except Exception as e:
-            self.logger.error(f"加载配置失败: {e}")
+            self.logger.error(f"❌ 加载配置设置失败: {e}")
             # 返回默认配置
             self._settings = Settings()
             return self._settings
 
     def save_settings(self, settings: Settings, user_config: bool = True) -> bool:
-        """保存配置设置
+        """保存配置设置（兼容方法）
 
         Args:
             settings: 配置设置对象
@@ -166,74 +164,72 @@ class ConfigManager:
             bool: 保存是否成功
         """
         try:
-            self.logger.info("保存配置设置")
+            # 转换为字典
+            settings_dict = asdict(settings)
 
-            # 创建备份
-            if user_config and self.user_config_file.exists():
-                self._create_backup()
-
-            # 加密敏感信息
-            settings_copy = self._encrypt_sensitive_data(settings)
-
-            # 选择保存文件
-            target_file = self.user_config_file if user_config else self.config_file
-
-            # 保存配置
-            success = self._save_to_file(settings_copy, target_file)
+            # 使用新配置中心保存配置
+            config_type = "user" if user_config else "main"
+            success = self._config_center.save_config(settings_dict, config_type)
 
             if success:
                 self._settings = settings
-                self.logger.info(f"✅ 配置已保存: {target_file}")
+                self.logger.info(f"✅ 配置已保存: {config_type}")
 
             return success
 
         except Exception as e:
             self.logger.error(f"保存配置失败: {e}")
             return False
-    
+
     def _load_yaml_file(self, file_path: Path) -> Optional[Dict[str, Any]]:
         """加载YAML文件
-        
+
         Args:
             file_path: YAML文件路径
-            
+
         Returns:
             Dict[str, Any]: 配置数据字典，失败时返回None
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
                 return data if data else {}
         except Exception as e:
             self.logger.error(f"加载YAML文件失败 {file_path}: {e}")
             return None
-    
-    def _deep_merge_dict(self, base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+
+    def _deep_merge_dict(
+        self, base: Dict[str, Any], override: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """深度合并字典
-        
+
         Args:
             base: 基础字典
             override: 覆盖字典
-            
+
         Returns:
             Dict[str, Any]: 合并后的字典
         """
         result = base.copy()
-        
+
         for key, value in override.items():
-            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
                 result[key] = self._deep_merge_dict(result[key], value)
             else:
                 result[key] = value
-                
+
         return result
-    
+
     def _apply_environment_overrides(self, settings: Settings) -> Settings:
         """应用环境变量覆盖
-        
+
         Args:
             settings: 配置设置对象
-            
+
         Returns:
             Settings: 应用环境变量后的配置设置
         """
@@ -241,121 +237,115 @@ class ConfigManager:
             # 环境变量映射
             env_mappings = {
                 # 应用配置
-                'DEBUG': ('app', 'debug'),
-                'LOG_LEVEL': ('app', 'log_level'),
-                
+                "DEBUG": ("app", "debug"),
+                "LOG_LEVEL": ("app", "log_level"),
                 # 服务器配置
-                'SERVER_HOST': ('server', 'host'),
-                'SERVER_PORT': ('server', 'port'),
-                'WORKERS': ('server', 'workers'),
-                
+                "SERVER_HOST": ("server", "host"),
+                "SERVER_PORT": ("server", "port"),
+                "WORKERS": ("server", "workers"),
                 # AI配置
-                'OPENAI_API_KEY': ('ai', 'openai', 'api_key'),
-                'OPENAI_MODEL': ('ai', 'openai', 'model'),
-                'OPENAI_MAX_TOKENS': ('ai', 'openai', 'max_tokens'),
-                'OPENAI_TEMPERATURE': ('ai', 'openai', 'temperature'),
-                'OPENAI_TIMEOUT': ('ai', 'openai', 'timeout'),
-                
-                'ANTHROPIC_API_KEY': ('ai', 'anthropic', 'api_key'),
-                'ANTHROPIC_MODEL': ('ai', 'anthropic', 'model'),
-                'ANTHROPIC_MAX_TOKENS': ('ai', 'anthropic', 'max_tokens'),
-                'ANTHROPIC_TEMPERATURE': ('ai', 'anthropic', 'temperature'),
-                'ANTHROPIC_TIMEOUT': ('ai', 'anthropic', 'timeout'),
-                
+                "OPENAI_API_KEY": ("ai", "openai", "api_key"),
+                "OPENAI_MODEL": ("ai", "openai", "model"),
+                "OPENAI_MAX_TOKENS": ("ai", "openai", "max_tokens"),
+                "OPENAI_TEMPERATURE": ("ai", "openai", "temperature"),
+                "OPENAI_TIMEOUT": ("ai", "openai", "timeout"),
+                "ANTHROPIC_API_KEY": ("ai", "anthropic", "api_key"),
+                "ANTHROPIC_MODEL": ("ai", "anthropic", "model"),
+                "ANTHROPIC_MAX_TOKENS": ("ai", "anthropic", "max_tokens"),
+                "ANTHROPIC_TEMPERATURE": ("ai", "anthropic", "temperature"),
+                "ANTHROPIC_TIMEOUT": ("ai", "anthropic", "timeout"),
                 # Creo配置
-                'CREO_INSTALL_PATH': ('creo', 'install_path'),
-                'CREO_CONNECTION_TIMEOUT': ('creo', 'connection_timeout'),
-                'CREO_OPERATION_TIMEOUT': ('creo', 'operation_timeout'),
-                'CREO_AUTO_START': ('creo', 'auto_start'),
-                
+                "CREO_INSTALL_PATH": ("creo", "install_path"),
+                "CREO_CONNECTION_TIMEOUT": ("creo", "connection_timeout"),
+                "CREO_OPERATION_TIMEOUT": ("creo", "operation_timeout"),
+                "CREO_AUTO_START": ("creo", "auto_start"),
                 # 数据库配置
-                'DATABASE_TYPE': ('database', 'type'),
-                'DATABASE_PATH': ('database', 'sqlite', 'path'),
-                'DATABASE_HOST': ('database', 'postgresql', 'host'),
-                'DATABASE_PORT': ('database', 'postgresql', 'port'),
-                'DATABASE_NAME': ('database', 'postgresql', 'name'),
-                'DATABASE_USER': ('database', 'postgresql', 'user'),
-                'DATABASE_PASSWORD': ('database', 'postgresql', 'password'),
-                
+                "DATABASE_TYPE": ("database", "type"),
+                "DATABASE_PATH": ("database", "sqlite", "path"),
+                "DATABASE_HOST": ("database", "postgresql", "host"),
+                "DATABASE_PORT": ("database", "postgresql", "port"),
+                "DATABASE_NAME": ("database", "postgresql", "name"),
+                "DATABASE_USER": ("database", "postgresql", "user"),
+                "DATABASE_PASSWORD": ("database", "postgresql", "password"),
                 # 存储配置
-                'TEMP_DIR': ('storage', 'temp_dir'),
-                'UPLOAD_DIR': ('storage', 'upload_dir'),
-                'MAX_FILE_SIZE': ('storage', 'max_file_size'),
-                
+                "TEMP_DIR": ("storage", "temp_dir"),
+                "UPLOAD_DIR": ("storage", "upload_dir"),
+                "MAX_FILE_SIZE": ("storage", "max_file_size"),
                 # 安全配置
-                'SECRET_KEY': ('security', 'secret_key'),
-                'JWT_SECRET_KEY': ('security', 'jwt_secret_key'),
-                'SESSION_TIMEOUT': ('security', 'session_timeout'),
-                
+                "SECRET_KEY": ("security", "secret_key"),
+                "JWT_SECRET_KEY": ("security", "jwt_secret_key"),
+                "SESSION_TIMEOUT": ("security", "session_timeout"),
                 # 性能配置
-                'CACHE_ENABLED': ('performance', 'cache', 'enabled'),
-                'CACHE_TTL': ('performance', 'cache', 'ttl'),
-                'MAX_WORKERS': ('performance', 'concurrency', 'max_workers'),
-                
+                "CACHE_ENABLED": ("performance", "cache", "enabled"),
+                "CACHE_TTL": ("performance", "cache", "ttl"),
+                "MAX_WORKERS": ("performance", "concurrency", "max_workers"),
                 # 功能开关
-                'ENABLE_CHAT_INTERFACE': ('features', 'chat_interface'),
-                'ENABLE_DESIGN_INTERPRETER': ('features', 'design_interpreter'),
-                'ENABLE_PARAMETER_PARSER': ('features', 'parameter_parser'),
-                'ENABLE_GEOMETRY_CREATOR': ('features', 'geometry_creator'),
-                'ENABLE_REAL_TIME_PREVIEW': ('features', 'real_time_preview'),
-                
+                "ENABLE_CHAT_INTERFACE": ("features", "chat_interface"),
+                "ENABLE_DESIGN_INTERPRETER": ("features", "design_interpreter"),
+                "ENABLE_PARAMETER_PARSER": ("features", "parameter_parser"),
+                "ENABLE_GEOMETRY_CREATOR": ("features", "geometry_creator"),
+                "ENABLE_REAL_TIME_PREVIEW": ("features", "real_time_preview"),
                 # 开发配置
-                'HOT_RELOAD': ('development', 'hot_reload'),
-                'DEBUG_TOOLBAR': ('development', 'debug_toolbar'),
-                'PROFILING': ('development', 'profiling'),
+                "HOT_RELOAD": ("development", "hot_reload"),
+                "DEBUG_TOOLBAR": ("development", "debug_toolbar"),
+                "PROFILING": ("development", "profiling"),
             }
-            
+
             # 应用环境变量覆盖
             settings_dict = asdict(settings)
-            
+
             for env_var, path in env_mappings.items():
                 env_value = os.getenv(env_var)
                 if env_value is not None:
                     # 转换环境变量值类型
                     converted_value = self._convert_env_value(env_value)
-                    
+
                     # 设置嵌套字典值
                     self._set_nested_dict_value(settings_dict, path, converted_value)
-                    
-                    self.logger.debug(f"应用环境变量覆盖: {env_var} = {converted_value}")
-            
+
+                    self.logger.debug(
+                        f"应用环境变量覆盖: {env_var} = {converted_value}"
+                    )
+
             # 从字典重新创建Settings对象
             return Settings.from_dict(settings_dict)
-            
+
         except Exception as e:
             self.logger.error(f"应用环境变量覆盖失败: {e}")
             return settings
-    
+
     def _convert_env_value(self, value: str) -> Any:
         """转换环境变量值类型
-        
+
         Args:
             value: 环境变量字符串值
-            
+
         Returns:
             Any: 转换后的值
         """
         # 布尔值转换
-        if value.lower() in ('true', 'yes', '1', 'on'):
+        if value.lower() in ("true", "yes", "1", "on"):
             return True
-        elif value.lower() in ('false', 'no', '0', 'off'):
+        elif value.lower() in ("false", "no", "0", "off"):
             return False
-        
+
         # 数字转换
         try:
-            if '.' in value:
+            if "." in value:
                 return float(value)
             else:
                 return int(value)
         except ValueError:
             pass
-        
+
         # 返回字符串
         return value
-    
-    def _set_nested_dict_value(self, data: Dict[str, Any], path: tuple, value: Any) -> None:
+
+    def _set_nested_dict_value(
+        self, data: Dict[str, Any], path: tuple, value: Any
+    ) -> None:
         """设置嵌套字典值
-        
+
         Args:
             data: 目标字典
             path: 路径元组
@@ -367,10 +357,10 @@ class ConfigManager:
                 current[key] = {}
             current = current[key]
         current[path[-1]] = value
-    
+
     def _save_default_config(self, settings: Settings) -> None:
         """保存默认配置文件
-        
+
         Args:
             settings: 配置设置对象
         """
@@ -381,7 +371,7 @@ class ConfigManager:
             self.logger.error(f"保存默认配置失败: {e}")
 
     def get_settings(self) -> Settings:
-        """获取当前配置设置
+        """获取当前配置设置（兼容方法）
 
         Returns:
             Settings: 配置设置对象
@@ -391,7 +381,7 @@ class ConfigManager:
         return self._settings
 
     def update_setting(self, key_path: str, value: Any) -> bool:
-        """更新单个配置项
+        """更新单个配置项（兼容方法）
 
         Args:
             key_path: 配置项路径，如 'creo.connection_timeout'
@@ -401,36 +391,18 @@ class ConfigManager:
             bool: 更新是否成功
         """
         try:
-            settings = self.get_settings()
-
-            # 解析键路径
-            keys = key_path.split(".")
-            obj = settings
-
-            # 导航到目标对象
-            for key in keys[:-1]:
-                if hasattr(obj, key):
-                    obj = getattr(obj, key)
-                else:
-                    self.logger.error(f"配置路径不存在: {key_path}")
-                    return False
-
-            # 设置值
-            final_key = keys[-1]
-            if hasattr(obj, final_key):
-                setattr(obj, final_key, value)
+            success = self._config_center.set_config(key_path, value, save=True)
+            if success:
                 self.logger.info(f"配置已更新: {key_path} = {value}")
-                return self.save_settings(settings)
-            else:
-                self.logger.error(f"配置项不存在: {final_key}")
-                return False
-
+                # 更新缓存的settings
+                self._settings = None
+            return success
         except Exception as e:
             self.logger.error(f"更新配置失败: {e}")
             return False
 
     def get_setting(self, key_path: str, default: Any = None) -> Any:
-        """获取单个配置项
+        """获取单个配置项（兼容方法）
 
         Args:
             key_path: 配置项路径，如 'creo.connection_timeout'
@@ -440,21 +412,7 @@ class ConfigManager:
             Any: 配置值
         """
         try:
-            settings = self.get_settings()
-
-            # 解析键路径
-            keys = key_path.split(".")
-            obj = settings
-
-            # 导航到目标值
-            for key in keys:
-                if hasattr(obj, key):
-                    obj = getattr(obj, key)
-                else:
-                    return default
-
-            return obj
-
+            return self._config_center.get_config(key_path, default)
         except Exception as e:
             self.logger.error(f"获取配置失败: {e}")
             return default
@@ -649,7 +607,10 @@ class ConfigManager:
     def _encrypt_sensitive_data(self, settings: Settings) -> Settings:
         """加密敏感数据"""
         try:
-            if not hasattr(settings, 'security') or not settings.security.encrypt_api_keys:
+            if (
+                not hasattr(settings, "security")
+                or not settings.security.encrypt_api_keys
+            ):
                 return settings
 
             # 创建设置副本
@@ -658,12 +619,15 @@ class ConfigManager:
             settings_copy = copy.deepcopy(settings)
 
             # 加密API密钥
-            if hasattr(settings_copy.ai, 'openai') and settings_copy.ai.openai.api_key:
+            if hasattr(settings_copy.ai, "openai") and settings_copy.ai.openai.api_key:
                 settings_copy.ai.openai.api_key = encrypt_data(
                     settings_copy.ai.openai.api_key, settings.security.encryption_key
                 )
 
-            if hasattr(settings_copy.ai, 'anthropic') and settings_copy.ai.anthropic.api_key:
+            if (
+                hasattr(settings_copy.ai, "anthropic")
+                and settings_copy.ai.anthropic.api_key
+            ):
                 settings_copy.ai.anthropic.api_key = encrypt_data(
                     settings_copy.ai.anthropic.api_key, settings.security.encryption_key
                 )
@@ -677,11 +641,14 @@ class ConfigManager:
     def _decrypt_sensitive_data(self, settings: Settings):
         """解密敏感数据"""
         try:
-            if not hasattr(settings, 'security') or not settings.security.encrypt_api_keys:
+            if (
+                not hasattr(settings, "security")
+                or not settings.security.encrypt_api_keys
+            ):
                 return
 
             # 解密API密钥
-            if hasattr(settings.ai, 'openai') and settings.ai.openai.api_key:
+            if hasattr(settings.ai, "openai") and settings.ai.openai.api_key:
                 try:
                     settings.ai.openai.api_key = decrypt_data(
                         settings.ai.openai.api_key, settings.security.encryption_key
@@ -689,7 +656,7 @@ class ConfigManager:
                 except Exception:
                     self.logger.warning("OpenAI API密钥解密失败")
 
-            if hasattr(settings.ai, 'anthropic') and settings.ai.anthropic.api_key:
+            if hasattr(settings.ai, "anthropic") and settings.ai.anthropic.api_key:
                 try:
                     settings.ai.anthropic.api_key = decrypt_data(
                         settings.ai.anthropic.api_key, settings.security.encryption_key

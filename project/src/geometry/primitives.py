@@ -258,7 +258,8 @@ class PrimitiveShapes:
         """
         try:
             self.logger.debug(
-                f"创建长方体: {params.name}, 尺寸={params.length}x{params.width}x{params.height}"
+                f"创建长方体: {params.name}, "
+                f"尺寸={params.length}x{params.width}x{params.height}"
             )
 
             # 验证参数
@@ -344,7 +345,8 @@ class PrimitiveShapes:
         """
         try:
             self.logger.debug(
-                f"创建圆锥体: {params.name}, 底半径={params.bottom_radius}, 顶半径={params.top_radius}, 高度={params.height}"
+                f"创建圆锥体: {params.name}, 底半径={params.bottom_radius}, "
+                f"顶半径={params.top_radius}, 高度={params.height}"
             )
 
             # 验证参数
@@ -407,7 +409,8 @@ class PrimitiveShapes:
         """
         try:
             self.logger.debug(
-                f"创建环形体: {params.name}, 主半径={params.major_radius}, 次半径={params.minor_radius}"
+                f"创建环形体: {params.name}, "
+                f"主半径={params.major_radius}, 次半径={params.minor_radius}"
             )
 
             # 验证参数

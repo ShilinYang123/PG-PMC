@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -6,8 +7,7 @@ PG-Dev AI设计助理 - Creo API封装器
 
 import os
 import time
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 try:
     import pythoncom
@@ -72,7 +72,7 @@ class CreoAPIWrapper:
             app = self.connector.application
             
             # 创建新零件
-            part = app.FileNew(part_name, template, None)
+            part = app.FileNew(part_name, template, None)  # noqa: F841
             
             self.logger.info(f"成功创建零件: {part_name}")
             return True
@@ -117,7 +117,7 @@ class CreoAPIWrapper:
             circle_sketch = self._create_circle_sketch(model, sketch_plane, diameter/2)
             
             # 拉伸成圆柱体
-            cylinder_feature = self._extrude_sketch(model, circle_sketch, height)
+            cylinder_feature = self._extrude_sketch(model, circle_sketch, height)  # noqa: F841
             
             self.logger.info(f"成功创建圆柱体: 直径{diameter}mm, 高度{height}mm")
             return True
@@ -219,7 +219,7 @@ class CreoAPIWrapper:
         # 这里需要根据Creo API实现圆形草图创建
         # 简化实现
         sketch = model.CreateSketch(sketch_plane)
-        circle = sketch.CreateCircle(0, 0, radius)
+        circle = sketch.CreateCircle(0, 0, radius)  # noqa: F841
         return sketch
     
     def _extrude_sketch(self, model, sketch, height: float):

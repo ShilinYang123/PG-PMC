@@ -32,6 +32,17 @@ if sys.platform == "win32":
 PROJECT_ROOT = Path(__file__).parent.parent
 TOOLS_DIR = PROJECT_ROOT / "tools"
 
+# 添加项目路径到Python路径
+sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(TOOLS_DIR))
+
+# 导入统一日志系统
+from project.src.core.unified_logging import get_logger, initialize_logging
+
+# 初始化统一日志系统
+initialize_logging()
+logger = get_logger("finish", "finish")
+
 
 # 读取项目配置
 def load_project_config():
@@ -49,12 +60,6 @@ def load_project_config():
 project_config = load_project_config()
 git_config = project_config.get("git", {})
 GIT_REPO_DIR = PROJECT_ROOT / "bak" / git_config.get("repo_dir_name", "github_repo")
-
-# 使用统一的日志配置
-sys.path.insert(0, str(TOOLS_DIR))
-from logging_config import get_logger
-
-logger = get_logger("finish")
 
 
 def run_structure_check():
@@ -88,10 +93,31 @@ def run_structure_check():
         return False
 
 
-def run_backup():
-    """执行备份操作"""
+def run_backup(full_backup=False):
+    """执行备份操作
+    
+    Args:
+        full_backup (bool): 是否进行全量zip压缩备份
+    """
     logger.info("开始备份操作...")
 
+    try:
+        if full_backup:
+            # 全量zip压缩备份
+            return run_full_zip_backup()
+        else:
+            # 核心文件备份
+            return run_core_files_backup()
+
+    except Exception as e:
+        logger.error(f"执行备份时出错: {e}")
+        return False
+
+
+def run_core_files_backup():
+    """执行核心文件备份"""
+    logger.info("开始核心文件备份...")
+    
     try:
         # 创建备份目录
         backup_base_dir = PROJECT_ROOT / "bak" / "专项备份"
@@ -128,11 +154,63 @@ def run_backup():
                 shutil.copy2(source_file, target_file)
                 backup_count += 1
 
-        logger.info(f"备份操作完成，已备份 {backup_count} 个文件到: {backup_dir}")
+        logger.info(f"核心文件备份完成，已备份 {backup_count} 个文件到: {backup_dir}")
         return True
 
     except Exception as e:
-        logger.error(f"执行备份时出错: {e}")
+        logger.error(f"执行核心文件备份时出错: {e}")
+        return False
+
+
+def run_full_zip_backup():
+    """执行全量zip压缩备份"""
+    logger.info("开始全量zip压缩备份...")
+    
+    try:
+        import zipfile
+        
+        # 创建常规备份目录
+        backup_base_dir = PROJECT_ROOT / "bak" / "常规备份"
+        backup_base_dir.mkdir(parents=True, exist_ok=True)
+
+        # 生成备份文件名
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_file = backup_base_dir / f"全量备份_{timestamp}.zip"
+        
+        # 需要备份的目录
+        backup_dirs = ["docs", "project", "tools"]
+        
+        total_files = 0
+        with zipfile.ZipFile(backup_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for dir_name in backup_dirs:
+                source_dir = PROJECT_ROOT / dir_name
+                if source_dir.exists():
+                    logger.info(f"正在压缩目录: {dir_name}")
+                    for file_path in source_dir.rglob('*'):
+                        if file_path.is_file():
+                            # 计算相对路径
+                            relative_path = file_path.relative_to(PROJECT_ROOT)
+                            zipf.write(file_path, relative_path)
+                            total_files += 1
+                            
+                            # 每100个文件输出一次进度
+                            if total_files % 100 == 0:
+                                logger.info(f"已压缩 {total_files} 个文件...")
+                else:
+                    logger.warning(f"目录不存在，跳过: {dir_name}")
+        
+        # 获取压缩文件大小
+        file_size_mb = backup_file.stat().st_size / (1024 * 1024)
+        
+        logger.info(f"全量zip压缩备份完成！")
+        logger.info(f"备份文件: {backup_file}")
+        logger.info(f"压缩文件数: {total_files}")
+        logger.info(f"文件大小: {file_size_mb:.2f} MB")
+        
+        return True
+
+    except Exception as e:
+        logger.error(f"执行全量zip压缩备份时出错: {e}")
         return False
 
 
@@ -258,59 +336,75 @@ def run_git_push():
 
 def main():
     """主函数"""
+    import argparse
+    
+    # 解析命令行参数
+    parser = argparse.ArgumentParser(description='项目完成脚本')
+    parser.add_argument('--full-backup', action='store_true', 
+                       help='进行全量zip压缩备份到常规备份目录')
+    parser.add_argument('--backup-only', action='store_true',
+                       help='仅执行备份操作，跳过结构检查和Git推送')
+    args = parser.parse_args()
+    
     try:
-        print("[START] 启动项目完成流程")
-        print(f"[INFO] 项目根目录: {PROJECT_ROOT}")
-        print("-" * 60)
+        logger.info("启动项目完成流程")
+        logger.info(f"项目根目录: {PROJECT_ROOT}")
+        if args.full_backup:
+            logger.info("[模式] 全量zip压缩备份模式")
+        if args.backup_only:
+            logger.info("[模式] 仅备份模式")
+        logger.info("-" * 60)
 
         success_count = 0
-        total_steps = 3
-        print(f"[DEBUG] 初始化完成，准备执行 {total_steps} 个步骤")
+        total_steps = 1 if args.backup_only else 3
+        logger.debug(f"初始化完成，准备执行 {total_steps} 个步骤")
 
-        # 1. 目录结构检查
-        print("\n[STEP 1/3] 目录结构检查")
-        check_result = run_structure_check()
-        print(f"[DEBUG] 目录结构检查返回值: {check_result}")
-        if check_result:
-            success_count += 1
-            print("[SUCCESS] 目录结构检查完成")
-        else:
-            print("[FAILED] 目录结构检查失败")
+        if not args.backup_only:
+            # 1. 目录结构检查
+            logger.info("\n[STEP 1/3] 目录结构检查")
+            check_result = run_structure_check()
+            logger.debug(f"目录结构检查返回值: {check_result}")
+            if check_result:
+                success_count += 1
+                logger.info("[SUCCESS] 目录结构检查完成")
+            else:
+                logger.error("[FAILED] 目录结构检查失败")
 
         # 2. 备份操作
-        print("\n[STEP 2/3] 备份操作")
-        backup_result = run_backup()
-        print(f"[DEBUG] 备份操作返回值: {backup_result}")
+        step_num = "1/1" if args.backup_only else "2/3"
+        logger.info(f"\n[STEP {step_num}] 备份操作")
+        backup_result = run_backup(full_backup=args.full_backup)
+        logger.debug(f"备份操作返回值: {backup_result}")
         if backup_result:
             success_count += 1
-            print("[SUCCESS] 备份操作完成")
+            logger.info("[SUCCESS] 备份操作完成")
         else:
-            print("[FAILED] 备份操作失败")
+            logger.error("[FAILED] 备份操作失败")
 
-        # 3. Git推送
-        print("\n[STEP 3/3] Git推送")
-        if run_git_push():
-            success_count += 1
-            print("[SUCCESS] Git推送完成")
-        else:
-            print("[FAILED] Git推送失败")
+        if not args.backup_only:
+            # 3. Git推送
+            logger.info("\n[STEP 3/3] Git推送")
+            if run_git_push():
+                success_count += 1
+                logger.info("[SUCCESS] Git推送完成")
+            else:
+                logger.error("[FAILED] Git推送失败")
 
         # 总结
-        print("\n" + "=" * 60)
-        print(f"[SUMMARY] 完成情况: {success_count}/{total_steps} 步骤成功")
+        logger.info("\n" + "=" * 60)
+        logger.info(f"[SUMMARY] 完成情况: {success_count}/{total_steps} 步骤成功")
 
         if success_count == total_steps:
-            print("[COMPLETE] 所有步骤都已成功完成！")
+            logger.info("[COMPLETE] 所有步骤都已成功完成！")
             return 0
         else:
-            print("[WARNING] 部分步骤失败，请检查日志")
+            logger.warning("[WARNING] 部分步骤失败，请检查日志")
             return 1
 
     except Exception as e:
-        print(f"[ERROR] 执行过程中发生异常: {e}")
+        logger.error(f"执行过程中发生异常: {e}")
         import traceback
-
-        traceback.print_exc()
+        logger.error(traceback.format_exc())
         return 1
 
 

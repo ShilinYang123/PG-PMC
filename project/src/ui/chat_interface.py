@@ -297,10 +297,10 @@ class ChatInterface:
             welcome_panel = Panel(
                 "[bold green]欢迎使用 PinGao AI设计助理![/bold green]\n\n"
                 "我可以帮助您：\n"
-                "• 创建3D模型和零件\n"
-                "• 生成工程图\n"
-                "• 优化设计参数\n"
-                "• 提供设计建议\n\n"
+                "- 创建3D模型和零件\n"
+                "- 生成工程图\n"
+                "- 优化设计参数\n"
+                "- 提供设计建议\n\n"
                 "输入 [bold]/help[/bold] 查看可用命令\n"
                 "输入 [bold]/quit[/bold] 退出程序",
                 title="AI设计助理",
@@ -367,7 +367,8 @@ class ChatInterface:
                 "\n".join(
                     [
                         f"[{msg.timestamp.strftime('%H:%M:%S')}] "
-                        f"{msg.type.value}: {msg.content[:100]}{'...' if len(msg.content) > 100 else ''}"
+                        f"{msg.type.value}: {msg.content[:100]}"
+                        f"{'...' if len(msg.content) > 100 else ''}"
                         for msg in history_messages
                     ]
                 ),
@@ -408,7 +409,8 @@ class ChatInterface:
             for msg in self.messages:
                 export_lines.extend(
                     [
-                        f"[{msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')}] {msg.type.value.upper()}",
+                        f"[{msg.timestamp.strftime('%Y-%m-%d %H:%M:%S')}] "
+                        f"{msg.type.value.upper()}",
                         msg.content,
                         "-" * 30,
                         "",

@@ -65,21 +65,21 @@ def main():
             logger.info("正在测试Creo连接...")
             success = assistant.test_creo_connection()
             if success:
-                logger.info("✅ Creo连接测试成功")
+                logger.info("[SUCCESS] Creo连接测试成功")
                 return 0
             else:
-                logger.error("❌ Creo连接测试失败")
+                logger.error("[ERROR] Creo连接测试失败")
                 return 1
 
         # 启动AI设计助理
-        logger.info("🚀 启动PG-Dev AI设计助理...")
+        logger.info("[START] 启动PG-Dev AI设计助理...")
         assistant.run()
 
     except KeyboardInterrupt:
-        logger.info("👋 用户中断，正在退出...")
+        logger.info("[INFO] 用户中断，正在退出...")
         return 0
     except Exception as e:
-        logger.error(f"❌ 程序运行出错: {e}")
+        logger.error(f"[ERROR] 程序运行出错: {e}")
         if args.dev:
             import traceback
 
