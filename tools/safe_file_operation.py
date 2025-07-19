@@ -14,7 +14,7 @@ def check_and_execute(operation_type, file_path, *args):
     # 调用前置检查
     check_cmd = [
         sys.executable,
-        "s:\PG-Dev\tools\pre_operation_check.py",
+        "s:\PG-PMC\tools\pre_operation_check.py",
         "--check-file", file_path,
         "--operation", operation_type
     ]

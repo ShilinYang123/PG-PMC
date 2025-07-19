@@ -67,8 +67,8 @@ def main():
     print("\n步骤3: 运行 start.py")
     try:
         result = subprocess.run(
-            [sys.executable, "s:\\PG-Dev\\tools\\start.py"],
-            cwd="s:\\PG-Dev",
+            [sys.executable, "s:\\PG-PMC\\tools\\start.py"],
+            cwd="s:\\PG-PMC",
             capture_output=True,
             text=True,
             encoding='utf-8',

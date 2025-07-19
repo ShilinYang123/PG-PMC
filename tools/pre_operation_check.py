@@ -22,7 +22,7 @@ from datetime import datetime
 class ProjectComplianceChecker:
     """项目合规性检查器（升级版）"""
     
-    def __init__(self, project_root: str = "s:/PG-Dev", enhanced_mode: bool = True):
+    def __init__(self, project_root: str = "s:/PG-PMC", enhanced_mode: bool = True):
         self.project_root = Path(project_root)
         self.docs_dir = self.project_root / "docs"
         self.architecture_doc = self.docs_dir / "01-设计" / "项目架构设计.md"

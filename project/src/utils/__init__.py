@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PG-Dev AI设计助理 - 工具模块
+PG-PMC AI设计助理 - 工具模块
 """
 
 from .encryption import SimpleEncryption
@@ -11,7 +11,7 @@ from .performance import SystemMonitor
 from .validation import Validator
 
 __version__ = "1.0.0"
-__author__ = "PG-Dev Team"
+__author__ = "PG-PMC Team"
 
 __all__ = [
     "get_logger",

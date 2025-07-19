@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PG-Dev AI设计助理 - 配置设置
+PG-PMC AI设计助理 - 配置设置
 """
 
 import os
@@ -13,8 +13,7 @@ from typing import Any, Dict, List
 @dataclass
 class AppSettings:
     """应用基础设置"""
-
-    name: str = "PG-Dev AI设计助理"
+    name: str = "PG-PMC AI设计助理"
     version: str = "1.0.0"
     description: str = "基于AI的Creo参数化设计助理"
     debug: bool = False
@@ -25,27 +24,24 @@ class AppSettings:
 @dataclass
 class ServerSettings:
     """服务器设置"""
-
     host: str = "127.0.0.1"
     port: int = 8000
     workers: int = 1
     reload: bool = True
     access_log: bool = True
-
+    
 
 @dataclass
 class SQLiteSettings:
     """SQLite数据库设置"""
-
     path: str = "data/pgdev.db"
     timeout: int = 30
     check_same_thread: bool = False
-
+    
 
 @dataclass
 class PostgreSQLSettings:
     """PostgreSQL数据库设置"""
-
     host: str = "localhost"
     port: int = 5432
     name: str = "pgdev"
@@ -53,43 +49,31 @@ class PostgreSQLSettings:
     password: str = ""
     pool_size: int = 10
     max_overflow: int = 20
-
+    
 
 @dataclass
 class DatabaseSettings:
     """数据库设置"""
-
     type: str = "sqlite"  # sqlite, postgresql
     sqlite: SQLiteSettings = field(default_factory=SQLiteSettings)
     postgresql: PostgreSQLSettings = field(default_factory=PostgreSQLSettings)
-
+    
 
 @dataclass
 class StorageSettings:
     """文件存储设置"""
-
     temp_dir: str = "temp"
     upload_dir: str = "uploads"
     backup_dir: str = "backups"
     max_file_size: int = 100  # MB
     allowed_extensions: List[str] = field(
-        default_factory=lambda: [
-            ".prt",
-            ".asm",
-            ".drw",
-            ".step",
-            ".stp",
-            ".iges",
-            ".igs",
-            ".stl",
-        ]
+        default_factory=lambda: [".prt", ".asm", ".drw", ".step", ".stp", ".iges", ".igs", ".stl"]
     )
-
+    
 
 @dataclass
 class CreoSettings:
     """Creo相关设置"""
-
     install_path: str = r"C:\Program Files\PTC\Creo 7.0\Common Files\x86e_win64\bin"
     executable: str = "parametric.exe"
     startup_args: List[str] = field(
@@ -98,7 +82,7 @@ class CreoSettings:
     connection_timeout: int = 30
     operation_timeout: int = 60
     max_retries: int = 3
-    working_directory: str = r"C:\PG-Dev\CreoWork"
+    working_directory: str = r"C:\PG-PMC\CreoWork"
     config_file: str = "config.pro"
     startup_mode: str = "windowed"  # windowed, minimized, hidden
     api_version: str = "7.0"
@@ -112,7 +96,6 @@ class CreoSettings:
 @dataclass
 class OpenAISettings:
     """OpenAI相关设置"""
-
     api_key: str = ""
     model: str = "gpt-4"
     base_url: str = "https://api.openai.com/v1"
@@ -126,7 +109,6 @@ class OpenAISettings:
 @dataclass
 class AnthropicSettings:
     """Anthropic相关设置"""
-
     api_key: str = ""
     model: str = "claude-3-sonnet-20240229"
     base_url: str = "https://api.anthropic.com"
@@ -140,17 +122,16 @@ class AnthropicSettings:
 @dataclass
 class AISettings:
     """AI相关设置"""
-
     openai: OpenAISettings = field(default_factory=OpenAISettings)
     anthropic: AnthropicSettings = field(default_factory=AnthropicSettings)
-
+    
     # 通用设置
     default_provider: str = "openai"  # openai, anthropic
     language: str = "zh-CN"  # zh-CN, en-US
-
+    
     # 设计知识库
     knowledge_base_path: str = "data/knowledge_base"
-
+    
     # 缓存设置
     enable_cache: bool = True
     cache_size: int = 1000
@@ -270,45 +251,41 @@ class SecuritySettings:
 @dataclass
 class CacheSettings:
     """缓存设置"""
-
     enabled: bool = True
     ttl: int = 3600  # 秒
     max_size: int = 1000
-
+    
 
 @dataclass
 class ConcurrencySettings:
     """并发设置"""
-
     max_workers: int = 4
     thread_pool_size: int = 4
     enable_async: bool = True
-
+    
 
 @dataclass
 class PerformanceSettings:
     """性能设置"""
-
     cache: CacheSettings = field(default_factory=CacheSettings)
     concurrency: ConcurrencySettings = field(default_factory=ConcurrencySettings)
-
+    
     # 内存和资源限制
     memory_limit: int = 2048  # MB
     max_file_size: int = 100  # MB
-
+    
     # 几何处理
     geometry_simplification_threshold: float = 0.01
     render_quality: str = "medium"  # low, medium, high, ultra
-
+    
     # 预加载设置
     preload_models: bool = False
     preload_textures: bool = False
-
+    
 
 @dataclass
 class FeaturesSettings:
     """功能开关设置"""
-
     chat_interface: bool = True
     design_interpreter: bool = True
     parameter_parser: bool = True
@@ -316,12 +293,11 @@ class FeaturesSettings:
     real_time_preview: bool = True
     file_upload: bool = True
     batch_processing: bool = False
-
+    
 
 @dataclass
 class DevelopmentSettings:
     """开发设置"""
-
     hot_reload: bool = True
     debug_toolbar: bool = True
     profiling: bool = False
@@ -332,7 +308,7 @@ class DevelopmentSettings:
 @dataclass
 class Settings:
     """主配置类"""
-
+    
     # 各模块设置
     app: AppSettings = field(default_factory=AppSettings)
     server: ServerSettings = field(default_factory=ServerSettings)
@@ -346,25 +322,25 @@ class Settings:
     features: FeaturesSettings = field(default_factory=FeaturesSettings)
     development: DevelopmentSettings = field(default_factory=DevelopmentSettings)
     ui: UISettings = field(default_factory=UISettings)
-
+    
     # 配置文件路径（向后兼容）
     config_file: str = "config/settings.yaml"
-
+    
     # 目录设置（向后兼容）
     data_directory: str = "data"
     temp_directory: str = "temp"
     plugins_directory: str = "plugins"
-
+    
     @property
     def app_name(self) -> str:
         """应用名称（向后兼容）"""
         return self.app.name
-
+        
     @property
     def app_version(self) -> str:
         """应用版本（向后兼容）"""
         return self.app.version
-
+        
     @property
     def debug_mode(self) -> bool:
         """调试模式（向后兼容）"""
@@ -453,7 +429,10 @@ class Settings:
             errors.append("Creo操作超时时间必须大于0")
 
         # 验证AI设置
-        if not self.ai.openai.api_key and not self.ai.anthropic.api_key:
+        if (
+            not self.ai.openai.api_key
+            and not self.ai.anthropic.api_key
+        ):
             errors.append("必须配置至少一个AI服务的API密钥")
         if self.ai.openai.max_tokens <= 0:
             errors.append("OpenAI最大令牌数必须大于0")

@@ -350,7 +350,7 @@ class ComplianceFileSystemHandler(FileSystemEventHandler):
 class ComplianceMonitor:
     """合规性监控器"""
     
-    def __init__(self, project_root: str = "s:/PG-Dev"):
+    def __init__(self, project_root: str = "s:/PG-PMC"):
         self.project_root = Path(project_root)
         self.config_file = self.project_root / "docs" / "03-管理" / "project_config.yaml"
         self.violations_file = self.project_root / "logs" / "合规性报告" / "violations.json"
@@ -725,7 +725,7 @@ def main():
     parser.add_argument("--date-check", action="store_true", help="执行日期一致性检查")
     parser.add_argument("--file", help="指定要检查的文件（用于date-check）")
     parser.add_argument("--fix", action="store_true", help="自动修复日期问题")
-    parser.add_argument("--project-root", default="s:/PG-Dev", help="项目根目录")
+    parser.add_argument("--project-root", default="s:/PG-PMC", help="项目根目录")
     
     args = parser.parse_args()
     

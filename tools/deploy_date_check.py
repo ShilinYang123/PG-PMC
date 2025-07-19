@@ -26,7 +26,7 @@ class DateCheckDeployer:
     """日期检查功能部署器"""
     
     def __init__(self):
-        self.project_root = Path("S:/PG-Dev")
+        self.project_root = Path("S:/PG-PMC")
         self.tools_dir = self.project_root / "tools"
         self.docs_dir = self.project_root / "docs"
         self.config_file = self.docs_dir / "03-管理" / "project_config.yaml"

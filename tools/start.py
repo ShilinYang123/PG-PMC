@@ -19,7 +19,7 @@ from typing import Dict, List, Tuple, Any, Optional
 class AIAssistantStartupChecker:
     """AI助理启动前置检查器"""
     
-    def __init__(self, project_root: str = "s:/PG-Dev"):
+    def __init__(self, project_root: str = "s:/PG-PMC"):
         self.project_root = Path(project_root)
         self.docs_dir = self.project_root / "docs"
         self.tools_dir = self.project_root / "tools"

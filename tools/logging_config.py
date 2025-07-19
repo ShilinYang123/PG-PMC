@@ -123,8 +123,8 @@ class LoggingConfig:
         forbidden_paths = ["bak", "github_repo", "backup", "备份"]
         current_path_str = str(current_dir).lower()
 
-        # 强制使用项目根目录 S:\PG-Dev，无论当前在哪里
-        project_root = Path("S:\\PG-Dev")
+        # 强制使用项目根目录 S:\PG-PMC，无论当前在哪里
+        project_root = Path("S:\\PG-PMC")
 
         # 检查logs_dir路径是否包含禁止的路径
         logs_dir_str = str(self.logs_dir).lower()

@@ -40,7 +40,7 @@ except ImportError:
 class UnifiedReportGenerator:
     """统一报告生成器类"""
 
-    def __init__(self, project_root_path: str = "s:/PG-Dev"):
+    def __init__(self, project_root_path: str = "s:/PG-PMC"):
         """初始化统一报告生成器"""
         self.project_root = Path(project_root_path)
         self.config = ConfigLoader.load_config()
@@ -428,7 +428,7 @@ def main():
     parser.add_argument("--daily", action="store_true", help="生成每日报告")
     parser.add_argument("--weekly", action="store_true", help="生成每周报告")
     parser.add_argument("--schedule", action="store_true", help="启动定时任务")
-    parser.add_argument("--project-root", default="s:/PG-Dev", help="项目根目录")
+    parser.add_argument("--project-root", default="s:/PG-PMC", help="项目根目录")
     
     args = parser.parse_args()
     

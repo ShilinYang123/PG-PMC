@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PG-Dev AI设计助理 - 环境管理器
+PG-PMC AI设计助理 - 环境管理器
 """
 
 import os

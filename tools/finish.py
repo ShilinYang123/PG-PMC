@@ -36,12 +36,19 @@ TOOLS_DIR = PROJECT_ROOT / "tools"
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(TOOLS_DIR))
 
-# 导入统一日志系统
-from project.src.core.unified_logging import get_logger, initialize_logging
-
-# 初始化统一日志系统
-initialize_logging()
-logger = get_logger("finish", "finish")
+# 导入日志系统
+try:
+    from project.src.utils.logger import get_logger
+    logger = get_logger("finish")
+except ImportError:
+    # 如果导入失败，使用标准logging
+    import logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] %(name)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    logger = logging.getLogger("finish")
 
 
 # 读取项目配置

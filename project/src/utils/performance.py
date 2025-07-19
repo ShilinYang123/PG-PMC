@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PG-Dev AI设计助理 - 性能监控工具
+PG-PMC AI设计助理 - 性能监控工具
 """
 
 import functools

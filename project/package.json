@@ -1,7 +1,7 @@
 {
-  "name": "pg-dev-ai-design-assistant",
+  "name": "pg-pmc-intelligent-tracking",
   "version": "1.0.0",
-  "description": "PG-Dev AI设计助理 - 基于Creo的自然语言小家电设计系统",
+  "description": "PG-PMC智能追踪系统 - AI驱动的小家电生产管理平台",
   "main": "src/main.py",
   "scripts": {
     "start": "python src/main.py",
@@ -17,24 +17,26 @@
     "security-check": "bandit -r src/",
     "install-deps": "pip install -r requirements.txt",
     "setup-env": "python -m venv .venv && .venv\\Scripts\\activate && pip install -r requirements.txt",
-    "creo-test": "python src/creo/creo_connector.py --test",
+    "db-init": "python src/database/init_db.py",
+    "db-migrate": "python src/database/migrate.py",
     "prepare": "pre-commit install"
   },
   "keywords": [
     "ai",
-    "design-assistant",
-    "creo",
-    "cad",
-    "natural-language",
-    "3d-modeling",
-    "pg-dev",
+    "production-management",
+    "intelligent-tracking",
+    "manufacturing",
+    "iot",
+    "scheduling",
+    "warning-system",
+    "pg-pmc",
     "江门市品高电器"
   ],
   "author": "江门市品高电器实业有限公司",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pg-dev-company/ai-design-assistant.git"
+    "url": "https://github.com/pg-pmc-company/intelligent-tracking.git"
   },
   "engines": {
     "python": ">=3.11.0"

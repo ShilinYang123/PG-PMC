@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Python代码示例库 - PG-Dev工作室
+Python代码示例库 - PG-PMC工作室
 提供常用的Python代码模板，包括数据处理、Web开发、异步编程等
 """
 

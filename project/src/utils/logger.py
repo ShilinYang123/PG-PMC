@@ -1,51 +1,40 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PG-Dev AI设计助理 - 日志工具（统一日志系统包装器）
-
-注意：此模块已重构为统一日志系统的包装器，保持向后兼容性。
-新代码应直接使用 project.src.core.unified_logging 模块。
+PG-PMC AI设计助理 - 日志工具
 """
 
+import os
 import sys
-import warnings
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-# 导入统一日志系统
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-
-# 这些导入必须在sys.path修改后进行
-from project.src.core.unified_logging import (  # noqa: E402
-    get_logger as unified_get_logger,
-)
-from project.src.core.unified_logging import initialize_logging  # noqa: E402
-
-# 发出废弃警告
-warnings.warn(
-    "project.src.utils.logger 模块已废弃，请使用 project.src.core.unified_logging",
-    DeprecationWarning,
-    stacklevel=2,
-)
+from loguru import logger
 
 
 class LoggerConfig:
-    """日志配置（兼容性包装器）"""
+    """日志配置"""
 
     def __init__(self):
-        # 为了向后兼容，保留配置属性但不实际使用
+        # 默认配置
         self.level = "INFO"
-        self.format = "%(asctime)s [%(levelname)s] %(name)s:%(lineno)d - %(message)s"
+        self.format = (
+            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+            "<level>{level: <8}</level> | "
+            "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | "
+            "<level>{message}</level>"
+        )
         self.rotation = "10 MB"
         self.retention = "30 days"
         self.compression = "zip"
         self.backtrace = True
         self.diagnose = True
 
-        # 文件路径（统一日志系统会自动管理）
+        # 文件路径
         self.log_dir = Path("logs")
-        self.log_file = "application.log"
-        self.error_file = "errors.log"
+        self.log_file = "pingao_ai.log"
+        self.error_file = "pingao_ai_error.log"
 
         # 控制台输出
         self.console_enabled = True
@@ -58,13 +47,6 @@ class LoggerConfig:
         # 错误文件
         self.error_file_enabled = True
         self.error_file_level = "ERROR"
-
-        # 发出废弃警告
-        warnings.warn(
-            "LoggerConfig 类已废弃，统一日志系统会自动管理配置",
-            DeprecationWarning,
-            stacklevel=2,
-        )
 
         # 性能日志
         self.performance_enabled = True
@@ -84,48 +66,121 @@ class CustomLogger:
         self._setup_logger()
 
     def _setup_logger(self):
-        """设置日志器（兼容性方法，实际由统一日志系统管理）"""
-        # 此方法保留用于向后兼容，实际日志配置由统一日志系统管理
-        # 初始化统一日志系统
-        initialize_logging()
-        # 获取统一日志系统的logger
-        self._logger = unified_get_logger(self.name, "standard")
+        """设置日志器"""
+        try:
+            # 创建日志目录
+            self.config.log_dir.mkdir(parents=True, exist_ok=True)
+
+            # 移除默认处理器
+            logger.remove()
+
+            # 添加控制台处理器
+            if self.config.console_enabled:
+                logger.add(
+                    sys.stderr,
+                    format=self.config.format,
+                    level=self.config.console_level,
+                    colorize=True,
+                    backtrace=self.config.backtrace,
+                    diagnose=self.config.diagnose,
+                )
+
+            # 添加文件处理器
+            if self.config.file_enabled:
+                log_file_path = self.config.log_dir / self.config.log_file
+                logger.add(
+                    log_file_path,
+                    format=self.config.format,
+                    level=self.config.file_level,
+                    rotation=self.config.rotation,
+                    retention=self.config.retention,
+                    compression=self.config.compression,
+                    backtrace=self.config.backtrace,
+                    diagnose=self.config.diagnose,
+                    encoding="utf-8",
+                )
+
+            # 添加错误文件处理器
+            if self.config.error_file_enabled:
+                error_file_path = self.config.log_dir / self.config.error_file
+                logger.add(
+                    error_file_path,
+                    format=self.config.format,
+                    level=self.config.error_file_level,
+                    rotation=self.config.rotation,
+                    retention=self.config.retention,
+                    compression=self.config.compression,
+                    backtrace=self.config.backtrace,
+                    diagnose=self.config.diagnose,
+                    encoding="utf-8",
+                )
+
+            # 添加性能日志处理器
+            if self.config.performance_enabled:
+                perf_file_path = self.config.log_dir / self.config.performance_file
+                logger.add(
+                    perf_file_path,
+                    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
+                    level="INFO",
+                    filter=lambda record: "PERFORMANCE" in record["extra"],
+                    rotation="1 day",
+                    retention="7 days",
+                    encoding="utf-8",
+                )
+
+            # 添加审计日志处理器
+            if self.config.audit_enabled:
+                audit_file_path = self.config.log_dir / self.config.audit_file
+                logger.add(
+                    audit_file_path,
+                    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
+                    level="INFO",
+                    filter=lambda record: "AUDIT" in record["extra"],
+                    rotation="1 day",
+                    retention="30 days",
+                    encoding="utf-8",
+                )
+
+        except Exception as e:
+            print(f"设置日志器失败: {e}")
+            # 使用基本配置
+            logger.add(sys.stderr, level="INFO")
 
     def get_logger(self):
         """获取日志器"""
-        return self._logger
+        return logger.bind(name=self.name)
 
     def debug(self, message: str, **kwargs):
         """调试日志"""
-        self._logger.debug(f"[{self.name}] {message}")
+        logger.bind(name=self.name).debug(message, **kwargs)
 
     def info(self, message: str, **kwargs):
         """信息日志"""
-        self._logger.info(f"[{self.name}] {message}")
+        logger.bind(name=self.name).info(message, **kwargs)
 
     def warning(self, message: str, **kwargs):
         """警告日志"""
-        self._logger.warning(f"[{self.name}] {message}")
+        logger.bind(name=self.name).warning(message, **kwargs)
 
     def error(self, message: str, **kwargs):
         """错误日志"""
-        self._logger.error(f"[{self.name}] {message}")
+        logger.bind(name=self.name).error(message, **kwargs)
 
     def critical(self, message: str, **kwargs):
         """严重错误日志"""
-        self._logger.critical(f"[{self.name}] {message}")
+        logger.bind(name=self.name).critical(message, **kwargs)
 
     def exception(self, message: str, **kwargs):
         """异常日志"""
-        self._logger.exception(f"[{self.name}] {message}")
+        logger.bind(name=self.name).exception(message, **kwargs)
 
     def performance(self, message: str, **kwargs):
         """性能日志"""
-        self._logger.info(f"[PERF][{self.name}] {message}")
+        logger.bind(name=self.name, PERFORMANCE=True).info(message, **kwargs)
 
     def audit(self, message: str, **kwargs):
         """审计日志"""
-        self._logger.info(f"[AUDIT][{self.name}] {message}")
+        logger.bind(name=self.name, AUDIT=True).info(message, **kwargs)
 
 
 # 全局日志器实例
@@ -140,212 +195,263 @@ def setup_logging(
     console_enabled: bool = None,
     file_enabled: bool = None,
 ) -> LoggerConfig:
-    """设置全局日志配置（兼容性包装器）
+    """设置全局日志配置
 
     Args:
-        config: 日志配置对象（已废弃，仅保留兼容性）
-        level: 日志级别（已废弃，仅保留兼容性）
-        log_dir: 日志目录（已废弃，仅保留兼容性）
-        console_enabled: 是否启用控制台输出（已废弃，仅保留兼容性）
-        file_enabled: 是否启用文件输出（已废弃，仅保留兼容性）
+        config: 日志配置对象
+        level: 日志级别
+        log_dir: 日志目录
+        console_enabled: 是否启用控制台输出
+        file_enabled: 是否启用文件输出
 
     Returns:
-        LoggerConfig: 日志配置（兼容性返回）
+        LoggerConfig: 日志配置
     """
     global _global_config
 
-    warnings.warn(
-        "project.src.utils.logger.setup_logging 已废弃，"
-        "请使用 project.src.core.unified_logging.initialize_logging",
-        DeprecationWarning,
-        stacklevel=2,
-    )
+    try:
+        # 使用提供的配置或创建新配置
+        if config is None:
+            config = LoggerConfig()
 
-    # 初始化统一日志系统
-    initialize_logging()
+        # 应用参数覆盖
+        if level is not None:
+            config.level = level
+            config.console_level = level
+            config.file_level = level
 
-    # 为了兼容性，返回一个配置对象
-    if config is None:
-        config = LoggerConfig()
+        if log_dir is not None:
+            config.log_dir = Path(log_dir)
 
-    _global_config = config
-    return config
+        if console_enabled is not None:
+            config.console_enabled = console_enabled
+
+        if file_enabled is not None:
+            config.file_enabled = file_enabled
+
+        _global_config = config
+
+        # 清空现有日志器，强制重新初始化
+        _loggers.clear()
+
+        # 创建根日志器以验证配置
+        get_logger("root")
+
+        return config
+
+    except Exception as e:
+        print(f"设置日志配置失败: {e}")
+        # 返回默认配置
+        _global_config = LoggerConfig()
+        return _global_config
 
 
-def get_logger(name: str):
-    """获取日志器（兼容性包装器）
+def get_logger(name: str) -> CustomLogger:
+    """获取日志器
 
     Args:
         name: 日志器名称
 
     Returns:
-        Logger: 日志器实例
+        CustomLogger: 日志器实例
     """
-    warnings.warn(
-        "project.src.utils.logger.get_logger 已废弃，"
-        "请使用 project.src.core.unified_logging.get_logger",
-        DeprecationWarning,
-        stacklevel=2,
-    )
+    global _loggers, _global_config
 
-    # 初始化统一日志系统
-    initialize_logging()
+    try:
+        # 如果日志器已存在，直接返回
+        if name in _loggers:
+            return _loggers[name]
 
-    # 返回统一日志系统的logger
-    return unified_get_logger(name, "standard")
+        # 使用全局配置或默认配置
+        config = _global_config or LoggerConfig()
+
+        # 创建新的日志器
+        custom_logger = CustomLogger(name, config)
+        _loggers[name] = custom_logger
+
+        return custom_logger
+
+    except Exception as e:
+        print(f"获取日志器失败: {e}")
+        # 返回基本日志器
+        if name not in _loggers:
+            _loggers[name] = CustomLogger(name, LoggerConfig())
+        return _loggers[name]
 
 
 def get_log_files() -> Dict[str, str]:
-    """获取日志文件路径（兼容性包装器）
+    """获取日志文件路径
 
     Returns:
         Dict[str, str]: 日志文件路径字典
     """
-    warnings.warn(
-        "project.src.utils.logger.get_log_files 已废弃，日志文件由统一日志系统管理",
-        DeprecationWarning,
-        stacklevel=2,
-    )
+    try:
+        config = _global_config or LoggerConfig()
 
-    # 返回统一日志系统的标准日志文件路径
-    return {
-        "main": "logs/application.log",
-        "error": "logs/errors.log",
-        "performance": "logs/performance.log",
-        "audit": "logs/audit.log",
-    }
+        log_files = {}
+
+        if config.file_enabled:
+            log_files["main"] = str(config.log_dir / config.log_file)
+
+        if config.error_file_enabled:
+            log_files["error"] = str(config.log_dir / config.error_file)
+
+        if config.performance_enabled:
+            log_files["performance"] = str(config.log_dir / config.performance_file)
+
+        if config.audit_enabled:
+            log_files["audit"] = str(config.log_dir / config.audit_file)
+
+        return log_files
+
+    except Exception as e:
+        print(f"获取日志文件路径失败: {e}")
+        return {}
 
 
 def cleanup_old_logs(days: int = 30):
-    """清理旧日志文件（兼容性包装器）
+    """清理旧日志文件
 
     Args:
-        days: 保留天数（已废弃，统一日志系统自动管理）
+        days: 保留天数
     """
-    warnings.warn(
-        "project.src.utils.logger.cleanup_old_logs 已废弃，统一日志系统自动管理日志清理",
-        DeprecationWarning,
-        stacklevel=2,
-    )
+    try:
+        config = _global_config or LoggerConfig()
+        log_dir = config.log_dir
 
-    # 统一日志系统会自动处理日志清理，此函数仅保留兼容性
-    print(f"日志清理功能已由统一日志系统自动管理，保留天数: {days}天")
+        if not log_dir.exists():
+            return
+
+        cutoff_time = datetime.now().timestamp() - (days * 24 * 60 * 60)
+
+        deleted_count = 0
+        for log_file in log_dir.glob("*.log*"):
+            if log_file.stat().st_mtime < cutoff_time:
+                try:
+                    log_file.unlink()
+                    deleted_count += 1
+                except Exception as e:
+                    print(f"删除日志文件失败 {log_file}: {e}")
+
+        if deleted_count > 0:
+            logger.info(f"清理了 {deleted_count} 个旧日志文件")
+
+    except Exception as e:
+        print(f"清理旧日志失败: {e}")
 
 
 def set_log_level(level: str):
-    """设置日志级别（兼容性包装器）
+    """设置日志级别
 
     Args:
-        level: 日志级别 (DEBUG, INFO, WARNING, ERROR, CRITICAL)（已废弃）
+        level: 日志级别 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     """
-    warnings.warn(
-        "project.src.utils.logger.set_log_level 已废弃，日志级别由统一日志系统管理",
-        DeprecationWarning,
-        stacklevel=2,
-    )
+    try:
+        global _global_config
 
-    print(f"日志级别设置功能已由统一日志系统管理，请求级别: {level.upper()}")
+        if _global_config is None:
+            _global_config = LoggerConfig()
+
+        _global_config.level = level.upper()
+        _global_config.console_level = level.upper()
+        _global_config.file_level = level.upper()
+
+        # 重新设置所有日志器
+        _loggers.clear()
+
+        logger.info(f"日志级别已设置为: {level.upper()}")
+
+    except Exception as e:
+        print(f"设置日志级别失败: {e}")
 
 
 def enable_debug_mode():
-    """启用调试模式（兼容性包装器）"""
-    warnings.warn(
-        "project.src.utils.logger.enable_debug_mode 已废弃，调试模式由统一日志系统管理",
-        DeprecationWarning,
-        stacklevel=2,
-    )
+    """启用调试模式"""
+    try:
+        set_log_level("DEBUG")
 
-    print("调试模式功能已由统一日志系统管理")
+        global _global_config
+        if _global_config:
+            _global_config.backtrace = True
+            _global_config.diagnose = True
+
+        logger.info("调试模式已启用")
+
+    except Exception as e:
+        print(f"启用调试模式失败: {e}")
 
 
 def disable_console_logging():
-    """禁用控制台日志输出（兼容性包装器）"""
-    warnings.warn(
-        "project.src.utils.logger.disable_console_logging 已废弃，控制台输出由统一日志系统管理",
-        DeprecationWarning,
-        stacklevel=2,
-    )
+    """禁用控制台日志输出"""
+    try:
+        global _global_config
 
-    print("控制台日志输出功能已由统一日志系统管理")
+        if _global_config is None:
+            _global_config = LoggerConfig()
+
+        _global_config.console_enabled = False
+
+        # 重新设置所有日志器
+        _loggers.clear()
+
+        print("控制台日志输出已禁用")
+
+    except Exception as e:
+        print(f"禁用控制台日志失败: {e}")
 
 
 def get_logger_stats() -> Dict[str, Any]:
-    """获取日志器统计信息（兼容性包装器）
+    """获取日志器统计信息
 
     Returns:
         Dict[str, Any]: 统计信息
     """
-    warnings.warn(
-        "project.src.utils.logger.get_logger_stats 已废弃，统计信息由统一日志系统管理",
-        DeprecationWarning,
-        stacklevel=2,
-    )
+    try:
+        config = _global_config or LoggerConfig()
 
-    # 返回基本的兼容性统计信息
-    return {
-        "loggers_count": 0,
-        "logger_names": [],
-        "config": {
-            "level": "INFO",
-            "log_dir": "logs",
-            "console_enabled": True,
-            "file_enabled": True,
-            "unified_logging": True,
-        },
-    }
+        stats = {
+            "loggers_count": len(_loggers),
+            "logger_names": list(_loggers.keys()),
+            "config": {
+                "level": config.level,
+                "log_dir": str(config.log_dir),
+                "console_enabled": config.console_enabled,
+                "file_enabled": config.file_enabled,
+                "error_file_enabled": config.error_file_enabled,
+                "performance_enabled": config.performance_enabled,
+                "audit_enabled": config.audit_enabled,
+            },
+            "log_files": get_log_files(),
+        }
+
+        # 获取日志文件大小
+        for name, path in stats["log_files"].items():
+            try:
+                if os.path.exists(path):
+                    size = os.path.getsize(path)
+                    stats["config"][
+                        f"{name}_file_size"
+                    ] = f"{size / 1024 / 1024:.2f} MB"
+                else:
+                    stats["config"][f"{name}_file_size"] = "不存在"
+            except Exception:
+                stats["config"][f"{name}_file_size"] = "未知"
+
+        return stats
+
+    except Exception as e:
+        print(f"获取日志器统计失败: {e}")
+        return {}
 
 
 # 兼容性函数
-def getLogger(name: str):
-    """获取日志器（兼容标准库，兼容性包装器）
+def getLogger(name: str) -> CustomLogger:
+    """获取日志器（兼容标准库）
 
     Args:
         name: 日志器名称
 
     Returns:
-        Logger: 日志器实例
+        CustomLogger: 日志器实例
     """
-    warnings.warn(
-        "project.src.utils.logger.getLogger 已废弃，"
-        "请使用 project.src.core.unified_logging.get_logger",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
     return get_logger(name)
-
-
-def get_performance_logger(name: str = "performance"):
-    """获取性能日志器（兼容性包装器）"""
-    warnings.warn(
-        "project.src.utils.logger.get_performance_logger 已废弃，"
-        "请使用 project.src.core.unified_logging.get_logger",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    # 初始化统一日志系统
-    initialize_logging()
-
-    # 返回性能日志器
-    return unified_get_logger(name, "performance")
-
-
-def get_audit_logger(name: str = "audit"):
-    """获取审计日志器（兼容性包装器）"""
-    warnings.warn(
-        "project.src.utils.logger.get_audit_logger 已废弃，"
-        "请使用 project.src.core.unified_logging.get_logger",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    # 初始化统一日志系统
-    initialize_logging()
-
-    # 返回审计日志器
-    return unified_get_logger(name, "audit")
-
-
-# 创建默认日志器实例
-logger = get_logger("pingao_ai")

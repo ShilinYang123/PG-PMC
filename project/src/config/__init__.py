@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PG-Dev AI设计助理 - 配置管理模块
+PG-PMC AI设计助理 - 配置管理模块
 """
 
 from .config_manager import ConfigManager
@@ -18,4 +18,4 @@ __all__ = [
 ]
 
 __version__ = "1.0.0"
-__author__ = "PG-Dev Team"
+__author__ = "PG-PMC Team"

@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PG-Dev AI设计助理 - AI模块
+PG-PMC AI设计助理 - AI模块
 """
 
-from .design_interpreter import DesignInterpreter
-from .language_processor import LanguageProcessor
-from .parameter_parser import ParameterParser
+from .intelligent_scheduler import IntelligentScheduler
+from .warning_system import WarningSystem
 
-__all__ = ["LanguageProcessor", "DesignInterpreter", "ParameterParser"]
+__all__ = ["IntelligentScheduler", "WarningSystem"]

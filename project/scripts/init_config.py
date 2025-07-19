@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PG-Dev AI设计助理 - 配置初始化脚本
+PG-PMC AI设计助理 - 配置初始化脚本
 
 此脚本用于初始化项目配置，包括创建必要的目录、生成配置文件模板等。
 """
@@ -177,7 +177,7 @@ class ConfigInitializer:
     def create_user_config_template(self) -> None:
         """创建用户配置模板"""
         template_content = """
-# PG-Dev AI设计助理 - 用户配置模板
+# PG-PMC AI设计助理 - 用户配置模板
 # 复制此文件为 user_settings.yaml 并根据需要修改
 
 # 应用设置
@@ -205,7 +205,7 @@ ai:
 # Creo设置
 creo:
   install_path: "C:\\Program Files\\PTC\\Creo 7.0\\Common Files\\x86e_win64\\bin"
-  working_directory: "C:\\PG-Dev\\CreoWork"
+  working_directory: "C:\\PG-PMC\\CreoWork"
   auto_start: false
 
 # 数据库设置
@@ -241,7 +241,7 @@ def main():
     """主函数"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="PG-Dev AI设计助理配置初始化")
+    parser = argparse.ArgumentParser(description="PG-PMC AI设计助理配置初始化")
     parser.add_argument(
         "--force", 
         action="store_true", 

@@ -28,7 +28,7 @@ class TestExample:
     def test_string_operations(self):
         """测试字符串操作"""
         text = "PinGao工作室"
-        assert len(text) == 9
+        assert len(text) == 7
         assert "PinGao" in text
 
     def test_list_operations(self):

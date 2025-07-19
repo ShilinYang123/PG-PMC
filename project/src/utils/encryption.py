@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PG-Dev AI设计助理 - 加密工具
+PG-PMC AI设计助理 - 加密工具
 """
 
 import base64
