@@ -24,7 +24,13 @@ from typing import Dict, Set
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # 导入统一日志系统
-from project.src.core.unified_logging import get_logger, initialize_logging
+# 尝试导入日志模块
+try:
+    from project.src.utils.logger import get_logger
+except ImportError:
+    import logging
+    def get_logger(name):
+        return logging.getLogger(name)
 
 
 class EnhancedStructureChecker:
