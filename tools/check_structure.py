@@ -27,10 +27,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # 尝试导入日志模块
 try:
     from project.src.utils.logger import get_logger
+    def initialize_logging():
+        pass  # 占位函数
 except ImportError:
     import logging
     def get_logger(name):
         return logging.getLogger(name)
+    def initialize_logging():
+        pass  # 占位函数
 
 
 class EnhancedStructureChecker:
@@ -45,7 +49,7 @@ class EnhancedStructureChecker:
         """
         # 初始化统一日志系统
         initialize_logging()
-        self.logger = get_logger("enhanced_checker", "enhanced_checker")
+        self.logger = get_logger("enhanced_checker")
 
         # 验证和设置路径
         self.root_path = self._validate_and_resolve_path(root_path, "项目根目录")
