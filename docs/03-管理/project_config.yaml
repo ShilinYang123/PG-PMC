@@ -171,6 +171,20 @@ mcp:
   task_manager:
     isolation_mode: project
     storage_path: docs/02-开发/tasks.json
+  github:
+    isolation_mode: global
+    enabled: true
+    tools:
+      - create_repository
+      - create_or_update_file
+      - push_files
+      - get_repository
+      - list_repositories
+      - create_branch
+      - create_pull_request
+      - get_file_contents
+      - delete_file
+      - search_repositories
 migration:
   cleanup_dirs:
   - __pycache__
