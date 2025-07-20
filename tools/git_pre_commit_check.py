@@ -46,8 +46,6 @@ class GitPreCommitChecker:
                     "ai",
                     "config",
                     "core",
-                    "creo",
-                    "geometry",
                     "ui",
                     "utils",
                 ],
