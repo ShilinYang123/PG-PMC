@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-PG-PMC AI设计助理 - 验证工具
+数据验证工具模块
+提供各种数据验证功能，包括项目管理相关的验证
 """
 
 import ipaddress
@@ -735,6 +736,101 @@ class GeometryValidator:
 
 # 全局验证器实例
 geometry_validator = GeometryValidator()
+
+
+# 项目管理相关验证函数
+def validate_email(email: str) -> bool:
+    """验证邮箱格式"""
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return bool(re.match(pattern, email))
+
+def validate_phone(phone: str) -> bool:
+    """验证手机号格式"""
+    pattern = r'^1[3-9]\d{9}$'
+    return bool(re.match(pattern, phone))
+
+def validate_required_fields(data: Dict[str, Any], required_fields: List[str]) -> List[str]:
+    """验证必填字段"""
+    missing_fields = []
+    for field in required_fields:
+        if field not in data or not data[field]:
+            missing_fields.append(field)
+    return missing_fields
+
+def validate_project_name(project_name: str) -> bool:
+    """验证项目名称
+    
+    规则：
+    - 长度在2-50个字符之间
+    - 不能包含特殊字符（除了中文、英文、数字、下划线、短横线）
+    - 不能以点开头或结尾
+    """
+    if not project_name or not isinstance(project_name, str):
+        return False
+    
+    # 长度检查
+    if len(project_name) < 2 or len(project_name) > 50:
+        return False
+    
+    # 字符检查：允许中文、英文、数字、下划线、短横线
+    pattern = r'^[\u4e00-\u9fa5a-zA-Z0-9_-]+$'
+    if not re.match(pattern, project_name):
+        return False
+    
+    # 不能以点开头或结尾
+    if project_name.startswith('.') or project_name.endswith('.'):
+        return False
+    
+    return True
+
+def validate_project_id(project_id: str) -> bool:
+    """验证项目ID
+    
+    规则：
+    - 8位字符串
+    - 只包含字母和数字
+    """
+    if not project_id or not isinstance(project_id, str):
+        return False
+    
+    # 长度检查
+    if len(project_id) != 8:
+        return False
+    
+    # 字符检查：只允许字母和数字
+    pattern = r'^[a-zA-Z0-9]{8}$'
+    return bool(re.match(pattern, project_id))
+
+def validate_project_type(project_type: str) -> bool:
+    """验证项目类型
+    
+    允许的项目类型
+    """
+    valid_types = [
+        '小家电产品开发', '生产线优化', '供应链改进', 
+        '质量管理', '成本控制', '技术改进', '其他'
+    ]
+    return project_type in valid_types
+
+def validate_project_status(status: str) -> bool:
+    """验证项目状态"""
+    valid_statuses = ['active', 'archived', 'completed', 'suspended']
+    return status in valid_statuses
+
+def sanitize_filename(filename: str) -> str:
+    """清理文件名，移除不安全字符"""
+    # 移除或替换不安全字符
+    unsafe_chars = r'[<>:"/\|?*]'
+    safe_filename = re.sub(unsafe_chars, '_', filename)
+    
+    # 移除前后空格和点
+    safe_filename = safe_filename.strip(' .')
+    
+    # 确保不为空
+    if not safe_filename:
+        safe_filename = 'unnamed'
+    
+    return safe_filename
 
 
 # 预定义的验证器

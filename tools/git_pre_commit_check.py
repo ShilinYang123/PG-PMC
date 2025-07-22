@@ -134,17 +134,36 @@ class GitPreCommitChecker:
                     content = f.read()
 
                 # 检查是否包含JavaScript/TypeScript特征
+                # 使用更精确的模式，避免误报
                 js_patterns = [
                     "import React",
                     "export default",
-                    "const ",
-                    "let ",
-                    "function(",
-                    "=>",
-                    "console.log",
-                    "document.",
+                    "console.log(",
+                    "document.getElementById",
+                    "window.",
+                    "localStorage.",
+                    "sessionStorage.",
+                    "addEventListener(",
                 ]
 
+                # 检查行首的JavaScript关键字模式
+                lines = content.split('\n')
+                for line_num, line in enumerate(lines, 1):
+                    stripped_line = line.strip()
+                    
+                    # 跳过注释和字符串
+                    if stripped_line.startswith('#') or stripped_line.startswith('"""') or stripped_line.startswith("'''"):
+                        continue
+                    
+                    # 检查行首的JavaScript模式
+                    if (stripped_line.startswith('const ') or 
+                        stripped_line.startswith('let ') or 
+                        stripped_line.startswith('var ') or
+                        stripped_line.startswith('function ')):
+                        self.errors.append(f"Python文件包含JavaScript代码: {file_path} (第{line_num}行)")
+                        return False
+                
+                # 检查其他JavaScript特征
                 for pattern in js_patterns:
                     if pattern in content:
                         self.errors.append(f"Python文件包含JavaScript代码: {file_path}")

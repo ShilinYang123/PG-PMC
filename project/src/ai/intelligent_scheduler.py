@@ -12,6 +12,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from src.utils.logger import get_logger
+from src.ai.project_command_processor import ProjectCommandProcessor
 
 
 class DesignIntent(Enum):
@@ -629,3 +630,205 @@ class DesignInterpreter:
         except Exception as e:
             self.logger.error(f"从字典创建设计指令失败: {e}")
             return DesignInstruction(intent=DesignIntent.UNKNOWN, confidence=0.0)
+
+
+class IntelligentScheduler:
+    """智能调度器 - 集成项目管理和设计解释功能"""
+    
+    def __init__(self, tensorflow_config=None, pytorch_config=None):
+        """初始化智能调度器
+        
+        Args:
+            tensorflow_config: TensorFlow配置
+            pytorch_config: PyTorch配置
+        """
+        self.logger = get_logger(self.__class__.__name__)
+        self.design_interpreter = DesignInterpreter()
+        self.project_command_processor = ProjectCommandProcessor()
+        
+        # AI模型配置
+        self.tensorflow_config = tensorflow_config
+        self.pytorch_config = pytorch_config
+        
+        self.logger.info("智能调度器初始化完成")
+    
+    def process_user_input(self, user_input: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+        """处理用户输入 - 统一入口
+        
+        Args:
+            user_input: 用户输入文本
+            context: 上下文信息
+            
+        Returns:
+            Dict: 处理结果
+        """
+        try:
+            self.logger.info(f"处理用户输入: {user_input}")
+            
+            # 判断输入类型：项目管理 vs 设计指令
+            input_type = self._classify_input_type(user_input)
+            
+            if input_type == "project_management":
+                # 项目管理指令
+                result = self.project_command_processor.process_input(user_input)
+                result["input_type"] = "project_management"
+                return result
+            elif input_type == "design_instruction":
+                # 设计指令
+                design_instruction = self.design_interpreter.interpret(user_input)
+                is_valid, errors = self.design_interpreter.validate_instruction(design_instruction)
+                
+                result = {
+                    "success": is_valid,
+                    "input_type": "design_instruction",
+                    "design_instruction": self.design_interpreter.to_dict(design_instruction),
+                    "confidence": design_instruction.confidence
+                }
+                
+                if not is_valid:
+                    result["errors"] = errors
+                    result["suggestions"] = self.design_interpreter.get_parameter_suggestions(design_instruction)
+                
+                return result
+            else:
+                # 混合或未知类型
+                return self._handle_mixed_input(user_input, context)
+                
+        except Exception as e:
+            self.logger.error(f"处理用户输入失败: {e}")
+            return {
+                "success": False,
+                "error": f"处理输入时发生错误: {str(e)}",
+                "input_type": "unknown"
+            }
+    
+    def _classify_input_type(self, user_input: str) -> str:
+        """分类输入类型
+        
+        Returns:
+            str: 'project_management', 'design_instruction', 'mixed', 'unknown'
+        """
+        # 项目管理关键词
+        project_keywords = [
+            "项目", "创建项目", "新建项目", "切换项目", "列出项目", 
+            "更新项目", "归档项目", "项目信息", "项目状态"
+        ]
+        
+        # 设计指令关键词
+        design_keywords = [
+            "创建零件", "画一个", "做一个", "圆柱", "长方体", "球体", 
+            "直径", "高度", "长度", "宽度", "厚度", "圆角", "倒角"
+        ]
+        
+        project_score = sum(1 for keyword in project_keywords if keyword in user_input)
+        design_score = sum(1 for keyword in design_keywords if keyword in user_input)
+        
+        if project_score > design_score and project_score > 0:
+            return "project_management"
+        elif design_score > project_score and design_score > 0:
+            return "design_instruction"
+        elif project_score > 0 and design_score > 0:
+            return "mixed"
+        else:
+            return "unknown"
+    
+    def _handle_mixed_input(self, user_input: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
+        """处理混合类型输入"""
+        try:
+            # 尝试同时处理项目管理和设计指令
+            project_result = self.project_command_processor.process_input(user_input)
+            design_instruction = self.design_interpreter.interpret(user_input)
+            
+            return {
+                "success": True,
+                "input_type": "mixed",
+                "project_result": project_result,
+                "design_result": {
+                    "design_instruction": self.design_interpreter.to_dict(design_instruction),
+                    "confidence": design_instruction.confidence
+                },
+                "message": "检测到混合指令，已分别处理项目管理和设计部分"
+            }
+            
+        except Exception as e:
+            self.logger.error(f"处理混合输入失败: {e}")
+            return {
+                "success": False,
+                "error": f"处理混合输入时发生错误: {str(e)}",
+                "input_type": "mixed"
+            }
+    
+    def get_current_project_context(self) -> Dict[str, Any]:
+        """获取当前项目上下文"""
+        try:
+            current_project_id = self.project_command_processor.get_current_project()
+            if current_project_id:
+                project_info = self.project_command_processor.project_api.get_project_info(current_project_id)
+                return {
+                    "has_current_project": True,
+                    "project_info": project_info
+                }
+            else:
+                return {
+                    "has_current_project": False,
+                    "message": "当前没有选择项目"
+                }
+        except Exception as e:
+            self.logger.error(f"获取项目上下文失败: {e}")
+            return {
+                "has_current_project": False,
+                "error": str(e)
+            }
+    
+    def set_project_context(self, project_id: str) -> bool:
+        """设置项目上下文"""
+        return self.project_command_processor.set_current_project(project_id)
+    
+    def get_ai_suggestions(self, user_input: str) -> List[str]:
+        """获取AI建议"""
+        try:
+            suggestions = []
+            
+            # 获取项目管理建议
+            if "项目" in user_input:
+                project_suggestions = [
+                    "创建新项目：智能咖啡机开发",
+                    "列出所有进行中的项目",
+                    "切换到指定项目",
+                    "查看当前项目状态"
+                ]
+                suggestions.extend(project_suggestions)
+            
+            # 获取设计建议
+            if any(keyword in user_input for keyword in ["画", "做", "创建", "设计"]):
+                design_suggestions = [
+                    "创建圆柱体：直径50mm，高度100mm",
+                    "创建长方体：长度100mm，宽度50mm，高度30mm",
+                    "添加圆角：半径5mm",
+                    "创建孔：直径10mm"
+                ]
+                suggestions.extend(design_suggestions)
+            
+            return suggestions
+            
+        except Exception as e:
+            self.logger.error(f"获取AI建议失败: {e}")
+            return []
+    
+    def get_system_status(self) -> Dict[str, Any]:
+        """获取系统状态"""
+        try:
+            return {
+                "scheduler_status": "running",
+                "project_processor_status": "active",
+                "design_interpreter_status": "active",
+                "current_project": self.project_command_processor.get_current_project(),
+                "tensorflow_enabled": self.tensorflow_config is not None,
+                "pytorch_enabled": self.pytorch_config is not None
+            }
+        except Exception as e:
+            self.logger.error(f"获取系统状态失败: {e}")
+            return {
+                "scheduler_status": "error",
+                "error": str(e)
+            }

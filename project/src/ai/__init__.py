@@ -4,7 +4,12 @@
 PG-PMC AI设计助理 - AI模块
 """
 
+from .warning_system import LanguageProcessor
 from .intelligent_scheduler import IntelligentScheduler
-from .warning_system import WarningSystem
+from .project_command_processor import ProjectCommandProcessor
 
-__all__ = ["IntelligentScheduler", "WarningSystem"]
+__all__ = [
+    'LanguageProcessor',
+    'IntelligentScheduler', 
+    'ProjectCommandProcessor'
+]

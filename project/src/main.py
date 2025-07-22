@@ -4,7 +4,7 @@
 PG-PMC智能追踪系统 - 主程序入口
 AI驱动的小家电生产管理平台
 
-作者: 江门市品高电器实业有限公司
+作者: 3AI电器实业有限公司
 版本: 1.0.0
 """
 
@@ -13,13 +13,13 @@ import logging
 import sys
 from pathlib import Path
 
-from src.config.settings import Settings
-from src.core.app import PMCTrackingSystem
-from src.utils.logger import setup_logger
-
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+
+from config.settings import Settings
+from core.app import PMCTrackingSystem
+from utils.logger import setup_logger
 
 
 def parse_arguments():

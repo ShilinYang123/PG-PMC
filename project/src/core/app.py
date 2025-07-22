@@ -6,13 +6,14 @@ PG-PMC智能追踪系统 - 主应用类
 
 from typing import Optional
 
-from src.ai.intelligent_scheduler import IntelligentScheduler
-from src.ai.warning_system import WarningSystem
-from src.config.settings import Settings
-from src.database.connector import DatabaseConnector
-from src.iot.device_manager import IoTDeviceManager
-from src.ui.dashboard_interface import DashboardInterface
-from src.utils.logger import get_logger
+from ..ai.intelligent_scheduler import IntelligentScheduler
+from ..ai.warning_system import LanguageProcessor
+from ..config.settings import Settings
+from ..database.connector import DatabaseConnector
+from ..iot.device_manager import IoTDeviceManager
+from ..ui.dashboard_interface import DashboardInterface
+from .project_api import get_project_api
+from ..utils.logger import get_logger
 
 
 class PMCTrackingSystem:
@@ -32,9 +33,10 @@ class PMCTrackingSystem:
         # 核心组件
         self.database_connector: Optional[DatabaseConnector] = None
         self.intelligent_scheduler: Optional[IntelligentScheduler] = None
-        self.warning_system: Optional[WarningSystem] = None
+        self.language_processor: Optional[LanguageProcessor] = None
         self.iot_device_manager: Optional[IoTDeviceManager] = None
         self.dashboard_interface: Optional[DashboardInterface] = None
+        self.project_api = get_project_api()  # 项目管理API
 
         # 初始化标志
         self._initialized = False
@@ -63,12 +65,9 @@ class PMCTrackingSystem:
                 pytorch_config=self.settings.ai.pytorch,
             )
 
-            # 初始化预警系统
-            self.logger.info("初始化预警系统...")
-            self.warning_system = WarningSystem(
-                scheduler=self.intelligent_scheduler,
-                database=self.database_connector,
-            )
+            # 初始化语言处理器
+            self.logger.info("初始化语言处理器...")
+            self.language_processor = LanguageProcessor()
 
             # 初始化IoT设备管理器
             self.logger.info("初始化IoT设备管理器...")
@@ -81,8 +80,9 @@ class PMCTrackingSystem:
             self.logger.info("初始化仪表板界面...")
             self.dashboard_interface = DashboardInterface(
                 scheduler=self.intelligent_scheduler,
-                warning_system=self.warning_system,
+                language_processor=self.language_processor,
                 iot_manager=self.iot_device_manager,
+                project_api=self.project_api,  # 传递项目API
                 dev_mode=self.dev_mode,
             )
 

@@ -33,7 +33,7 @@ environment:
   app:
     api_port: 8000
     api_url: http://localhost:8000
-    name: 江门市品高电器实业有限公司
+    name: 3AI电器实业有限公司
     port: 3000
     url: http://localhost:3000
     version: 1.0.0
@@ -68,7 +68,7 @@ environment:
     openai_model: gpt-4
   mail:
     from_address: noreply@pingao.com
-    from_name: 江门市品高电器实业有限公司
+    from_name: 3AI电器实业有限公司
     smtp_host: smtp.gmail.com
     smtp_pass: your-app-password
     smtp_port: 587
@@ -237,7 +237,7 @@ project:
   name: PG-PMC
   root: s:/PG-PMC
   updated_at: '2025-06-20T00:11:18.534332'
-project_description: 江门市品高电器实业有限公司研发管理项目
+project_description: 3AI电器实业有限公司研发管理项目
 project_name: PG-PMC
 project_root: ''
 project_version: 1.0.0
@@ -427,7 +427,7 @@ structure_check:
     - archive
   standard_list_file: docs/01-设计/目录结构标准清单.md
 template:
-  default_description: 江门市品高电器实业有限公司研发管理项目
+  default_description: 3AI电器实业有限公司研发管理项目
   default_project_name: PG-PMC
   variables:
   - PROJECT_NAME
