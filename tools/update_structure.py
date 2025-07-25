@@ -53,16 +53,13 @@ class DirectoryStructureGenerator:
         structure_config = self.config.get("structure_check", {})
         generator_config = structure_config.get("generator", {})
 
-        # 排除规则配置
+        # 排除规则配置 - 根据项目架构设计优化
         self.excluded_dirs = set(
             generator_config.get(
                 "excluded_dirs",
                 [
                     "__pycache__",
                     ".git",
-                    ".vscode",
-                    ".idea",
-                    "node_modules",
                     ".pytest_cache",
                     ".coverage",
                     "htmlcov",
@@ -73,9 +70,9 @@ class DirectoryStructureGenerator:
                     ".mypy_cache",
                     ".DS_Store",
                     "Thumbs.db",
-                    ".venv",
-                    "venv",
-                    "env",
+                    "node_modules",
+                    # 保留重要的开发环境配置目录
+                    # ".vscode", ".idea", ".venv", "venv", "env" - 这些现在包含在清单中
                 ],
             )
         )
@@ -84,7 +81,6 @@ class DirectoryStructureGenerator:
             generator_config.get(
                 "excluded_files",
                 [
-                    ".gitkeep",
                     ".DS_Store",
                     "Thumbs.db",
                     "*.pyc",
@@ -94,6 +90,7 @@ class DirectoryStructureGenerator:
                     "*.so",
                     "*.dylib",
                     "*.dll",
+                    # 保留 .gitkeep 文件以显示目录结构
                 ],
             )
         )
@@ -117,7 +114,7 @@ class DirectoryStructureGenerator:
             )
         )
 
-        # 特殊目录配置
+        # 特殊目录配置 - 根据项目架构设计更新
         self.special_dirs = generator_config.get(
             "special_dirs",
             {
@@ -129,6 +126,18 @@ class DirectoryStructureGenerator:
                     "常规备份",
                 ],
                 "logs": ["工作记录", "检查报告", "其他日志", "archive"],
+                "AI调度表": [  # 新增：AI调度表目录配置
+                    "项目A_小家电产品开发",
+                    "项目B_生产线优化",
+                    "项目模板",
+                ],
+                "data": [  # 新增：数据目录配置
+                    "database",
+                    "uploads",
+                    "exports",
+                    "cache",
+                    "temp",
+                ],
             },
         )
 
@@ -324,7 +333,29 @@ class DirectoryStructureGenerator:
             return {}
 
     def should_exclude(self, path: Path) -> bool:
-        """判断是否应该排除某个路径"""
+        """判断是否应该排除某个路径（与check_structure.py保持一致）"""
+
+        # 排除隐藏目录和文件（除了特定的配置文件）
+        if path.name.startswith(".") and path.name not in {
+            ".env",
+            ".env.local",
+            ".env.production",
+            ".env.template",
+            ".env.example",
+            ".gitignore",
+            ".dockerignore",
+            ".eslintrc.js",
+            ".prettierrc",
+            ".pre-commit-config.yaml",
+            ".devcontainer",
+            ".github",
+            ".venv",
+            ".cache",
+            ".coverage",
+            ".pytest_cache",
+            ".vscode",
+        }:
+            return True
 
         # 排除特定目录
         if path.name in self.excluded_dirs:
@@ -342,6 +373,8 @@ class DirectoryStructureGenerator:
         # 从配置中获取允许的子目录
         allowed_bak_dirs = set(self.special_dirs.get("bak", []))
         allowed_logs_dirs = set(self.special_dirs.get("logs", []))
+        allowed_ai_dirs = set(self.special_dirs.get("AI调度表", []))
+        allowed_data_dirs = set(self.special_dirs.get("data", []))
 
         # 检查是否在bak/目录下
         if relative_path.startswith("bak/"):
@@ -367,10 +400,34 @@ class DirectoryStructureGenerator:
             elif relative_path.count("/") > 1:  # logs/xxx/yyy 格式
                 return True  # 过滤掉logs/子目录下的所有内容
 
+        # 检查是否在AI调度表/目录下
+        elif relative_path.startswith("AI调度表/"):
+            # 如果是AI调度表/下的直接子项，检查是否在允许列表中
+            if relative_path.count("/") == 1:  # AI调度表/xxx 格式
+                dir_name = relative_path.split("/")[-1]
+                if entry.is_dir() and dir_name not in allowed_ai_dirs:
+                    return True  # 过滤掉不在允许列表中的目录
+                elif entry.is_file():
+                    return True  # 过滤掉AI调度表/下的所有文件
+            elif relative_path.count("/") > 1:  # AI调度表/xxx/yyy 格式
+                return True  # 过滤掉AI调度表/子目录下的所有内容
+
+        # 检查是否在data/目录下
+        elif relative_path.startswith("data/"):
+            # 如果是data/下的直接子项，检查是否在允许列表中
+            if relative_path.count("/") == 1:  # data/xxx 格式
+                dir_name = relative_path.split("/")[-1]
+                if entry.is_dir() and dir_name not in allowed_data_dirs:
+                    return True  # 过滤掉不在允许列表中的目录
+                elif entry.is_file():
+                    return True  # 过滤掉data/下的所有文件
+            elif relative_path.count("/") > 1:  # data/xxx/yyy 格式
+                return True  # 过滤掉data/子目录下的所有内容
+
         return False
 
     def scan_filtered_directory(self, dir_path: Path, relative_path: str) -> List[Dict]:
-        """扫描经过特殊过滤的目录（bak/和logs/）"""
+        """扫描经过特殊过滤的目录（bak/、logs/、AI调度表/和data/）"""
         items = []
 
         # 从配置中获取允许的子目录
@@ -378,6 +435,10 @@ class DirectoryStructureGenerator:
             allowed_dirs = set(self.special_dirs.get("bak", []))
         elif relative_path == "logs":
             allowed_dirs = set(self.special_dirs.get("logs", []))
+        elif relative_path == "AI调度表":
+            allowed_dirs = set(self.special_dirs.get("AI调度表", []))
+        elif relative_path == "data":
+            allowed_dirs = set(self.special_dirs.get("data", []))
         else:
             return items
 
@@ -509,8 +570,8 @@ class DirectoryStructureGenerator:
                     # 目录处理
                     self.stats["total_dirs"] += 1
 
-                    # 对于bak/和logs/目录，使用同步方法
-                    if item_relative_path == "bak" or item_relative_path == "logs":
+                    # 对于特殊目录，使用同步方法
+                    if item_relative_path in ["bak", "logs", "AI调度表", "data"]:
                         children = self.scan_filtered_directory(
                             entry, item_relative_path
                         )
@@ -601,9 +662,9 @@ class DirectoryStructureGenerator:
                     # 目录
                     self.stats["total_dirs"] += 1
 
-                    # 对于bak/和logs/目录，只扫描允许的子目录
+                    # 对于特殊目录，只扫描允许的子目录
                     children = []
-                    if item_relative_path == "bak" or item_relative_path == "logs":
+                    if item_relative_path in ["bak", "logs", "AI调度表", "data"]:
                         children = self.scan_filtered_directory(
                             entry, item_relative_path
                         )

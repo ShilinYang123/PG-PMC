@@ -506,20 +506,11 @@ class EnhancedStructureChecker:
                         structure["directories"].add(item_relative_path)
                         self.logger.debug(f"添加目录: {item_relative_path}")
 
-                        # 对于bak和logs目录，使用与update_structure.py
+                        # 对于特殊目录，使用与update_structure.py
                         # 相同的过滤逻辑
-                        if item_relative_path == "bak" or item_relative_path == "logs":
+                        if item_relative_path in ["bak", "logs", "AI调度表", "data"]:
                             # 只扫描允许的子目录，不扫描其内容
-                            allowed_dirs = {
-                                "bak": {
-                                    "github_repo",
-                                    "迁移备份",
-                                    "专项备份",
-                                    "待清理资料",
-                                    "常规备份",
-                                },
-                                "logs": {"工作记录", "检查报告", "其他日志", "archive"},
-                            }.get(item_relative_path, set())
+                            allowed_dirs = set(self.special_dirs.get(item_relative_path, []))
 
                             try:
                                 # 获取目录下所有项目

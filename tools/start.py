@@ -44,6 +44,9 @@ class AIAssistantStartupChecker:
         # 设置工作流程日志
         self.setup_workflow_logging()
         
+        # 禁用虚拟环境（杨老师要求）
+        self.disable_virtual_environment()
+        
     def setup_workflow_logging(self):
         """设置工作流程日志系统"""
         log_file = self.work_logs_dir / f"workflow_{datetime.now().strftime('%Y%m%d')}.log"
@@ -58,6 +61,93 @@ class AIAssistantStartupChecker:
             formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
             handler.setFormatter(formatter)
             self.workflow_logger.addHandler(handler)
+            
+    def disable_virtual_environment(self):
+        """禁用虚拟环境自动激活（杨老师专用功能）"""
+        try:
+            # 检查当前是否在虚拟环境中
+            if 'VIRTUAL_ENV' in os.environ:
+                self.workflow_logger.info(f"检测到虚拟环境: {os.environ['VIRTUAL_ENV']}")
+                self.workflow_logger.info("正在禁用虚拟环境...")
+                
+                # 移除虚拟环境相关的环境变量
+                if 'VIRTUAL_ENV' in os.environ:
+                    del os.environ['VIRTUAL_ENV']
+                    self.workflow_logger.info("✓ 已移除 VIRTUAL_ENV 环境变量")
+                
+                if 'VIRTUAL_ENV_PROMPT' in os.environ:
+                    del os.environ['VIRTUAL_ENV_PROMPT']
+                    self.workflow_logger.info("✓ 已移除 VIRTUAL_ENV_PROMPT 环境变量")
+                
+                # 恢复系统PATH
+                path = os.environ.get('PATH', '')
+                path_parts = path.split(os.pathsep)
+                
+                # 移除虚拟环境相关的路径
+                cleaned_paths = []
+                for part in path_parts:
+                    if '.venv' not in part.lower() and 'virtual' not in part.lower():
+                        cleaned_paths.append(part)
+                
+                os.environ['PATH'] = os.pathsep.join(cleaned_paths)
+                self.workflow_logger.info("✓ 已清理PATH环境变量")
+                
+                # 检查是否成功切换到系统Python
+                if '.venv' in sys.executable.lower() or 'virtual' in sys.executable.lower():
+                    self.workflow_logger.warning("⚠️ 仍在虚拟环境中，建议重新启动终端")
+                else:
+                    self.workflow_logger.info("✓ 成功切换到系统Python环境")
+                    
+            else:
+                self.workflow_logger.info("当前未检测到虚拟环境，使用系统Python")
+                
+            # 记录当前Python环境信息
+            self.workflow_logger.info(f"Python版本: {sys.version.split()[0]}")
+            self.workflow_logger.info(f"Python路径: {sys.executable}")
+            
+            # 确保创建no_venv.bat脚本
+            self.create_no_venv_script()
+            
+        except Exception as e:
+            self.workflow_logger.error(f"禁用虚拟环境时发生错误: {e}")
+            
+    def create_no_venv_script(self):
+        """创建无虚拟环境运行脚本"""
+        try:
+            script_content = '''@echo off
+REM 禁用虚拟环境的批处理脚本
+REM 杨老师专用 - 确保使用系统Python
+
+echo === 禁用虚拟环境运行模式 ===
+
+REM 清除虚拟环境变量
+set VIRTUAL_ENV=
+set VIRTUAL_ENV_PROMPT=
+
+REM 使用系统Python运行脚本
+if "%1"=="" (
+    echo 用法: no_venv.bat [Python脚本路径]
+    echo 示例: no_venv.bat tools\\check_structure.py
+    pause
+    exit /b 1
+)
+
+echo 正在使用系统Python运行: %1
+python %*
+
+echo.
+echo 脚本执行完成
+pause
+'''
+            
+            batch_file = self.tools_dir / "no_venv.bat"
+            with open(batch_file, 'w', encoding='utf-8') as f:
+                f.write(script_content)
+            
+            self.workflow_logger.info(f"✓ 已创建无虚拟环境运行脚本: {batch_file}")
+            
+        except Exception as e:
+            self.workflow_logger.error(f"创建no_venv.bat脚本失败: {e}")
             
     def run_script(self, script_name: str, args: List[str] = None) -> bool:
         """运行指定脚本"""
@@ -233,7 +323,9 @@ class AIAssistantStartupChecker:
             "   - 违规行为将被自动记录和处理", 
             "   - 请严格按照项目规范执行",
             "   - 文件操作前请运行前置检查",
-            "   - 定期查看合规性报告"
+            "   - 定期查看合规性报告",
+            "   - 已禁用虚拟环境，使用系统Python提升性能",
+            "   - 如需运行脚本，建议使用 no_venv.bat"
         ]
         
         for reminder in reminders:
@@ -276,6 +368,7 @@ class AIAssistantStartupChecker:
             constraints.append("🚫 严禁在项目根目录创建任何临时文件或代码文件")
             constraints.append("✅ 每次操作前必须执行路径合规性检查")
             constraints.append("🔒 严格保护核心文档，禁止未经授权的修改")
+            constraints.append("⚡ 禁止使用虚拟环境，确保使用系统Python以提升性能")
             
             # 工作流程约束
             if "工作准备流程" in content:
@@ -308,12 +401,18 @@ class AIAssistantStartupChecker:
         """生成启动简报"""
         monitoring_status = "🟢 运行中" if self.check_monitoring_system() else "🔴 未运行"
         
+        # 检查虚拟环境状态
+        venv_status = "🔴 已禁用" if 'VIRTUAL_ENV' not in os.environ else "🟡 检测到虚拟环境"
+        python_env = "系统Python" if '.venv' not in sys.executable.lower() else "虚拟环境Python"
+        
         briefing = f"""
 # AI助理启动简报
 
 **启动时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 **项目根目录**: {self.project_root}
 **监控系统状态**: {monitoring_status}
+**虚拟环境状态**: {venv_status}
+**Python环境**: {python_env} ({sys.version.split()[0]})
 
 ## 🎯 工作目标
 作为本项目的技术负责人，您需要：
@@ -585,6 +684,10 @@ class AIAssistantStartupChecker:
             print("   🛡️ 合规监控: 运行中")
             print("   🔄 工作流程: 已启动")
             print("   📚 核心文档: 已加载")
+            venv_display = "已禁用" if 'VIRTUAL_ENV' not in os.environ else "检测到虚拟环境"
+            python_display = "系统Python" if '.venv' not in sys.executable.lower() else "虚拟环境Python"
+            print(f"   ⚡ 虚拟环境: {venv_display}")
+            print(f"   🐍 Python环境: {python_display}")
             
             # 显示重要提醒
             print("")

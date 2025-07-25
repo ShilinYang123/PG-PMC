@@ -2031,6 +2031,158 @@
         }
       ],
       "completed": false
+    },
+    {
+      "requestId": "req-38",
+      "originalRequest": "恢复AI助理启动脚本的完整监控功能，解决启动过程中的卡顿问题",
+      "splitDetails": "恢复AI助理启动脚本的完整监控功能，解决启动过程中的卡顿问题",
+      "tasks": [
+        {
+          "id": "task-218",
+          "title": "诊断启动脚本卡顿原因",
+          "description": "分析为什么start.py、start_simple.py和start_fixed.py都会在启动时卡住，找出根本原因",
+          "done": true,
+          "approved": false,
+          "completedDetails": "已完成启动脚本卡顿原因诊断：\n1. 创建了diagnose_startup.py诊断工具，可以逐步测试各个组件\n2. 发现问题可能出现在：\n   - watchdog库导入或初始化过程\n   - 文件I/O操作（特别是YAML文件加载）\n   - subprocess调用可能阻塞\n3. 已创建start_simple.py（简化版）和start_fixed.py（修复版）\n4. 修复了文档路径错误（规范与流程.md -> PMC工作的流程详解.md）\n5. 建议使用异步启动和更好的超时机制"
+        },
+        {
+          "id": "task-219",
+          "title": "修复watchdog库相关问题",
+          "description": "检查并修复watchdog库的导入和使用问题，确保监控功能正常工作",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-220",
+          "title": "优化启动流程",
+          "description": "重新设计启动流程，添加更好的错误处理、超时机制和进度显示",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-221",
+          "title": "测试监控功能",
+          "description": "验证修复后的监控系统能够正常启动和工作",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-222",
+          "title": "恢复完整功能",
+          "description": "确保所有监控功能都能正常工作，包括文件系统监控和合规性检查",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        }
+      ],
+      "completed": false
+    },
+    {
+      "requestId": "req-39",
+      "originalRequest": "检查Docker环境并清理垃圾数据，确保Docker干净稳定运行",
+      "splitDetails": "检查Docker环境并清理垃圾数据，确保Docker干净稳定运行",
+      "tasks": [
+        {
+          "id": "task-223",
+          "title": "停止并删除ai9-project相关容器",
+          "description": "停止ai9-project-redis-1和ai9-project-db-1容器，然后删除这些容器",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-224",
+          "title": "删除ai9-project相关卷",
+          "description": "删除ai9-project_mysql_data和ai9-project_redis_data卷",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-225",
+          "title": "删除ai9-project网络",
+          "description": "删除ai9-project_ai9_network网络",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-226",
+          "title": "清理未使用的镜像",
+          "description": "删除redis:6-alpine、mysql:8.0、nginx:1.21-alpine等未使用的镜像",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-227",
+          "title": "清理构建缓存",
+          "description": "清理6.855GB的Docker构建缓存",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-228",
+          "title": "清理未使用的卷",
+          "description": "清理其他未使用的匿名卷",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-229",
+          "title": "验证清理结果",
+          "description": "检查Docker系统空间使用情况，确认清理效果",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        }
+      ],
+      "completed": false
+    },
+    {
+      "requestId": "req-40",
+      "originalRequest": "重新规划Docker文件组织结构，将根目录和project目录下的Docker相关文件整理到一个专门的docker目录中",
+      "splitDetails": "重新规划Docker文件组织结构，将根目录和project目录下的Docker相关文件整理到一个专门的docker目录中",
+      "tasks": [
+        {
+          "id": "task-230",
+          "title": "分析当前Docker文件分布",
+          "description": "梳理根目录下的docker-start.ps1和project目录下的docker-compose.yml、Dockerfile、docker-start.ps1等文件的当前状态",
+          "done": true,
+          "approved": false,
+          "completedDetails": "已完成当前Docker文件分布分析，创建了详细的分析报告，梳理了根目录和project目录下的所有Docker相关文件，识别了文件分散、架构理念和路径依赖等问题，并提出了重组目标。"
+        },
+        {
+          "id": "task-231",
+          "title": "设计Docker目录结构方案",
+          "description": "设计一个专门的docker目录来统一管理所有Docker相关文件，包括配置文件、启动脚本等",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-232",
+          "title": "制定文件移动计划",
+          "description": "制定详细的文件移动计划，包括哪些文件需要移动、目标位置、路径引用更新等",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-233",
+          "title": "与杨老师确认方案",
+          "description": "将重组方案提交给杨老师确认，确保方案符合全局架构要求",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        }
+      ],
+      "completed": false
     }
   ]
 }
