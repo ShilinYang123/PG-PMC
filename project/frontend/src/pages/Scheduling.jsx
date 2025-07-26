@@ -31,7 +31,7 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import * as echarts from 'echarts';
 import './Scheduling.css';
 
@@ -316,7 +316,7 @@ const Scheduling = () => {
       dataIndex: 'due_date',
       key: 'due_date',
       width: 120,
-      render: (text) => moment(text).format('YYYY-MM-DD'),
+      render: (text) => dayjs(text).format('YYYY-MM-DD'),
     },
     {
       title: '优先级',
@@ -366,9 +366,9 @@ const Scheduling = () => {
         if (start && record.scheduled_end) {
           return (
             <div>
-              <div>{moment(start).format('MM-DD HH:mm')}</div>
+              <div>{dayjs(start).format('MM-DD HH:mm')}</div>
               <div style={{ fontSize: '12px', color: '#666' }}>
-                至 {moment(record.scheduled_end).format('MM-DD HH:mm')}
+                至 {dayjs(record.scheduled_end).format('MM-DD HH:mm')}
               </div>
             </div>
           );
@@ -637,14 +637,14 @@ const Scheduling = () => {
                   {ganttData.map((item, index) => (
                     <Timeline.Item
                       key={index}
-                      label={moment(item.start_time).format('MM-DD HH:mm')}
+                      label={dayjs(item.start_time).format('MM-DD HH:mm')}
                       color={item.priority === 'URGENT' ? 'red' : 'blue'}
                     >
                       <div>
                         <strong>{item.order_id}</strong> - {item.product_code}
                       </div>
                       <div style={{ fontSize: '12px', color: '#666' }}>
-                        设备: {item.equipment} | 至: {moment(item.end_time).format('MM-DD HH:mm')}
+                        设备: {item.equipment} | 至: {dayjs(item.end_time).format('MM-DD HH:mm')}
                       </div>
                     </Timeline.Item>
                   ))}

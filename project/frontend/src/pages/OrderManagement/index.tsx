@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -8,13 +8,21 @@ import {
   Modal,
   Form,
   Input,
+  InputNumber,
   DatePicker,
   Select,
   Upload,
   message,
   Popconfirm,
   Row,
-  Col
+  Col,
+  Tooltip,
+  Divider,
+  Statistic,
+  Progress,
+  Descriptions,
+  Timeline,
+  Badge
 } from 'antd';
 import {
   PlusOutlined,
@@ -22,160 +30,305 @@ import {
   DeleteOutlined,
   UploadOutlined,
   DownloadOutlined,
-  SearchOutlined
+  SearchOutlined,
+  EyeOutlined,
+  ReloadOutlined,
+  ExportOutlined,
+  FilterOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  ExclamationCircleOutlined,
+  SyncOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { UploadProps } from 'antd';
 import dayjs from 'dayjs';
+import axios from 'axios';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 interface OrderRecord {
-  key: string;
-  orderNo: string;
-  customer: string;
-  product: string;
-  specification: string;
+  id: number;
+  order_number: string;
+  customer_name: string;
+  customer_code?: string;
+  customer_contact?: string;
+  customer_phone?: string;
+  customer_email?: string;
+  customer_address?: string;
+  product_name: string;
+  product_code: string;
+  product_model?: string;
+  product_spec?: string;
   quantity: number;
   unit: string;
-  unitPrice: number;
-  totalAmount: number;
-  orderDate: string;
-  deliveryDate: string;
+  unit_price?: number;
+  total_amount?: number;
+  currency?: string;
+  order_date: string;
+  delivery_date: string;
   status: string;
   priority: string;
-  remark: string;
+  contact_person?: string;
+  contact_phone?: string;
+  contact_email?: string;
+  delivery_address?: string;
+  technical_requirements?: string;
+  quality_standards?: string;
+  remark?: string;
+  created_at?: string;
+  updated_at?: string;
+  created_by?: string;
+  updated_by?: string;
+}
+
+interface OrderStats {
+  total_orders: number;
+  pending_orders: number;
+  confirmed_orders: number;
+  in_production_orders: number;
+  completed_orders: number;
+  cancelled_orders: number;
+  urgent_orders: number;
+  overdue_orders: number;
+  monthly_new_orders: number;
+  monthly_completed_orders: number;
+  total_amount: number;
+  monthly_amount: number;
+}
+
+interface QueryParams {
+  page: number;
+  page_size: number;
+  keyword?: string;
+  status?: string;
+  priority?: string;
+  customer_name?: string;
+  product_name?: string;
+  order_date_start?: string;
+  order_date_end?: string;
+  delivery_date_start?: string;
+  delivery_date_end?: string;
+  urgent_only?: boolean;
+  sort_field?: string;
+  sort_order?: 'asc' | 'desc';
 }
 
 const OrderManagement: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<OrderRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<OrderRecord | null>(null);
   const [form] = Form.useForm();
+  const [searchForm] = Form.useForm();
 
-  // 模拟订单数据
-  const [dataSource, setDataSource] = useState<OrderRecord[]>([
-    {
-      key: '1',
-      orderNo: 'BD400-001',
-      customer: '深圳科技有限公司',
-      product: '精密零件A',
-      specification: '规格A-001',
-      quantity: 1000,
-      unit: '件',
-      unitPrice: 25.5,
-      totalAmount: 25500,
-      orderDate: '2024-01-15',
-      deliveryDate: '2024-02-15',
-      status: '生产中',
-      priority: '高',
-      remark: '客户要求提前交货'
-    },
-    {
-      key: '2',
-      orderNo: 'BD400-002',
-      customer: '广州制造集团',
-      product: '标准件B',
-      specification: '规格B-002',
-      quantity: 500,
-      unit: '套',
-      unitPrice: 120.0,
-      totalAmount: 60000,
-      orderDate: '2024-01-20',
-      deliveryDate: '2024-02-20',
-      status: '待生产',
-      priority: '中',
-      remark: '标准交期'
-    },
-    {
-      key: '3',
-      orderNo: 'BD400-003',
-      customer: '东莞精工厂',
-      product: '定制件C',
-      specification: '规格C-003',
-      quantity: 200,
-      unit: '个',
-      unitPrice: 85.0,
-      totalAmount: 17000,
-      orderDate: '2024-01-10',
-      deliveryDate: '2024-02-10',
-      status: '已完成',
-      priority: '低',
-      remark: '质量要求严格'
+  // 数据状态
+  const [dataSource, setDataSource] = useState<OrderRecord[]>([]);
+  const [orderStats, setOrderStats] = useState<OrderStats | null>(null);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
+
+  // 查询参数
+  const [queryParams, setQueryParams] = useState<QueryParams>({
+    page: 1,
+    page_size: 10
+  });
+
+  // API调用函数
+  const fetchOrders = async (params: QueryParams = queryParams) => {
+    setLoading(true);
+    try {
+      const response = await axios.get('/api/orders', { params });
+      if (response.data.code === 200) {
+        setDataSource(response.data.data);
+        setPagination({
+          current: response.data.page_info.page,
+          pageSize: response.data.page_info.page_size,
+          total: response.data.page_info.total
+        });
+      } else {
+        message.error(response.data.message || '获取订单列表失败');
+      }
+    } catch (error) {
+      console.error('获取订单列表失败:', error);
+      message.error('获取订单列表失败');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  const fetchOrderStats = async () => {
+    try {
+      const response = await axios.get('/api/orders/stats/overview');
+      if (response.data.code === 200) {
+        setOrderStats(response.data.data);
+      }
+    } catch (error) {
+      console.error('获取订单统计失败:', error);
+    }
+  };
+
+  const createOrder = async (values: any) => {
+    setLoading(true);
+    try {
+      const orderData = {
+        ...values,
+        order_date: values.order_date.format('YYYY-MM-DD HH:mm:ss'),
+        delivery_date: values.delivery_date.format('YYYY-MM-DD HH:mm:ss'),
+        total_amount: values.unit_price * values.quantity
+      };
+      
+      const response = await axios.post('/api/orders', orderData);
+      if (response.data.code === 200) {
+        message.success('创建订单成功');
+        setModalVisible(false);
+        form.resetFields();
+        fetchOrders();
+        fetchOrderStats();
+      } else {
+        message.error(response.data.message || '创建订单失败');
+      }
+    } catch (error) {
+      console.error('创建订单失败:', error);
+      message.error('创建订单失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateOrder = async (id: number, values: any) => {
+    setLoading(true);
+    try {
+      const orderData = {
+        ...values,
+        order_date: values.order_date.format('YYYY-MM-DD HH:mm:ss'),
+        delivery_date: values.delivery_date.format('YYYY-MM-DD HH:mm:ss'),
+        total_amount: values.unit_price * values.quantity
+      };
+      
+      const response = await axios.put(`/api/orders/${id}`, orderData);
+      if (response.data.code === 200) {
+        message.success('更新订单成功');
+        setModalVisible(false);
+        form.resetFields();
+        setEditingRecord(null);
+        fetchOrders();
+        fetchOrderStats();
+      } else {
+        message.error(response.data.message || '更新订单失败');
+      }
+    } catch (error) {
+      console.error('更新订单失败:', error);
+      message.error('更新订单失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteOrder = async (id: number) => {
+    setLoading(true);
+    try {
+      const response = await axios.delete(`/api/orders/${id}`);
+      if (response.data.code === 200) {
+        message.success('删除订单成功');
+        fetchOrders();
+        fetchOrderStats();
+      } else {
+        message.error(response.data.message || '删除订单失败');
+      }
+    } catch (error) {
+      console.error('删除订单失败:', error);
+      message.error('删除订单失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 初始化数据
+  useEffect(() => {
+    fetchOrders();
+    fetchOrderStats();
+  }, []);
 
   const columns: ColumnsType<OrderRecord> = [
     {
-      title: '订单号',
-      dataIndex: 'orderNo',
-      key: 'orderNo',
+      title: '订单编号',
+      dataIndex: 'order_number',
+      key: 'order_number',
       width: 120,
       fixed: 'left'
     },
     {
-      title: '客户',
-      dataIndex: 'customer',
-      key: 'customer',
+      title: '客户名称',
+      dataIndex: 'customer_name',
+      key: 'customer_name',
       width: 150
     },
     {
-      title: '产品',
-      dataIndex: 'product',
-      key: 'product',
+      title: '产品名称',
+      dataIndex: 'product_name',
+      key: 'product_name',
       width: 120
     },
     {
-      title: '规格',
-      dataIndex: 'specification',
-      key: 'specification',
-      width: 100
+      title: '产品规格',
+      dataIndex: 'product_spec',
+      key: 'product_spec',
+      width: 120
     },
     {
       title: '数量',
       dataIndex: 'quantity',
       key: 'quantity',
       width: 80,
-      render: (value, record) => `${value} ${record.unit}`
+      render: (value: number, record: OrderRecord) => `${value} ${record.unit || '件'}`
     },
     {
       title: '单价',
-      dataIndex: 'unitPrice',
-      key: 'unitPrice',
-      width: 80,
-      render: (value) => `¥${value.toFixed(2)}`
+      dataIndex: 'unit_price',
+      key: 'unit_price',
+      width: 100,
+      render: (value: number) => `¥${value?.toFixed(2) || '0.00'}`
     },
     {
       title: '总金额',
-      dataIndex: 'totalAmount',
-      key: 'totalAmount',
-      width: 100,
-      render: (value) => `¥${value.toLocaleString()}`
+      dataIndex: 'total_amount',
+      key: 'total_amount',
+      width: 120,
+      render: (value: number) => `¥${value?.toFixed(2) || '0.00'}`
     },
     {
       title: '下单日期',
-      dataIndex: 'orderDate',
-      key: 'orderDate',
-      width: 100
+      dataIndex: 'order_date',
+      key: 'order_date',
+      width: 120,
+      render: (value: string) => value ? dayjs(value).format('YYYY-MM-DD') : '-'
     },
     {
-      title: '交期',
-      dataIndex: 'deliveryDate',
-      key: 'deliveryDate',
-      width: 100
+      title: '交货日期',
+      dataIndex: 'delivery_date',
+      key: 'delivery_date',
+      width: 120,
+      render: (value: string) => value ? dayjs(value).format('YYYY-MM-DD') : '-'
     },
     {
       title: '优先级',
       dataIndex: 'priority',
       key: 'priority',
       width: 80,
-      render: (priority) => {
-        let color = 'default';
-        if (priority === '高') color = 'red';
-        if (priority === '中') color = 'orange';
-        if (priority === '低') color = 'green';
-        return <Tag color={color}>{priority}</Tag>;
+      render: (priority: string) => {
+        const priorityConfig = {
+          'high': { color: 'red', text: '高' },
+          'medium': { color: 'orange', text: '中' },
+          'low': { color: 'green', text: '低' }
+        };
+        const config = priorityConfig[priority as keyof typeof priorityConfig] || { color: 'default', text: priority };
+        return <Tag color={config.color}>{config.text}</Tag>;
       }
     },
     {
@@ -183,47 +336,93 @@ const OrderManagement: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       width: 100,
-      render: (status) => {
-        let color = 'default';
-        if (status === '生产中') color = 'processing';
-        if (status === '已完成') color = 'success';
-        if (status === '待生产') color = 'warning';
-        if (status === '已取消') color = 'error';
-        return <Tag color={color}>{status}</Tag>;
+      render: (status: string) => {
+        const statusConfig = {
+          'pending': { color: 'orange', text: '待生产', icon: <ClockCircleOutlined /> },
+          'confirmed': { color: 'blue', text: '已确认', icon: <CheckCircleOutlined /> },
+          'in_production': { color: 'processing', text: '生产中', icon: <SyncOutlined spin /> },
+          'completed': { color: 'green', text: '已完成', icon: <CheckCircleOutlined /> },
+          'cancelled': { color: 'red', text: '已取消', icon: <ExclamationCircleOutlined /> }
+        };
+        const config = statusConfig[status as keyof typeof statusConfig] || { color: 'default', text: status, icon: null };
+        return (
+          <Badge 
+            status={config.color as any} 
+            text={
+              <span>
+                {config.icon} {config.text}
+              </span>
+            } 
+          />
+        );
       }
     },
     {
       title: '操作',
       key: 'action',
-      width: 150,
+      width: 200,
       fixed: 'right',
-      render: (_, record) => (
+      render: (_, record: OrderRecord) => (
         <Space size="small">
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
-            编辑
-          </Button>
-          <Popconfirm
-            title="确定要删除这个订单吗？"
-            onConfirm={() => handleDelete(record.key)}
-            okText="确定"
-            cancelText="取消"
-          >
+          <Tooltip title="查看详情">
             <Button
               type="link"
-              danger
-              icon={<DeleteOutlined />}
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => handleViewDetail(record)}
             >
-              删除
+              详情
             </Button>
+          </Tooltip>
+          <Tooltip title="编辑订单">
+            <Button
+              type="link"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+            >
+              编辑
+            </Button>
+          </Tooltip>
+          <Popconfirm
+            title="确定要删除这个订单吗？"
+            description="删除后无法恢复，请谨慎操作。"
+            onConfirm={() => deleteOrder(record.id)}
+            okText="确定"
+            cancelText="取消"
+            placement="topRight"
+          >
+            <Tooltip title="删除订单">
+              <Button
+                type="link"
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+              >
+                删除
+              </Button>
+            </Tooltip>
           </Popconfirm>
         </Space>
       )
     }
   ];
+
+  // 事件处理函数
+  const handleViewDetail = (record: OrderRecord) => {
+    setSelectedRecord(record);
+    setDetailModalVisible(true);
+  };
+
+  const handleEdit = (record: OrderRecord) => {
+    setEditingRecord(record);
+    form.setFieldsValue({
+      ...record,
+      order_date: record.order_date ? dayjs(record.order_date) : null,
+      delivery_date: record.delivery_date ? dayjs(record.delivery_date) : null
+    });
+    setModalVisible(true);
+  };
 
   const handleAdd = () => {
     setEditingRecord(null);
@@ -231,53 +430,42 @@ const OrderManagement: React.FC = () => {
     setModalVisible(true);
   };
 
-  const handleEdit = (record: OrderRecord) => {
-    setEditingRecord(record);
-    form.setFieldsValue({
-      ...record,
-      orderDate: dayjs(record.orderDate),
-      deliveryDate: dayjs(record.deliveryDate)
-    });
-    setModalVisible(true);
-  };
-
-  const handleDelete = (key: string) => {
-    setDataSource(dataSource.filter(item => item.key !== key));
-    message.success('删除成功');
-  };
-
-  const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      const formData = {
-        ...values,
-        orderDate: values.orderDate.format('YYYY-MM-DD'),
-        deliveryDate: values.deliveryDate.format('YYYY-MM-DD'),
-        totalAmount: values.quantity * values.unitPrice
-      };
-
-      if (editingRecord) {
-        // 编辑
-        setDataSource(dataSource.map(item => 
-          item.key === editingRecord.key 
-            ? { ...item, ...formData }
-            : item
-        ));
-        message.success('更新成功');
-      } else {
-        // 新增
-        const newRecord = {
-          key: Date.now().toString(),
-          ...formData
-        };
-        setDataSource([...dataSource, newRecord]);
-        message.success('添加成功');
-      }
-      
-      setModalVisible(false);
-    } catch (error) {
-      console.error('表单验证失败:', error);
+  const handleSubmit = async (values: any) => {
+    if (editingRecord) {
+      await updateOrder(editingRecord.id, values);
+    } else {
+      await createOrder(values);
     }
+  };
+
+  const handleSearch = (values: any) => {
+    const searchParams = {
+      ...queryParams,
+      page: 1,
+      ...values
+    };
+    setQueryParams(searchParams);
+    fetchOrders(searchParams);
+  };
+
+  const handleReset = () => {
+    searchForm.resetFields();
+    const resetParams = {
+      page: 1,
+      page_size: 10
+    };
+    setQueryParams(resetParams);
+    fetchOrders(resetParams);
+  };
+
+  const handleTableChange = (paginationInfo: any) => {
+    const newParams = {
+      ...queryParams,
+      page: paginationInfo.current,
+      page_size: paginationInfo.pageSize
+    };
+    setQueryParams(newParams);
+    fetchOrders(newParams);
   };
 
   const uploadProps: UploadProps = {
@@ -296,73 +484,122 @@ const OrderManagement: React.FC = () => {
   };
 
   return (
-    <div>
-      <h1 className="page-title">订单管理</h1>
-      
+    <div className="order-management">
+      {/* 统计卡片 */}
+      {orderStats && (
+        <Row gutter={16} style={{ marginBottom: 16 }}>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="总订单数"
+                value={orderStats.total_orders}
+                valueStyle={{ color: '#1890ff' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="待生产订单"
+                value={orderStats.pending_orders}
+                prefix={<ClockCircleOutlined />}
+                valueStyle={{ color: '#faad14' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="生产中订单"
+                value={orderStats.in_production_orders}
+                prefix={<SyncOutlined />}
+                valueStyle={{ color: '#52c41a' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="已完成订单"
+                value={orderStats.completed_orders}
+                prefix={<CheckCircleOutlined />}
+                valueStyle={{ color: '#52c41a' }}
+              />
+            </Card>
+          </Col>
+        </Row>
+      )}
+
       {/* 搜索表单 */}
-      <Card className="search-form">
-        <Form layout="inline">
-          <Row gutter={16} style={{ width: '100%' }}>
-            <Col span={6}>
-              <Form.Item label="订单号">
-                <Input placeholder="请输入订单号" />
-              </Form.Item>
-            </Col>
-            <Col span={6}>
-              <Form.Item label="客户">
-                <Input placeholder="请输入客户名称" />
-              </Form.Item>
-            </Col>
-            <Col span={6}>
-              <Form.Item label="状态">
-                <Select placeholder="请选择状态" allowClear>
-                  <Option value="待生产">待生产</Option>
-                  <Option value="生产中">生产中</Option>
-                  <Option value="已完成">已完成</Option>
-                  <Option value="已取消">已取消</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={6}>
-              <Form.Item>
-                <Space>
-                  <Button type="primary" icon={<SearchOutlined />}>
-                    搜索
-                  </Button>
-                  <Button>重置</Button>
-                </Space>
-              </Form.Item>
-            </Col>
-          </Row>
+      <Card style={{ marginBottom: 16 }}>
+        <Form
+          form={searchForm}
+          layout="inline"
+          onFinish={handleSearch}
+          style={{ marginBottom: 16 }}
+        >
+          <Form.Item name="order_number" label="订单编号">
+            <Input placeholder="请输入订单编号" allowClear />
+          </Form.Item>
+          <Form.Item name="customer_name" label="客户名称">
+            <Input placeholder="请输入客户名称" allowClear />
+          </Form.Item>
+          <Form.Item name="product_name" label="产品名称">
+            <Input placeholder="请输入产品名称" allowClear />
+          </Form.Item>
+          <Form.Item name="status" label="订单状态">
+            <Select placeholder="请选择状态" allowClear style={{ width: 120 }}>
+              <Option value="pending">待生产</Option>
+              <Option value="confirmed">已确认</Option>
+              <Option value="in_production">生产中</Option>
+              <Option value="completed">已完成</Option>
+              <Option value="cancelled">已取消</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item name="priority" label="优先级">
+            <Select placeholder="请选择优先级" allowClear style={{ width: 100 }}>
+              <Option value="high">高</Option>
+              <Option value="medium">中</Option>
+              <Option value="low">低</Option>
+            </Select>
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
+                搜索
+              </Button>
+              <Button onClick={handleReset} icon={<ReloadOutlined />}>
+                重置
+              </Button>
+            </Space>
+          </Form.Item>
         </Form>
       </Card>
 
-      {/* 操作按钮 */}
-      <Card>
-        <div className="action-buttons" style={{ marginBottom: 16 }}>
-          <Space>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              新增订单
-            </Button>
-            <Upload {...uploadProps}>
-              <Button icon={<UploadOutlined />}>批量导入</Button>
-            </Upload>
-            <Button icon={<DownloadOutlined />}>导出Excel</Button>
-          </Space>
-        </div>
-
-        {/* 订单表格 */}
+      {/* 订单列表 */}
+      <Card title="订单列表" extra={
+        <Space>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            新增订单
+          </Button>
+          <Upload {...uploadProps}>
+            <Button icon={<UploadOutlined />}>批量导入</Button>
+          </Upload>
+          <Button icon={<DownloadOutlined />}>导出数据</Button>
+        </Space>
+      }>
         <Table
           columns={columns}
           dataSource={dataSource}
           loading={loading}
-          scroll={{ x: 1500 }}
+          scroll={{ x: 1400 }}
           pagination={{
-            total: dataSource.length,
-            pageSize: 10,
+            ...pagination,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total) => `共 ${total} 条记录`
+            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条/共 ${total} 条`,
+            onChange: handleTableChange,
+            onShowSizeChange: handleTableChange
           }}
         />
       </Card>
@@ -371,58 +608,116 @@ const OrderManagement: React.FC = () => {
       <Modal
         title={editingRecord ? '编辑订单' : '新增订单'}
         open={modalVisible}
-        onOk={handleSubmit}
-        onCancel={() => setModalVisible(false)}
-        width={800}
+        onCancel={() => {
+          setModalVisible(false);
+          form.resetFields();
+          setEditingRecord(null);
+        }}
+        footer={[
+          <Button key="cancel" onClick={() => setModalVisible(false)}>
+            取消
+          </Button>,
+          <Button key="submit" type="primary" loading={loading} onClick={() => form.submit()}>
+            {editingRecord ? '更新' : '创建'}
+          </Button>
+        ]}
+        width={900}
         destroyOnClose
       >
         <Form
           form={form}
           layout="vertical"
+          onFinish={handleSubmit}
           initialValues={{
-            status: '待生产',
-            priority: '中',
+            priority: 'medium',
+            status: 'pending',
             unit: '件'
           }}
         >
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                label="订单号"
-                name="orderNo"
-                rules={[{ required: true, message: '请输入订单号' }]}
+                name="order_number"
+                label="订单编号"
+                rules={[{ required: true, message: '请输入订单编号' }]}
               >
-                <Input placeholder="请输入订单号" />
+                <Input placeholder="请输入订单编号" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
-                label="客户"
-                name="customer"
+                name="customer_name"
+                label="客户名称"
                 rules={[{ required: true, message: '请输入客户名称' }]}
               >
                 <Input placeholder="请输入客户名称" />
               </Form.Item>
             </Col>
           </Row>
-          
+
+          <Row gutter={16}>
+             <Col span={8}>
+               <Form.Item
+                 name="customer_contact"
+                 label="联系人"
+               >
+                 <Input placeholder="请输入联系人" />
+               </Form.Item>
+             </Col>
+             <Col span={8}>
+               <Form.Item
+                 name="customer_phone"
+                 label="联系电话"
+               >
+                 <Input placeholder="请输入联系电话" />
+               </Form.Item>
+             </Col>
+             <Col span={8}>
+               <Form.Item
+                 name="customer_email"
+                 label="邮箱"
+               >
+                 <Input placeholder="请输入邮箱" />
+               </Form.Item>
+             </Col>
+           </Row>
+
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
-                label="产品"
-                name="product"
+                name="product_name"
+                label="产品名称"
                 rules={[{ required: true, message: '请输入产品名称' }]}
               >
                 <Input placeholder="请输入产品名称" />
               </Form.Item>
             </Col>
             <Col span={12}>
+               <Form.Item
+                 name="product_code"
+                 label="产品编码"
+                 rules={[{ required: true, message: '请输入产品编码' }]}
+               >
+                 <Input placeholder="请输入产品编码" />
+               </Form.Item>
+             </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
               <Form.Item
-                label="规格"
-                name="specification"
-                rules={[{ required: true, message: '请输入产品规格' }]}
+                name="product_spec"
+                label="产品规格"
               >
                 <Input placeholder="请输入产品规格" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="technical_requirements"
+                label="技术要求"
+              >
+                <Input placeholder="请输入技术要求" />
               </Form.Item>
             </Col>
           </Row>
@@ -430,17 +725,21 @@ const OrderManagement: React.FC = () => {
           <Row gutter={16}>
             <Col span={8}>
               <Form.Item
-                label="数量"
                 name="quantity"
+                label="数量"
                 rules={[{ required: true, message: '请输入数量' }]}
               >
-                <Input type="number" placeholder="请输入数量" />
+                <InputNumber
+                  min={1}
+                  placeholder="请输入数量"
+                  style={{ width: '100%' }}
+                />
               </Form.Item>
             </Col>
             <Col span={8}>
               <Form.Item
-                label="单位"
                 name="unit"
+                label="单位"
                 rules={[{ required: true, message: '请选择单位' }]}
               >
                 <Select placeholder="请选择单位">
@@ -448,16 +747,25 @@ const OrderManagement: React.FC = () => {
                   <Option value="套">套</Option>
                   <Option value="个">个</Option>
                   <Option value="台">台</Option>
+                  <Option value="批">批</Option>
+                  <Option value="米">米</Option>
+                  <Option value="公斤">公斤</Option>
                 </Select>
               </Form.Item>
             </Col>
             <Col span={8}>
               <Form.Item
+                name="unit_price"
                 label="单价"
-                name="unitPrice"
                 rules={[{ required: true, message: '请输入单价' }]}
               >
-                <Input type="number" placeholder="请输入单价" />
+                <InputNumber
+                  min={0}
+                  precision={2}
+                  placeholder="请输入单价"
+                  style={{ width: '100%' }}
+                  addonBefore="¥"
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -465,58 +773,136 @@ const OrderManagement: React.FC = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item
+                name="order_date"
                 label="下单日期"
-                name="orderDate"
                 rules={[{ required: true, message: '请选择下单日期' }]}
               >
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker
+                  style={{ width: '100%' }}
+                  placeholder="请选择下单日期"
+                  showTime
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item
-                label="交期"
-                name="deliveryDate"
-                rules={[{ required: true, message: '请选择交期' }]}
+                name="delivery_date"
+                label="交货日期"
+                rules={[{ required: true, message: '请选择交货日期' }]}
               >
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker
+                  style={{ width: '100%' }}
+                  placeholder="请选择交货日期"
+                  showTime
+                />
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
-                label="优先级"
                 name="priority"
+                label="优先级"
                 rules={[{ required: true, message: '请选择优先级' }]}
               >
                 <Select placeholder="请选择优先级">
-                  <Option value="高">高</Option>
-                  <Option value="中">中</Option>
-                  <Option value="低">低</Option>
+                  <Option value="high">高</Option>
+                  <Option value="medium">中</Option>
+                  <Option value="low">低</Option>
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
-                label="状态"
                 name="status"
-                rules={[{ required: true, message: '请选择状态' }]}
+                label="订单状态"
+                rules={[{ required: true, message: '请选择订单状态' }]}
               >
-                <Select placeholder="请选择状态">
-                  <Option value="待生产">待生产</Option>
-                  <Option value="生产中">生产中</Option>
-                  <Option value="已完成">已完成</Option>
-                  <Option value="已取消">已取消</Option>
+                <Select placeholder="请选择订单状态">
+                  <Option value="pending">待生产</Option>
+                  <Option value="confirmed">已确认</Option>
+                  <Option value="in_production">生产中</Option>
+                  <Option value="completed">已完成</Option>
+                  <Option value="cancelled">已取消</Option>
                 </Select>
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="delivery_address"
+                label="交货地址"
+              >
+                <Input placeholder="请输入交货地址" />
               </Form.Item>
             </Col>
           </Row>
 
-          <Form.Item label="备注" name="remark">
-            <Input.TextArea rows={3} placeholder="请输入备注信息" />
+          <Form.Item
+            name="remark"
+            label="备注"
+          >
+            <Input.TextArea
+              rows={3}
+              placeholder="请输入备注信息"
+            />
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* 订单详情弹窗 */}
+      <Modal
+        title="订单详情"
+        open={detailModalVisible}
+        onCancel={() => setDetailModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setDetailModalVisible(false)}>
+            关闭
+          </Button>
+        ]}
+        width={800}
+      >
+        {selectedRecord && (
+          <Descriptions bordered column={2}>
+            <Descriptions.Item label="订单编号">{selectedRecord.order_number}</Descriptions.Item>
+            <Descriptions.Item label="订单状态">
+              <Badge 
+                status={selectedRecord.status === 'completed' ? 'success' : 'processing'} 
+                text={selectedRecord.status} 
+              />
+            </Descriptions.Item>
+            <Descriptions.Item label="客户名称">{selectedRecord.customer_name}</Descriptions.Item>
+            <Descriptions.Item label="联系人">{selectedRecord.customer_contact || '-'}</Descriptions.Item>
+             <Descriptions.Item label="联系电话">{selectedRecord.customer_phone || '-'}</Descriptions.Item>
+             <Descriptions.Item label="邮箱">{selectedRecord.customer_email || '-'}</Descriptions.Item>
+            <Descriptions.Item label="产品名称">{selectedRecord.product_name}</Descriptions.Item>
+            <Descriptions.Item label="产品编码">{selectedRecord.product_code}</Descriptions.Item>
+            <Descriptions.Item label="产品规格">{selectedRecord.product_spec || '-'}</Descriptions.Item>
+            <Descriptions.Item label="技术要求">{selectedRecord.technical_requirements || '-'}</Descriptions.Item>
+            <Descriptions.Item label="数量">{selectedRecord.quantity} {selectedRecord.unit}</Descriptions.Item>
+            <Descriptions.Item label="单价">¥{selectedRecord.unit_price?.toFixed(2)}</Descriptions.Item>
+            <Descriptions.Item label="总金额">¥{selectedRecord.total_amount?.toFixed(2)}</Descriptions.Item>
+            <Descriptions.Item label="优先级">
+              <Tag color={selectedRecord.priority === 'high' ? 'red' : selectedRecord.priority === 'medium' ? 'orange' : 'green'}>
+                {selectedRecord.priority === 'high' ? '高' : selectedRecord.priority === 'medium' ? '中' : '低'}
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="下单日期">
+              {selectedRecord.order_date ? dayjs(selectedRecord.order_date).format('YYYY-MM-DD HH:mm:ss') : '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="交货日期">
+              {selectedRecord.delivery_date ? dayjs(selectedRecord.delivery_date).format('YYYY-MM-DD HH:mm:ss') : '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="交货地址" span={2}>{selectedRecord.delivery_address || '-'}</Descriptions.Item>
+            <Descriptions.Item label="备注" span={2}>{selectedRecord.remark || '-'}</Descriptions.Item>
+            <Descriptions.Item label="创建时间">
+              {selectedRecord.created_at ? dayjs(selectedRecord.created_at).format('YYYY-MM-DD HH:mm:ss') : '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="更新时间">
+              {selectedRecord.updated_at ? dayjs(selectedRecord.updated_at).format('YYYY-MM-DD HH:mm:ss') : '-'}
+            </Descriptions.Item>
+          </Descriptions>
+        )}
       </Modal>
     </div>
   );

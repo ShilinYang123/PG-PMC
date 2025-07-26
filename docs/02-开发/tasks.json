@@ -2183,6 +2183,70 @@
         }
       ],
       "completed": false
+    },
+    {
+      "requestId": "req-41",
+      "originalRequest": "按照项目开发进度总结，继续推进PMC全流程管理系统的开发工作",
+      "splitDetails": "基于当前项目状态（整体进度60%），重点完成前端界面层（当前40%）和后端API层（当前67%）的剩余功能，优先开发高优先级的核心模块",
+      "tasks": [
+        {
+          "id": "task-234",
+          "title": "完善订单管理模块前端界面",
+          "description": "开发订单列表、订单详情、订单状态跟踪等前端组件，集成后端API接口",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-235",
+          "title": "开发生产计划模块甘特图组件",
+          "description": "使用ECharts或专业甘特图库实现生产计划的可视化展示和交互功能",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-236",
+          "title": "完善进度跟踪模块",
+          "description": "开发进度统计图表、里程碑跟踪、延期预警等功能的前端界面",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-237",
+          "title": "集成ECharts图表组件库",
+          "description": "在Dashboard和各业务模块中集成ECharts，实现数据可视化展示",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-238",
+          "title": "开发通知催办系统",
+          "description": "完成微信、邮件、短信多渠道通知功能的前后端集成",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-239",
+          "title": "完善物料管理模块",
+          "description": "开发物料库存、采购计划、供应商管理等功能的前端界面",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-240",
+          "title": "系统集成测试",
+          "description": "进行前后端集成测试，确保各模块功能正常运行",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        }
+      ],
+      "completed": false
     }
   ]
 }
