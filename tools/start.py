@@ -13,7 +13,7 @@ import time
 import subprocess
 import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Tuple, Any, Optional
 
 class AIAssistantStartupChecker:
@@ -46,6 +46,9 @@ class AIAssistantStartupChecker:
         
         # 禁用虚拟环境（杨老师要求）
         self.disable_virtual_environment()
+        
+        # 初始化系统日期管理
+        self.setup_system_date_management()
         
     def setup_workflow_logging(self):
         """设置工作流程日志系统"""
@@ -148,6 +151,139 @@ pause
             
         except Exception as e:
             self.workflow_logger.error(f"创建no_venv.bat脚本失败: {e}")
+            
+    def setup_system_date_management(self):
+        """设置系统日期管理功能"""
+        try:
+            # 获取当前系统日期
+            current_date = self.get_current_system_date()
+            
+            # 设置日期相关的环境变量
+            self.set_date_environment_variables(current_date)
+            
+            # 创建日期配置文件
+            self.create_date_config_file(current_date)
+            
+            # 记录日期设置
+            self.workflow_logger.info(f"✓ 系统日期管理已初始化: {current_date['formatted']}")
+            
+        except Exception as e:
+            self.workflow_logger.error(f"系统日期管理初始化失败: {e}")
+            
+    def get_current_system_date(self) -> Dict[str, str]:
+        """获取当前系统日期（多种格式）"""
+        try:
+            now = datetime.now()
+            
+            date_info = {
+                'timestamp': now.isoformat(),
+                'date': now.strftime('%Y-%m-%d'),
+                'datetime': now.strftime('%Y-%m-%d %H:%M:%S'),
+                'formatted': now.strftime('%Y年%m月%d日'),
+                'year': str(now.year),
+                'month': str(now.month),
+                'day': str(now.day),
+                'weekday': now.strftime('%A'),
+                'weekday_cn': ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][now.weekday()],
+                'unix_timestamp': str(int(now.timestamp()))
+            }
+            
+            return date_info
+            
+        except Exception as e:
+            self.workflow_logger.error(f"获取系统日期失败: {e}")
+            # 返回默认值
+            return {
+                'timestamp': '2025-07-26T00:00:00',
+                'date': '2025-07-26',
+                'datetime': '2025-07-26 00:00:00',
+                'formatted': '2025年07月26日',
+                'year': '2025',
+                'month': '7',
+                'day': '26',
+                'weekday': 'Friday',
+                'weekday_cn': '周五',
+                'unix_timestamp': '1721952000'
+            }
+            
+    def set_date_environment_variables(self, date_info: Dict[str, str]):
+        """设置日期相关的环境变量"""
+        try:
+            # 设置环境变量供AI和脚本使用
+            os.environ['SYSTEM_CURRENT_DATE'] = date_info['date']
+            os.environ['SYSTEM_CURRENT_DATETIME'] = date_info['datetime']
+            os.environ['SYSTEM_CURRENT_DATE_FORMATTED'] = date_info['formatted']
+            os.environ['SYSTEM_CURRENT_YEAR'] = date_info['year']
+            os.environ['SYSTEM_CURRENT_MONTH'] = date_info['month']
+            os.environ['SYSTEM_CURRENT_DAY'] = date_info['day']
+            os.environ['SYSTEM_CURRENT_WEEKDAY'] = date_info['weekday_cn']
+            os.environ['SYSTEM_TIMESTAMP'] = date_info['timestamp']
+            
+            self.workflow_logger.info("✓ 日期环境变量已设置")
+            
+        except Exception as e:
+            self.workflow_logger.error(f"设置日期环境变量失败: {e}")
+            
+    def create_date_config_file(self, date_info: Dict[str, str]):
+        """创建日期配置文件供AI和其他脚本读取"""
+        try:
+            # 创建JSON格式的日期配置文件
+            date_config_file = self.tools_dir / "current_date.json"
+            
+            config_data = {
+                "system_date_info": date_info,
+                "last_updated": date_info['timestamp'],
+                "ai_instructions": {
+                    "current_date": date_info['date'],
+                    "formatted_date": date_info['formatted'],
+                    "usage_note": "AI应使用此文件中的日期信息，而不是训练数据中的历史日期",
+                    "priority": "系统当前日期优先于AI知识库中的日期信息"
+                }
+            }
+            
+            with open(date_config_file, 'w', encoding='utf-8') as f:
+                json.dump(config_data, f, ensure_ascii=False, indent=2)
+                
+            self.workflow_logger.info(f"✓ 日期配置文件已创建: {date_config_file}")
+            
+            # 同时创建简单的文本文件供快速读取
+            date_text_file = self.tools_dir / "current_date.txt"
+            with open(date_text_file, 'w', encoding='utf-8') as f:
+                f.write(f"当前系统日期: {date_info['formatted']}\n")
+                f.write(f"ISO格式: {date_info['date']}\n")
+                f.write(f"完整时间: {date_info['datetime']}\n")
+                f.write(f"星期: {date_info['weekday_cn']}\n")
+                f.write(f"\n注意: AI应使用此文件中的日期，而不是训练数据中的历史日期\n")
+                
+            self.workflow_logger.info(f"✓ 日期文本文件已创建: {date_text_file}")
+            
+        except Exception as e:
+            self.workflow_logger.error(f"创建日期配置文件失败: {e}")
+            
+    def get_ai_date_instruction(self) -> str:
+        """获取AI日期使用指令"""
+        try:
+            date_info = self.get_current_system_date()
+            
+            instruction = f"""=== AI日期使用指令 ===
+当前系统日期: {date_info['formatted']} ({date_info['weekday_cn']})
+ISO格式: {date_info['date']}
+完整时间: {date_info['datetime']}
+
+重要提醒:
+1. 在生成任何需要日期的内容时，请使用上述当前系统日期
+2. 不要使用AI训练数据中的历史日期或进行日期推测
+3. 如需引用具体日期，请使用: {date_info['formatted']}
+4. 环境变量 SYSTEM_CURRENT_DATE_FORMATTED 也包含此信息
+5. 可读取 tools/current_date.json 获取完整日期信息
+
+=== 结束 ==="""
+            
+            return instruction
+            
+        except Exception as e:
+            self.workflow_logger.error(f"生成AI日期指令失败: {e}")
+            return "AI日期指令生成失败，请手动确认当前日期"
             
     def run_script(self, script_name: str, args: List[str] = None) -> bool:
         """运行指定脚本"""
@@ -405,6 +541,9 @@ pause
         venv_status = "🔴 已禁用" if 'VIRTUAL_ENV' not in os.environ else "🟡 检测到虚拟环境"
         python_env = "系统Python" if '.venv' not in sys.executable.lower() else "虚拟环境Python"
         
+        # 获取当前系统日期信息
+        current_date = self.get_current_system_date()
+        
         briefing = f"""
 # AI助理启动简报
 
@@ -414,12 +553,24 @@ pause
 **虚拟环境状态**: {venv_status}
 **Python环境**: {python_env} ({sys.version.split()[0]})
 
+## 📅 系统日期信息 (重要!)
+**当前系统日期**: {current_date['formatted']} ({current_date['weekday_cn']})
+**ISO格式**: {current_date['date']}
+**完整时间**: {current_date['datetime']}
+
+⚠️ **AI重要提醒**: 
+- 在生成任何需要日期的内容时，请使用上述当前系统日期
+- 不要使用AI训练数据中的历史日期或进行日期推测
+- 环境变量 SYSTEM_CURRENT_DATE_FORMATTED 包含格式化日期
+- 可读取 tools/current_date.json 获取完整日期信息
+
 ## 🎯 工作目标
 作为本项目的技术负责人，您需要：
 1. 严格遵守所有项目管理文档和规范
 2. 确保每次操作都符合项目架构设计
 3. 维护项目的完整性和一致性
 4. 提供高质量的技术解决方案
+5. **使用正确的系统当前日期**: {current_date['formatted']}
 
 ## 📋 核心约束条件
 """
@@ -663,6 +814,13 @@ pause
             # 第五阶段：生成启动简报
             print("\n📋 第五阶段：生成启动简报")
             print("-" * 30)
+            
+            # 显示当前系统日期信息
+            current_date = self.get_current_system_date()
+            print(f"📅 当前系统日期: {current_date['formatted']} ({current_date['weekday_cn']})")
+            print(f"   ISO格式: {current_date['date']}")
+            print(f"   完整时间: {current_date['datetime']}")
+            print("   ⚠️ AI将使用此日期信息，而非训练数据中的历史日期")
             
             # 6. 生成启动简报
             briefing = self.generate_startup_briefing(regulations, constraints)

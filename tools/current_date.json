@@ -1,0 +1,15 @@
+﻿{
+    "ai_instruction":  "AI should use date information from this file instead of historical dates from training data",
+    "last_updated":  "2025-07-26T23:06:29.517",
+    "system_date":  {
+                        "year":  "2025",
+                        "date":  "2025-07-26",
+                        "day":  "26",
+                        "month":  "07",
+                        "unix_timestamp":  "1753571190",
+                        "weekday":  "Saturday",
+                        "timestamp":  "2025-07-26T23:06:29.517",
+                        "formatted_date":  "2025-07-26",
+                        "weekday_cn":  "Saturday"
+                    }
+}

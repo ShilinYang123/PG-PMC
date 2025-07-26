@@ -19,7 +19,7 @@ compliance:
     log_level: ERROR
     require_approval: true
 config_version: 1.0.0
-created_at: '2025-06-19T17:15:34.936127'
+created_at: '2025-07-26T23:06:29.517000'
 database:
   dev_name: PG-PMC_dev_db
   host: localhost
@@ -233,10 +233,10 @@ performance:
   static_cache_ttl: 86400
   worker_processes: 4
 project:
-  created_at: '2025-06-20T00:11:18.534319'
+  created_at: '2025-07-26T23:06:29.517000'
   name: PG-PMC
   root: s:/PG-PMC
-  updated_at: '2025-06-20T00:11:18.534332'
+  updated_at: '2025-07-26T23:06:29.517000'
 project_description: 3AI电器实业有限公司研发管理项目
 project_name: PG-PMC
 project_root: ''
@@ -434,4 +434,4 @@ template:
   - PROJECT_DESCRIPTION
   - CREATED_AT
   - UPDATED_AT
-updated_at: '2025-06-19T17:15:34.936137'
+updated_at: '2025-07-26T23:06:29.517000'

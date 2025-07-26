@@ -6,7 +6,7 @@
 展示如何在项目中使用新的统一错误处理和日志记录系统。
 
 Author: AI Assistant
-Date: 2024
+Date: 2025
 """
 
 from tools.enhanced_error_handling import (
