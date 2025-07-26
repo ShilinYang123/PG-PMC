@@ -1,0 +1,64 @@
+services:
+  pmc-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: pmc-production
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    environment:
+      - PYTHONPATH=/app
+      - ENV=production
+    command: python tools/docker_start.py
+    restart: unless-stopped
+    networks:
+      - pmc-network
+
+  pmc-dev:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: pmc-development
+    ports:
+      - "8001:8000"
+    volumes:
+      - ..:/app
+      - /app/.venv
+    environment:
+      - PYTHONPATH=/app
+      - ENV=development
+    command: python tools/docker_start.py
+    restart: unless-stopped
+    networks:
+      - pmc-network
+
+  pmc-monitor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: pmc-monitor
+    volumes:
+      - ../logs:/app/logs
+      - ../data:/app/data
+    environment:
+      - PYTHONPATH=/app
+      - ENV=monitor
+    command: python tools/docker_start.py
+    restart: unless-stopped
+    depends_on:
+      - pmc-app
+    networks:
+      - pmc-network
+
+networks:
+  pmc-network:
+    driver: bridge
+
+volumes:
+  pmc-data:
+    driver: local
+  pmc-logs:
+    driver: local

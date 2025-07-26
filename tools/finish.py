@@ -185,7 +185,7 @@ def run_full_zip_backup():
         backup_file = backup_base_dir / f"全量备份_{timestamp}.zip"
         
         # 需要备份的目录
-        backup_dirs = ["docs", "project", "tools", "AI调度表"]
+        backup_dirs = ["docs", "project", "tools", "data", "docker", "AI调度表"]
         
         total_files = 0
         with zipfile.ZipFile(backup_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -259,7 +259,7 @@ def sync_to_backup_repo():
     
     try:
         # 需要同步的目录
-        sync_dirs = ['docs', 'project', 'tools']
+        sync_dirs = ['docs', 'project', 'tools', 'data', 'docker']
         
         for dir_name in sync_dirs:
             source_dir = PROJECT_ROOT / dir_name

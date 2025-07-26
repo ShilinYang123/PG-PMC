@@ -1,0 +1,47 @@
+# Web框架
+flask==3.0.0
+flask-cors==4.0.0
+werkzeug==3.0.1
+
+# 文件监控
+watchdog==4.0.0
+
+# 数据处理
+pandas==2.2.0
+numpy==1.26.4
+
+# HTTP请求
+requests==2.31.0
+
+# 日志处理
+loguru==0.7.2
+
+# 配置管理
+python-dotenv==1.0.0
+PyYAML==6.0.1
+
+# 时间处理
+python-dateutil==2.8.2
+
+# JSON处理
+orjson==3.9.10
+
+# 系统监控
+psutil==5.9.6
+
+# 开发工具
+pytest==7.4.3
+pytest-cov==4.1.0
+black==23.11.0
+flake8==6.1.0
+
+# 安全
+cryptography==41.0.7
+
+# 数据库（如需要）
+# sqlalchemy==2.0.23
+# sqlite3 # 内置模块
+
+# 异步支持（如需要）
+# asyncio # 内置模块
+# aiohttp==3.9.1
