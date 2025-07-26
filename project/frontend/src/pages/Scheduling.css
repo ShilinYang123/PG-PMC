@@ -1,0 +1,417 @@
+.scheduling-container {
+  padding: 24px;
+  background: #f0f2f5;
+  min-height: 100vh;
+}
+
+.scheduling-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 16px 24px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.scheduling-header h2 {
+  margin: 0;
+  color: #1890ff;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.gantt-container {
+  max-height: 600px;
+  overflow-y: auto;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 6px;
+}
+
+/* 统计卡片样式 */
+.ant-statistic {
+  text-align: center;
+}
+
+.ant-statistic-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.ant-statistic-content {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* 表格样式优化 */
+.ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  color: #262626;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: #e6f7ff;
+}
+
+/* 标签样式 */
+.ant-tag {
+  border-radius: 4px;
+  font-size: 12px;
+  padding: 2px 8px;
+}
+
+/* 进度条样式 */
+.ant-progress-line {
+  margin: 0;
+}
+
+.ant-progress-text {
+  font-size: 12px;
+}
+
+/* 时间轴样式 */
+.ant-timeline {
+  padding: 16px 0;
+}
+
+.ant-timeline-item-content {
+  margin-left: 16px;
+}
+
+/* 模态框样式 */
+.ant-modal-header {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 24px;
+}
+
+.ant-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.ant-modal-body {
+  padding: 24px;
+}
+
+/* 表单样式 */
+.ant-form-item-label > label {
+  font-weight: 500;
+  color: #262626;
+}
+
+.ant-form-item-required::before {
+  color: #ff4d4f;
+}
+
+/* 按钮样式 */
+.ant-btn {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.ant-btn-primary {
+  background: #1890ff;
+  border-color: #1890ff;
+}
+
+.ant-btn-primary:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
+/* 卡片样式 */
+.ant-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ant-card-head {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ant-card-head-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+}
+
+/* 选项卡样式 */
+.ant-tabs-tab {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ant-tabs-tab-active {
+  color: #1890ff;
+}
+
+.ant-tabs-ink-bar {
+  background: #1890ff;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .scheduling-container {
+    padding: 16px;
+  }
+  
+  .scheduling-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .scheduling-header h2 {
+    font-size: 20px;
+  }
+  
+  .ant-statistic-content {
+    font-size: 20px;
+  }
+  
+  .ant-modal {
+    margin: 16px;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+@media (max-width: 576px) {
+  .scheduling-container {
+    padding: 12px;
+  }
+  
+  .scheduling-header {
+    padding: 12px 16px;
+  }
+  
+  .scheduling-header h2 {
+    font-size: 18px;
+  }
+  
+  .ant-card {
+    margin-bottom: 12px;
+  }
+  
+  .ant-table {
+    font-size: 12px;
+  }
+  
+  .ant-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}
+
+/* 加载状态样式 */
+.ant-spin-container {
+  position: relative;
+}
+
+.ant-spin {
+  color: #1890ff;
+}
+
+/* 空状态样式 */
+.ant-empty {
+  padding: 40px 0;
+}
+
+.ant-empty-description {
+  color: #999;
+  font-size: 14px;
+}
+
+/* 工具提示样式 */
+.ant-tooltip {
+  font-size: 12px;
+}
+
+/* 分页样式 */
+.ant-pagination {
+  text-align: right;
+  margin-top: 16px;
+}
+
+.ant-pagination-total-text {
+  color: #666;
+  font-size: 14px;
+}
+
+/* 自定义滚动条 */
+.gantt-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.gantt-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.gantt-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.gantt-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 动画效果 */
+.ant-card,
+.ant-modal,
+.ant-btn {
+  transition: all 0.3s ease;
+}
+
+.ant-table-tbody > tr {
+  transition: background-color 0.3s ease;
+}
+
+/* 状态指示器 */
+.status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.status-indicator.pending {
+  background-color: #d9d9d9;
+}
+
+.status-indicator.scheduled {
+  background-color: #1890ff;
+}
+
+.status-indicator.in-progress {
+  background-color: #faad14;
+}
+
+.status-indicator.completed {
+  background-color: #52c41a;
+}
+
+.status-indicator.cancelled {
+  background-color: #ff4d4f;
+}
+
+/* 优先级指示器 */
+.priority-indicator {
+  display: inline-block;
+  width: 4px;
+  height: 20px;
+  margin-right: 8px;
+  border-radius: 2px;
+}
+
+.priority-indicator.low {
+  background-color: #d9d9d9;
+}
+
+.priority-indicator.normal {
+  background-color: #1890ff;
+}
+
+.priority-indicator.high {
+  background-color: #faad14;
+}
+
+.priority-indicator.urgent {
+  background-color: #ff4d4f;
+}
+
+/* 设备利用率颜色 */
+.utilization-low {
+  color: #52c41a;
+}
+
+.utilization-medium {
+  color: #faad14;
+}
+
+.utilization-high {
+  color: #ff4d4f;
+}
+
+/* 物料库存状态 */
+.stock-sufficient {
+  color: #52c41a;
+  font-weight: 500;
+}
+
+.stock-insufficient {
+  color: #ff4d4f;
+  font-weight: 500;
+}
+
+/* 甘特图项目样式 */
+.gantt-item {
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 4px;
+  border-left: 4px solid #1890ff;
+  background: #f6ffed;
+  transition: all 0.3s ease;
+}
+
+.gantt-item:hover {
+  background: #d9f7be;
+  transform: translateX(4px);
+}
+
+.gantt-item.urgent {
+  border-left-color: #ff4d4f;
+  background: #fff2f0;
+}
+
+.gantt-item.urgent:hover {
+  background: #ffccc7;
+}
+
+.gantt-item-title {
+  font-weight: 600;
+  color: #262626;
+  margin-bottom: 4px;
+}
+
+.gantt-item-details {
+  font-size: 12px;
+  color: #666;
+}
+
+/* 数据加载骨架屏 */
+.skeleton-container {
+  padding: 20px;
+}
+
+.skeleton-item {
+  margin-bottom: 16px;
+}
+
+/* 错误状态样式 */
+.error-container {
+  text-align: center;
+  padding: 40px;
+  color: #ff4d4f;
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.error-message {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.error-description {
+  font-size: 14px;
+  color: #999;
+}

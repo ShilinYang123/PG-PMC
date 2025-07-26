@@ -44,7 +44,7 @@ class QueryParams(BaseModel):
     page_size: int = Field(10, ge=1, le=100, description="每页大小")
     keyword: Optional[str] = Field(None, description="关键词搜索")
     sort_field: Optional[str] = Field(None, description="排序字段")
-    sort_order: Optional[str] = Field("desc", regex="^(asc|desc)$", description="排序方向")
+    sort_order: Optional[str] = Field("desc", pattern="^(asc|desc)$", description="排序方向")
 
 class DateRangeFilter(BaseModel):
     """日期范围过滤器"""

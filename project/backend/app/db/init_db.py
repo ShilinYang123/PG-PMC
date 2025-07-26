@@ -6,6 +6,8 @@ from app.models.order import Order, OrderStatus, OrderPriority
 from app.models.production_plan import ProductionPlan, ProductionStage, PlanStatus, PlanPriority
 from app.models.material import Material, BOM, BOMItem, PurchaseOrder, PurchaseOrderItem, MaterialCategory, MaterialStatus, PurchaseStatus
 from app.models.progress import ProgressRecord, StageRecord, QualityRecord, ProgressUpdate, ProgressStatus, QualityResult
+from app.models.scheduling import ProductionOrder, Equipment, Material as SchedulingMaterial, ScheduleLog, ScheduleRule, ScheduleOptimization
+from app.models.wechat import WeChatMessage, WeChatConfig, NotificationRule, MessageTemplate, MessageQueue, DeliveryLog, MessageStats
 from datetime import datetime, timedelta
 import logging
 

@@ -8,7 +8,7 @@ from app.models.production_plan import ProductionPlan
 from app.models.order import Order
 from app.models.user import User
 from app.schemas.common import ResponseModel, PagedResponseModel, QueryParams, PageInfo
-from app.schemas.auth import get_current_user, get_current_active_user
+from app.api.endpoints.auth import get_current_user, get_current_active_user
 from app.schemas.progress import (
     ProgressRecordCreate, ProgressRecordUpdate, ProgressRecordQuery, ProgressRecordDetail,
     StageRecordCreate, StageRecordUpdate, StageRecordDetail,

@@ -20,6 +20,14 @@ class PlanPriority(str, enum.Enum):
     HIGH = "高"
     URGENT = "紧急"
 
+class StageStatus(str, enum.Enum):
+    """阶段状态枚举"""
+    PENDING = "待开始"
+    IN_PROGRESS = "进行中"
+    COMPLETED = "已完成"
+    PAUSED = "暂停"
+    CANCELLED = "已取消"
+
 class ProductionPlan(Base):
     """生产计划模型"""
     __tablename__ = "production_plans"

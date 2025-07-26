@@ -385,11 +385,17 @@ def main():
     
     # 解析命令行参数
     parser = argparse.ArgumentParser(description='项目完成脚本')
-    parser.add_argument('--full-backup', action='store_true', 
-                       help='进行全量zip压缩备份到常规备份目录')
+    parser.add_argument('--full-backup', action='store_true', default=True,
+                       help='进行全量zip压缩备份到常规备份目录（默认启用）')
+    parser.add_argument('--core-backup', action='store_true',
+                       help='仅进行核心文件备份（覆盖默认的全量备份）')
     parser.add_argument('--backup-only', action='store_true',
                        help='仅执行备份操作，跳过结构检查和Git推送')
     args = parser.parse_args()
+    
+    # 如果指定了核心备份，则覆盖默认的全量备份
+    if args.core_backup:
+        args.full_backup = False
     
     try:
         logger.info("启动项目完成流程")

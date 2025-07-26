@@ -6,7 +6,7 @@ import uvicorn
 from loguru import logger
 
 # 导入路由模块
-from app.api.v1.api import api_router
+from app.api.api import api_router
 from app.core.config import settings
 from app.db.database import engine, Base
 from app.core.logging import setup_logging

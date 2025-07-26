@@ -6,7 +6,7 @@ from app.db.database import get_db
 from app.models.order import Order, OrderStatus, OrderPriority
 from app.models.user import User
 from app.schemas.common import ResponseModel, PagedResponseModel, QueryParams, PageInfo
-from app.schemas.auth import get_current_user, get_current_active_user
+from app.api.endpoints.auth import get_current_user, get_current_active_user
 from app.schemas.order import OrderCreate, OrderUpdate, OrderQuery, OrderDetail, OrderSummary, OrderStats
 from datetime import datetime, timedelta
 import logging

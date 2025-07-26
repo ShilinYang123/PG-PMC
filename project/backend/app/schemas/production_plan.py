@@ -32,7 +32,7 @@ class ProductionStageUpdate(BaseModel):
     planned_end_date: Optional[date] = Field(None, description="计划结束日期")
     actual_start_date: Optional[date] = Field(None, description="实际开始日期")
     actual_end_date: Optional[date] = Field(None, description="实际结束日期")
-    status: Optional[StageStatus] = Field(None, description="阶段状态")
+    stage_status: Optional[StageStatus] = Field(None, description="阶段状态")
     progress: Optional[Decimal] = Field(None, ge=0, le=100, description="进度百分比")
     workshop: Optional[str] = Field(None, description="车间")
     production_line: Optional[str] = Field(None, description="生产线")
@@ -47,7 +47,7 @@ class ProductionStageDetail(ProductionStageBase):
     plan_id: int = Field(..., description="计划ID")
     actual_start_date: Optional[date] = Field(None, description="实际开始日期")
     actual_end_date: Optional[date] = Field(None, description="实际结束日期")
-    status: StageStatus = Field(default=StageStatus.PENDING, description="阶段状态")
+    stage_status: StageStatus = Field(default=StageStatus.PENDING, description="阶段状态")
     progress: Decimal = Field(default=0, description="进度百分比")
     created_at: datetime = Field(..., description="创建时间")
     updated_at: Optional[datetime] = Field(None, description="更新时间")
@@ -257,7 +257,7 @@ class ProductionLineInfo(BaseModel):
 # 生产计划趋势
 class ProductionPlanTrend(BaseModel):
     """生产计划趋势"""
-    date: date = Field(..., description="日期")
+    plan_date: date = Field(..., description="日期")
     new_plans: int = Field(..., description="新增计划数")
     completed_plans: int = Field(..., description="完成计划数")
     in_progress_plans: int = Field(..., description="进行中计划数")

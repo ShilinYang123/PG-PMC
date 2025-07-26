@@ -20,8 +20,18 @@ COPY docker/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple && \
     pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple --timeout 300 --retries 3
 
-# 复制项目文件
-COPY . .
+# 先复制必要的配置文件
+COPY project/ ./project/
+COPY tools/ ./tools/
+COPY data/ ./data/
+COPY docs/ ./docs/
+
+# 复制其他必要文件
+COPY *.py ./
+COPY *.md ./
+COPY *.json ./
+COPY *.yaml ./
+COPY *.yml ./
 
 # 创建非root用户
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app

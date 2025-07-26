@@ -6,7 +6,7 @@ from app.db.database import get_db
 from app.models.equipment import Equipment, MaintenanceRecord, EquipmentStatus, MaintenanceType
 from app.models.user import User
 from app.schemas.common import ResponseModel, PagedResponseModel, QueryParams, PageInfo
-from app.schemas.auth import get_current_user, get_current_active_user, require_permissions
+from app.api.endpoints.auth import get_current_user, get_current_active_user
 from app.schemas.equipment import (
     EquipmentCreate, EquipmentUpdate, EquipmentQuery, EquipmentDetail,
     MaintenanceRecordCreate, MaintenanceRecordUpdate, MaintenanceRecordDetail,

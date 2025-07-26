@@ -6,7 +6,7 @@ from app.db.database import get_db
 from app.models.material import Material, MaterialCategory, MaterialStatus
 from app.models.user import User
 from app.schemas.common import ResponseModel, PagedResponseModel, QueryParams, PageInfo
-from app.schemas.auth import get_current_user, get_current_active_user
+from app.api.endpoints.auth import get_current_user, get_current_active_user
 from app.schemas.material import (
     MaterialCreate, MaterialUpdate, MaterialQuery, MaterialDetail,
     MaterialStats, MaterialSummary, MaterialStockAlert

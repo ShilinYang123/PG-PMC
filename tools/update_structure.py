@@ -28,7 +28,7 @@ import time
 import json
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
-import hashlib
+# 移除hashlib导入 - 不再需要缓存功能
 
 
 # 导入工具模块
@@ -149,21 +149,7 @@ class DirectoryStructureGenerator:
             "performance", {"max_workers": 4, "batch_size": 100, "enable_async": True}
         )
 
-        # 缓存配置
-        self.cache = generator_config.get(
-            "cache",
-            {
-                "enabled": False,
-                "cache_file": "structure_cache.json",
-                "ttl_hours": 24,
-                "cache_dir": ".cache/structure",
-                "check_mtime": True,
-            },
-        )
-
-        # 初始化缓存目录
-        if self.cache.get("enabled", False):
-            self._init_cache_dir()
+        # 移除缓存配置 - 确保每次都进行实时扫描
 
         # 性能统计
         self.perf_stats = {
@@ -176,143 +162,9 @@ class DirectoryStructureGenerator:
         # 统计信息
         self.stats = {"total_dirs": 0, "total_files": 0}
 
-    def _init_cache_dir(self) -> None:
-        """初始化缓存目录"""
-        cache_dir_str = self.cache.get("cache_dir", ".cache/structure")
-        cache_dir = self.project_root / Path(cache_dir_str)
-        cache_dir.mkdir(parents=True, exist_ok=True)
+    # 移除所有缓存相关方法 - 确保实时扫描
 
-    def _get_cache_file_path(self) -> Path:
-        """获取缓存文件路径"""
-        cache_dir_str = self.cache.get("cache_dir", ".cache/structure")
-        cache_dir = self.project_root / Path(cache_dir_str)
-        cache_file = self.cache.get("cache_file", "structure_cache.json")
-        return cache_dir / cache_file
-
-    def _get_directory_hash(self, dir_path: Path) -> str:
-        """计算目录的哈希值（基于路径和修改时间）
-
-        Args:
-            dir_path: 目录路径
-
-        Returns:
-            目录的哈希值
-        """
-        try:
-            # 获取目录的修改时间
-            mtime = dir_path.stat().st_mtime if dir_path.exists() else 0
-
-            # 计算哈希值
-            hash_data = f"{dir_path}:{mtime}"
-            return hashlib.md5(hash_data.encode()).hexdigest()
-        except Exception:
-            return hashlib.md5(str(dir_path).encode()).hexdigest()
-
-    def _load_cache(self) -> Dict:
-        """加载缓存数据
-
-        Returns:
-            缓存数据字典
-        """
-        if not self.cache.get("enabled", False):
-            return {}
-
-        cache_file = self._get_cache_file_path()
-        if not cache_file.exists():
-            return {}
-
-        try:
-            with open(cache_file, "r", encoding="utf-8") as f:
-                cache_data = json.load(f)
-
-            # 检查缓存是否过期
-            cache_time = cache_data.get("timestamp", 0)
-            ttl_seconds = self.cache.get("ttl_hours", 24) * 3600
-            current_time = time.time()
-
-            if current_time - cache_time > ttl_seconds:
-                print("🗑️  缓存已过期，将重新扫描")
-                return {}
-
-            return cache_data
-        except Exception as e:
-            print(f"⚠️  加载缓存失败: {e}")
-            return {}
-
-    def _save_cache(
-        self, structure: List[Dict], directory_hashes: Dict[str, str]
-    ) -> None:
-        """保存缓存数据
-
-        Args:
-            structure: 目录结构数据
-            directory_hashes: 目录哈希值映射
-        """
-        if not self.cache.get("enabled", False):
-            return
-
-        cache_file = self._get_cache_file_path()
-
-        try:
-            cache_data = {
-                "timestamp": time.time(),
-                "structure": structure,
-                "directory_hashes": directory_hashes,
-                "stats": self.stats.copy(),
-            }
-
-            with open(cache_file, "w", encoding="utf-8") as f:
-                json.dump(cache_data, f, ensure_ascii=False, indent=2)
-
-            print(f"💾 缓存已保存: {cache_file}")
-        except Exception as e:
-            print(f"⚠️  保存缓存失败: {e}")
-
-    def _is_directory_changed(self, dir_path: Path, cached_hash: str) -> bool:
-        """检查目录是否发生变化
-
-        Args:
-            dir_path: 目录路径
-            cached_hash: 缓存的哈希值
-
-        Returns:
-            目录是否发生变化
-        """
-        if not self.cache.get("check_mtime", True):
-            return False
-
-        current_hash = self._get_directory_hash(dir_path)
-        return current_hash != cached_hash
-
-    def _merge_cached_structure(
-        self, cached_structure: List[Dict], new_structure: List[Dict]
-    ) -> List[Dict]:
-        """合并缓存的结构和新扫描的结构
-
-        Args:
-            cached_structure: 缓存的结构数据
-            new_structure: 新扫描的结构数据
-
-        Returns:
-            合并后的结构数据
-        """
-        # 创建路径到结构项的映射
-        cached_map = {item["path"]: item for item in cached_structure}
-        new_map = {item["path"]: item for item in new_structure}
-
-        # 合并结构
-        merged = []
-        all_paths = set(cached_map.keys()) | set(new_map.keys())
-
-        for path in sorted(all_paths):
-            if path in new_map:
-                # 使用新扫描的数据
-                merged.append(new_map[path])
-            elif path in cached_map:
-                # 使用缓存的数据
-                merged.append(cached_map[path])
-
-        return merged
+    # 移除所有缓存相关方法 - 确保实时扫描
 
     def _load_config(self) -> Dict:
         """加载项目配置文件"""
@@ -731,7 +583,7 @@ class DirectoryStructureGenerator:
         return items
 
     async def scan_directory_with_performance(self, dir_path: Path) -> List[Dict]:
-        """带性能优化的目录扫描入口方法
+        """实时目录扫描方法（移除缓存，确保每次都获取最新数据）
 
         Args:
             dir_path: 要扫描的目录路径
@@ -742,35 +594,8 @@ class DirectoryStructureGenerator:
         # 记录开始时间
         self.perf_stats["scan_start_time"] = time.time()
 
-        # 尝试加载缓存
-        cache_data = self._load_cache()
-        cached_structure = cache_data.get("structure", [])
-        cached_hashes = cache_data.get("directory_hashes", {})
-
-        if cache_data and cached_structure:
-            print("📦 发现缓存数据，检查是否需要增量更新...")
-
-            # 检查根目录是否发生变化
-            root_hash = cached_hashes.get(str(dir_path), "")
-            if not self._is_directory_changed(dir_path, root_hash):
-                print("✅ 缓存有效，直接使用缓存数据")
-                # 恢复统计信息
-                if "stats" in cache_data:
-                    self.stats.update(cache_data["stats"])
-
-                end_time = time.time()
-                scan_start = self.perf_stats["scan_start_time"]
-                print(f"⏱️  缓存加载耗时: {end_time - scan_start:.2f}秒")
-                print(
-                    f"📊 缓存统计: {self.stats['total_dirs']}个目录, "
-                    f"{self.stats['total_files']}个文件"
-                )
-                return cached_structure
-            else:
-                print("🔄 检测到目录变化，执行增量扫描...")
-
         print(
-            f"🚀 启动{'异步' if self.perf_stats['async_enabled'] else '同步'}扫描模式"
+            f"🚀 启动{'异步' if self.perf_stats['async_enabled'] else '同步'}实时扫描模式"
         )
         print(
             f"⚙️  配置: 最大工作线程={self.performance.get('max_workers', 4)}, "
@@ -791,16 +616,11 @@ class DirectoryStructureGenerator:
                 self.perf_stats["scan_end_time"] - self.perf_stats["scan_start_time"]
             )
 
-            print(f"⏱️  扫描耗时: {self.perf_stats['total_scan_time']:.2f}秒")
+            print(f"⏱️  实时扫描耗时: {self.perf_stats['total_scan_time']:.2f}秒")
             print(
                 f"📊 扫描统计: {self.stats['total_dirs']}个目录, "
                 f"{self.stats['total_files']}个文件"
             )
-
-            # 保存缓存
-            if self.cache.get("enabled", False):
-                directory_hashes = {str(dir_path): self._get_directory_hash(dir_path)}
-                self._save_cache(structure, directory_hashes)
 
             return structure
 

@@ -6,7 +6,8 @@
 """
 
 from typing import List, Union, Optional
-from pydantic import AnyHttpUrl, BaseSettings, validator
+from pydantic import AnyHttpUrl, validator
+from pydantic_settings import BaseSettings
 import os
 import sys
 from pathlib import Path

@@ -7,6 +7,7 @@ import OrderManagement from '@/pages/OrderManagement';
 import ProductionPlan from '@/pages/ProductionPlan';
 import MaterialManagement from '@/pages/MaterialManagement';
 import ProgressTracking from '@/pages/ProgressTracking';
+import Scheduling from '@/pages/Scheduling';
 import './App.css';
 
 const App: React.FC = () => {
@@ -23,6 +24,7 @@ const App: React.FC = () => {
                 <Route path="/production" element={<ProductionPlan />} />
                 <Route path="/materials" element={<MaterialManagement />} />
                 <Route path="/progress" element={<ProgressTracking />} />
+                <Route path="/scheduling" element={<Scheduling />} />
               </Routes>
             </MainLayout>
           } />

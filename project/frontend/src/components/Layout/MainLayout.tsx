@@ -11,7 +11,8 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  BellOutlined
+  BellOutlined,
+  CalendarOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { MenuProps } from 'antd';
@@ -43,6 +44,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       key: '/production',
       icon: <ScheduleOutlined />,
       label: '生产计划',
+    },
+    {
+      key: '/scheduling',
+      icon: <CalendarOutlined />,
+      label: '排产管理',
     },
     {
       key: '/materials',

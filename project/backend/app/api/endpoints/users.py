@@ -5,7 +5,8 @@ from sqlalchemy import or_, and_
 from app.db.database import get_db
 from app.models.user import User, UserRole, UserStatus
 from app.schemas.common import ResponseModel, PagedResponseModel, QueryParams, PageInfo
-from app.schemas.auth import UserInfo, UserProfile, get_current_user, get_current_active_user
+from app.schemas.auth import UserInfo, UserProfile
+from app.api.endpoints.auth import get_current_user, get_current_active_user
 from app.schemas.user import UserCreate, UserUpdate, UserQuery, UserDetail
 from datetime import datetime
 import logging

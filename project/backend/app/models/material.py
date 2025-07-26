@@ -15,6 +15,7 @@ class MaterialCategory(str, enum.Enum):
 
 class MaterialStatus(str, enum.Enum):
     """物料状态枚举"""
+    ACTIVE = "启用"
     NORMAL = "正常"
     WARNING = "预警"
     OUT_OF_STOCK = "缺货"
