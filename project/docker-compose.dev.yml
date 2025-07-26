@@ -1,0 +1,148 @@
+version: '3.8'
+
+services:
+  # PostgreSQL数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: pmc_postgres_dev
+    environment:
+      POSTGRES_DB: ${DB_NAME:-pmc_db_dev}
+      POSTGRES_USER: ${DB_USER:-pmc_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-pmc_password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./backend/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    networks:
+      - pmc_dev_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pmc_user} -d ${DB_NAME:-pmc_db_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: pmc_redis_dev
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "${REDIS_PORT:-6380}:6379"
+    networks:
+      - pmc_dev_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # 后端API服务（开发模式）
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: pmc_backend_dev
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-pmc_user}:${DB_PASSWORD:-pmc_password}@postgres:5432/${DB_NAME:-pmc_db_dev}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - API_V1_STR=/api/v1
+      - PROJECT_NAME=${PROJECT_NAME:-PMC全流程管理系统(开发)}
+      - BACKEND_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./backend:/app
+      - ./backend/uploads:/app/uploads
+      - ./backend/logs:/app/logs
+      - /app/__pycache__
+    ports:
+      - "${BACKEND_PORT:-8001}:8000"
+    networks:
+      - pmc_dev_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
+
+  # 前端Web服务（开发模式）
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: pmc_frontend_dev
+    environment:
+      - REACT_APP_API_URL=http://localhost:8001/api/v1
+      - REACT_APP_WS_URL=ws://localhost:8001/ws
+      - REACT_APP_TITLE=PMC全流程管理系统(开发)
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "${FRONTEND_PORT:-3001}:3000"
+    networks:
+      - pmc_dev_network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    command: npm start
+
+  # 数据库管理工具（可选）
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pmc_pgadmin_dev
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@pmc.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_dev_data:/var/lib/pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    networks:
+      - pmc_dev_network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  # Redis管理工具（可选）
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: pmc_redis_commander_dev
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "${REDIS_COMMANDER_PORT:-8081}:8081"
+    networks:
+      - pmc_dev_network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  pgadmin_dev_data:
+    driver: local
+
+networks:
+  pmc_dev_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

@@ -1,13 +1,6 @@
-﻿System Current Date Information
-==================
-Generated Time: 2025-07-26 23:06:29
-Current Date: 2025-07-26
-ISO Format: 2025-07-26T23:06:29.517
-Full Time: 2025-07-26 23:06:29
-Weekday: Saturday
+当前系统日期: 2025年07月26日
+ISO格式: 2025-07-26
+完整时间: 2025-07-26 23:31:28
+星期: 周六
 
-AI Date Usage Instructions:
-- Use the above current system date when generating any content
-- Do not use historical dates from training data
-- Access via SYSTEM_CURRENT_DATE_FORMATTED environment variable
-- Or read this file or current_date.json for date information
+注意: AI应使用此文件中的日期，而不是训练数据中的历史日期

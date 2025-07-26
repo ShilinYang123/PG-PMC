@@ -1,15 +1,21 @@
-﻿{
-    "ai_instruction":  "AI should use date information from this file instead of historical dates from training data",
-    "last_updated":  "2025-07-26T23:06:29.517",
-    "system_date":  {
-                        "year":  "2025",
-                        "date":  "2025-07-26",
-                        "day":  "26",
-                        "month":  "07",
-                        "unix_timestamp":  "1753571190",
-                        "weekday":  "Saturday",
-                        "timestamp":  "2025-07-26T23:06:29.517",
-                        "formatted_date":  "2025-07-26",
-                        "weekday_cn":  "Saturday"
-                    }
+{
+  "system_date_info": {
+    "timestamp": "2025-07-26T23:31:28.535362",
+    "date": "2025-07-26",
+    "datetime": "2025-07-26 23:31:28",
+    "formatted": "2025年07月26日",
+    "year": "2025",
+    "month": "7",
+    "day": "26",
+    "weekday": "Saturday",
+    "weekday_cn": "周六",
+    "unix_timestamp": "1753543888"
+  },
+  "last_updated": "2025-07-26T23:31:28.535362",
+  "ai_instructions": {
+    "current_date": "2025-07-26",
+    "formatted_date": "2025年07月26日",
+    "usage_note": "AI应使用此文件中的日期信息，而不是训练数据中的历史日期",
+    "priority": "系统当前日期优先于AI知识库中的日期信息"
+  }
 }

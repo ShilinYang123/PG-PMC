@@ -170,6 +170,14 @@ class Settings(BaseSettings):
     # 缓存配置
     CACHE_TIMEOUT: int = 300  # 5分钟
     SESSION_TIMEOUT: int = 3600  # 1小时
+    CACHE_TTL: int = 3600  # 缓存过期时间（秒）
+    CACHE_MAX_SIZE: int = 1000  # 缓存最大条目数
+    
+    # 中间件配置
+    ENABLE_AUTH: bool = True  # 启用认证中间件
+    ENABLE_RATE_LIMIT: bool = True  # 启用速率限制
+    RATE_LIMIT_CALLS: int = 100  # 速率限制调用次数
+    RATE_LIMIT_PERIOD: int = 60  # 速率限制时间窗口（秒）
     
     class Config:
         env_file = ".env"

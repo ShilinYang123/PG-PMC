@@ -1,61 +1,95 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import uvicorn
-from loguru import logger
 
-# 导入路由模块
-from app.api.api import api_router
 from app.core.config import settings
+from app.core.logging import setup_logging, get_logger
+from app.core.middleware import setup_middleware
+from app.core.exceptions import setup_exception_handlers
+from app.core.database import init_database, close_database
 from app.db.database import engine, Base
-from app.core.logging import setup_logging
+from app.api.v1.api import api_router
 
 # 设置日志
-setup_logging()
+setup_logging(log_level=settings.LOG_LEVEL, debug=settings.DEBUG)
+logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
-    logger.info("PMC应用启动中...")
+    # 启动时
+    logger.info("PMC系统启动中...")
     
-    # 创建数据库表
     try:
-        Base.metadata.create_all(bind=engine)
-        logger.info("数据库表创建成功")
+        # 初始化数据库连接
+        await init_database()
+        logger.info("数据库连接初始化完成")
+        
+        # 创建数据库表
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("数据库表创建完成")
     except Exception as e:
         logger.error(f"数据库初始化失败: {e}")
         raise
     
+    # 根据配置设置日志级别
+    if settings.LOG_LEVEL:
+        import logging
+        logging.getLogger().setLevel(settings.LOG_LEVEL)
+    
+    # 设置调试模式
+    if settings.DEBUG:
+        logger.info("调试模式已启用")
+    
+    logger.info("PMC系统启动完成")
+    
     yield
     
-    logger.info("PMC应用关闭")
+    # 关闭时
+    logger.info("PMC系统关闭中...")
+    
+    try:
+        # 关闭数据库连接
+        await close_database()
+        logger.info("数据库连接已关闭")
+    except Exception as e:
+        logger.error(f"数据库关闭失败: {e}")
+    
+    logger.info("PMC系统已关闭")
 
-# 创建FastAPI应用实例
+# 创建FastAPI应用
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    description="PMC全流程管理系统后端API",
+    description="PMC全流程图表界面应用 - 生产管理与控制系统",
     version="1.0.0",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url=f"{settings.API_V1_STR}/docs",
+    redoc_url=f"{settings.API_V1_STR}/redoc",
     lifespan=lifespan
 )
 
-# 配置CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# 设置中间件
+setup_middleware(app)
+
+# 设置异常处理器
+setup_exception_handlers(app)
 
 # 注册API路由
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 # 静态文件服务
-app.mount("/static", StaticFiles(directory="static"), name="static")
+try:
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+except RuntimeError:
+    # 静态目录不存在时创建
+    import os
+    os.makedirs("static", exist_ok=True)
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+    logger.info("创建静态文件目录")
 
 @app.get("/")
 async def root():
