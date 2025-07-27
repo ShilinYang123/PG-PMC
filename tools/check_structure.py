@@ -1053,6 +1053,13 @@ def main():
     严格遵循规范与流程.md第五章工作结束事项中的目录结构合规性检查要求
     按照第七章目录文件及清单管理规定执行标准化检查流程
     """
+    # 设置标准输出编码为UTF-8（遵循规范与流程.md编码规范）
+    import io
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    elif hasattr(sys.stdout, 'buffer'):
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    
     print("\n[SEARCH] 启动目录结构合规性检查")
     print("[LIST] 遵循《规范与流程.md》第七章目录文件及清单管理规定")
     
