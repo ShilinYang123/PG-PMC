@@ -328,7 +328,7 @@ def run_git_push():
             cwd=str(GIT_REPO_DIR),
             capture_output=True,
             text=True,
-            encoding="gbk",
+            encoding="utf-8",
             errors="ignore",
         )
 
@@ -342,7 +342,7 @@ def run_git_push():
                 cwd=str(GIT_REPO_DIR),
                 capture_output=True,
                 text=True,
-                encoding="gbk",
+                encoding="utf-8",
                 errors="ignore",
                 check=True,
             )
@@ -363,7 +363,7 @@ def run_git_push():
                 cwd=str(GIT_REPO_DIR),
                 capture_output=True,
                 text=True,
-                encoding="gbk",
+                encoding="utf-8",
                 errors="ignore",
                 check=True,
             )
@@ -376,7 +376,7 @@ def run_git_push():
             cwd=str(GIT_REPO_DIR),
             capture_output=True,
             text=True,
-            encoding="gbk",
+            encoding="utf-8",
             errors="ignore",
         )
 
