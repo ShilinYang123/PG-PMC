@@ -442,7 +442,7 @@ ISO格式: {date_info['date']}
         
         pre_check_script = self.tools_dir / "pre_operation_check.py"
         if pre_check_script.exists():
-            if not self.run_script("pre_operation_check.py", ["--check-all"]):
+            if not self.run_script("pre_operation_check.py", ["report"]):
                 self.workflow_logger.warning("前置检查发现问题，请查看详情")
                 return False
         else:

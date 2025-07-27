@@ -44,7 +44,7 @@ class ProjectComplianceChecker:
             "docs": "项目开发依据的重要文档",
             "project": "项目开发成果", 
             "tools": "项目开发过程中使用到的工具与资源",
-            "AI助理生产成果": "利用项目开发成果进行现实生产的产出",
+            "AI调度表": "利用项目开发成果进行现实生产的产出",
             "bak": "项目备份目录",
             "logs": "开发及调试使用过程各种记录",
             ".cache": "项目性能优化的缓存系统"
@@ -172,7 +172,7 @@ class ProjectComplianceChecker:
         try:
             file_path.relative_to(self.project_root)
         except ValueError:
-            messages.append(f"❌ 文件路径不在项目根目录下: {file_path}")
+            messages.append(f"[错误] 文件路径不在项目根目录下: {file_path}")
             return False
         
         # 检查路径是否使用了标准目录
@@ -180,11 +180,11 @@ class ProjectComplianceChecker:
         if len(rel_path.parts) > 0:
             top_dir = rel_path.parts[0]
             if top_dir not in self.standard_dirs and not top_dir.startswith('.'):
-                messages.append(f"❌ 使用了非标准顶级目录: {top_dir}")
+                messages.append(f"[错误] 使用了非标准顶级目录: {top_dir}")
                 messages.append(f"📋 标准目录: {', '.join(self.standard_dirs.keys())}")
                 return False
         
-        messages.append(f"✅ 路径合规性检查通过")
+        messages.append(f"[通过] 路径合规性检查通过")
         return True
     
     def _check_root_directory_restrictions(self, file_path: Path, operation_type: str, messages: List[str]) -> bool:
@@ -197,8 +197,8 @@ class ProjectComplianceChecker:
             
             # 检查是否为禁止的文件类型
             if file_ext in self.forbidden_root_files:
-                messages.append(f"❌ 禁止在根目录创建 {file_ext} 类型文件")
-                messages.append(f"💡 建议: 将文件放置到合适的子目录中")
+                messages.append(f"[错误] 禁止在根目录创建 {file_ext} 类型文件")
+                messages.append(f"[建议] 将文件放置到合适的子目录中")
                 messages.append(f"📁 可选目录: {self._suggest_directory_for_file(file_ext)}")
                 return False
             
@@ -209,11 +209,11 @@ class ProjectComplianceChecker:
                     "package.json", "pyproject.toml", "setup.py"
                 ]
                 if file_path.name not in allowed_root_files:
-                    messages.append(f"❌ 不建议在根目录创建文件: {file_path.name}")
-                    messages.append(f"💡 建议: 将文件放置到合适的子目录中")
+                    messages.append(f"[警告] 不建议在根目录创建文件: {file_path.name}")
+                    messages.append(f"[建议] 将文件放置到合适的子目录中")
                     return False
         
-        messages.append(f"✅ 根目录限制检查通过")
+        messages.append(f"[通过] 根目录限制检查通过")
         return True
     
     def _check_directory_purpose(self, file_path: Path, messages: List[str]) -> bool:
@@ -228,7 +228,7 @@ class ProjectComplianceChecker:
                 if not self._validate_file_in_directory(file_path, top_dir, messages):
                     return False
         
-        messages.append(f"✅ 目录功能定位检查通过")
+        messages.append(f"[通过] 目录功能定位检查通过")
         return True
     
     def _validate_file_in_directory(self, file_path: Path, directory: str, messages: List[str]) -> bool:
@@ -239,25 +239,25 @@ class ProjectComplianceChecker:
         # docs目录检查
         if directory == "docs":
             if file_ext not in [".md", ".yaml", ".yml", ".json", ".txt"]:
-                messages.append(f"❌ docs目录应主要包含文档文件，不建议放置 {file_ext} 文件")
+                messages.append(f"[警告] docs目录应主要包含文档文件，不建议放置 {file_ext} 文件")
                 return False
         
         # project目录检查
         elif directory == "project":
             if file_ext in [".md"] and "readme" not in file_name:
-                messages.append(f"💡 提示: 文档文件建议放在docs目录中")
+                messages.append(f"[提示] 文档文件建议放在docs目录中")
         
         # AI助理生产成果目录检查
         elif directory == "AI助理生产成果":
             production_files = [".prt", ".asm", ".drw", ".pro", ".txt", ".md"]
             if file_ext not in production_files:
-                messages.append(f"❌ AI助理生产成果目录应包含生产相关文件，不建议放置 {file_ext} 文件")
+                messages.append(f"[警告] AI助理生产成果目录应包含生产相关文件，不建议放置 {file_ext} 文件")
                 return False
         
         # tools目录检查
         elif directory == "tools":
             if file_ext not in [".py", ".js", ".sh", ".bat", ".ps1", ".md"]:
-                messages.append(f"❌ tools目录应包含工具脚本，不建议放置 {file_ext} 文件")
+                messages.append(f"[警告] tools目录应包含工具脚本，不建议放置 {file_ext} 文件")
                 return False
         
         return True
@@ -270,20 +270,20 @@ class ProjectComplianceChecker:
         illegal_chars = ['<', '>', ':', '"', '|', '?', '*']
         for char in illegal_chars:
             if char in file_name:
-                messages.append(f"❌ 文件名包含非法字符: {char}")
+                messages.append(f"[错误] 文件名包含非法字符: {char}")
                 return False
         
         # 检查文件名长度
         if len(file_name) > 255:
-            messages.append(f"❌ 文件名过长 (>{255}字符)")
+            messages.append(f"[错误] 文件名过长 (>{255}字符)")
             return False
         
         # 检查是否使用了推荐的命名规范
         if file_path.suffix.lower() == ".py":
             if not file_name.replace('.py', '').replace('_', '').isalnum():
-                messages.append(f"💡 建议: Python文件使用snake_case命名")
+                messages.append(f"[建议] Python文件使用snake_case命名")
         
-        messages.append(f"✅ 文件命名规范检查通过")
+        messages.append(f"[通过] 文件命名规范检查通过")
         return True
     
     def _check_permission_requirements(self, file_path: Path, operation_type: str, messages: List[str]) -> bool:
@@ -304,21 +304,21 @@ class ProjectComplianceChecker:
         rel_path_str = str(file_path.relative_to(self.project_root)).replace('\\', '/')
         
         if rel_path_str in protected_files and operation_type in ["modify", "delete"]:
-            messages.append(f"❌ 核心文件需要特殊权限: {rel_path_str}")
-            messages.append(f"📋 需要杨老师授权才能修改此文件")
+            messages.append(f"[错误] 核心文件需要特殊权限: {rel_path_str}")
+            messages.append(f"[说明] 需要杨老师授权才能修改此文件")
             return False
         
-        messages.append(f"✅ 权限要求检查通过")
+        messages.append(f"[通过] 权限要求检查通过")
         return True
     
     def _check_date_consistency(self, file_path: Path, messages: List[str]) -> bool:
         """检查文件中的日期一致性"""
         if file_path.suffix.lower() not in ['.py', '.md', '.txt']:
-            messages.append(f"✅ 日期一致性检查跳过（非文本文件）")
+            messages.append(f"[通过] 日期一致性检查跳过（非文本文件）")
             return True
         
         if not file_path.exists():
-            messages.append(f"✅ 日期一致性检查跳过（新文件）")
+            messages.append(f"[通过] 日期一致性检查跳过（新文件）")
             return True
         
         try:
@@ -339,7 +339,7 @@ class ProjectComplianceChecker:
                 found_dates.extend(matches)
             
             if not found_dates:
-                messages.append(f"✅ 日期一致性检查跳过（未找到日期信息）")
+                messages.append(f"[通过] 日期一致性检查跳过（未找到日期信息）")
                 return True
             
             # 检查日期格式和合理性
@@ -354,22 +354,22 @@ class ProjectComplianceChecker:
                         
                         # 检查日期是否合理（不能是未来日期）
                         if file_date > datetime.now():
-                            messages.append(f"❌ 发现未来日期: {date_str}")
+                            messages.append(f"[错误] 发现未来日期: {date_str}")
                             return False
                         
                         # 检查日期是否过于久远（超过5年）
                         if (datetime.now() - file_date).days > 1825:
-                            messages.append(f"⚠️ 发现较旧日期: {date_str}，请确认是否需要更新")
+                            messages.append(f"[警告] 发现较旧日期: {date_str}，请确认是否需要更新")
                     
                 except ValueError:
-                    messages.append(f"❌ 日期格式错误: {date_str}")
+                    messages.append(f"[错误] 日期格式错误: {date_str}")
                     return False
             
-            messages.append(f"✅ 日期一致性检查通过")
+            messages.append(f"[通过] 日期一致性检查通过")
             return True
             
         except Exception as e:
-            messages.append(f"⚠️ 日期一致性检查失败: {str(e)}")
+            messages.append(f"[警告] 日期一致性检查失败: {str(e)}")
             return True  # 不因为检查失败而阻止操作
     
     def _suggest_directory_for_file(self, file_ext: str) -> str:
@@ -422,11 +422,11 @@ class ProjectComplianceChecker:
         found_terms = [term for term in key_terms if term in task_description]
         
         if len(found_terms) < 2:
-            messages.append(f"❌ 任务描述与开发任务书关联度较低")
-            messages.append(f"💡 建议: 确保任务与AI设计助理核心目标相关")
+            messages.append(f"[错误] 任务描述与开发任务书关联度较低")
+            messages.append(f"[建议] 确保任务与AI设计助理核心目标相关")
             return False
         
-        messages.append(f"✅ 任务与开发任务书对齐检查通过")
+        messages.append(f"[通过] 任务与开发任务书对齐检查通过")
         return True
     
     def _check_tech_solution_alignment(self, module_name: str, messages: List[str]) -> bool:
@@ -438,11 +438,11 @@ class ProjectComplianceChecker:
         ]
         
         if not any(valid_module in module_name for valid_module in valid_modules):
-            messages.append(f"❌ 模块名称与技术方案不匹配: {module_name}")
-            messages.append(f"📋 有效模块: {', '.join(valid_modules)}")
+            messages.append(f"[错误] 模块名称与技术方案不匹配: {module_name}")
+            messages.append(f"[说明] 有效模块: {', '.join(valid_modules)}")
             return False
         
-        messages.append(f"✅ 技术方案对齐检查通过")
+        messages.append(f"[通过] 技术方案对齐检查通过")
         return True
     
     def _check_architecture_alignment(self, module_name: str, messages: List[str]) -> bool:
@@ -453,7 +453,7 @@ class ProjectComplianceChecker:
         ]
         
         # 简化检查，确保模块属于某个架构层
-        messages.append(f"✅ 架构设计对齐检查通过")
+        messages.append(f"[通过] 架构设计对齐检查通过")
         return True
     
     def generate_compliance_report(self) -> Dict:
@@ -511,14 +511,14 @@ class ProjectComplianceChecker:
         if self.enhanced_config.get("strict_mode", {}).get("enabled", False):
             require_approval = self.enhanced_config.get("strict_mode", {}).get("require_approval", [])
             if operation_type in require_approval:
-                messages.append(f"🔒 严格模式: {operation_type} 操作需要管理员批准")
+                messages.append(f"[严格模式] {operation_type} 操作需要管理员批准")
                 return False
         
         # 保护模式检查
         protected_patterns = self.enhanced_config.get("strict_mode", {}).get("protected_patterns", [])
         for pattern in protected_patterns:
             if file_path.match(pattern):
-                messages.append(f"🛡️ 文件受保护: {file_path.name} 匹配模式 {pattern}")
+                messages.append(f"[保护模式] 文件受保护: {file_path.name} 匹配模式 {pattern}")
                 return False
         
         return True
@@ -560,10 +560,10 @@ class ProjectComplianceChecker:
         # 根据文件类型和操作类型生成建议
         if operation_type == "create":
             if file_path.suffix.lower() == ".py":
-                suggestions.append("💡 自动建议: Python文件应放在 project/src/ 目录")
+                suggestions.append("[自动建议] Python文件应放在 project/src/ 目录")
                 suggestions.append(f"   推荐路径: {self.project_root}/project/src/{file_path.name}")
             elif file_path.suffix.lower() == ".md":
-                suggestions.append("💡 自动建议: Markdown文件应放在 docs/ 目录")
+                suggestions.append("[自动建议] Markdown文件应放在 docs/ 目录")
                 suggestions.append(f"   推荐路径: {self.project_root}/docs/02-开发/{file_path.name}")
         
         return suggestions
@@ -667,10 +667,10 @@ def main():
             print(f"{'='*60}\n")
         
         if not passed:
-            print("❌ 检查未通过，请按照建议修正后再进行操作")
+            print("[失败] 检查未通过，请按照建议修正后再进行操作")
             sys.exit(1)
         else:
-            print("✅ 检查通过，可以进行操作")
+            print("[成功] 检查通过，可以进行操作")
     
     elif args.command == 'task':
         passed, messages = checker.check_development_task(args.task_description, args.module_name)
@@ -682,10 +682,10 @@ def main():
         print(f"{'='*60}\n")
         
         if not passed:
-            print("❌ 检查未通过，请调整开发计划")
+            print("[失败] 检查未通过，请调整开发计划")
             sys.exit(1)
         else:
-            print("✅ 检查通过，可以开始开发")
+            print("[成功] 检查通过，可以开始开发")
     
     elif args.command == 'report':
         report = checker.generate_compliance_report()
@@ -702,14 +702,14 @@ def main():
             print(f"执行检查: {', '.join(report['checks_performed'])}")
             
             if report['violations_found']:
-                print("\n❌ 发现的违规问题:")
+                print("\n[违规问题] 发现的违规问题:")
                 for violation in report['violations_found']:
                     print(f"  - {violation}")
             else:
-                print("\n✅ 未发现违规问题")
+                print("\n[成功] 未发现违规问题")
             
             if report['recommendations']:
-                print("\n💡 建议:")
+                print("\n[建议]")
                 for rec in report['recommendations']:
                     print(f"  - {rec}")
             
@@ -722,7 +722,7 @@ def main():
             import json
             print(json.dumps(stats, indent=2, ensure_ascii=False))
         else:
-            print("\n📊 违规统计报告")
+            print("\n[统计报告] 违规统计报告")
             print("=" * 50)
             print(f"总违规次数: {stats['total_violations']}")
             
@@ -742,7 +742,7 @@ def main():
                     print(f"  {violation['timestamp']}: {violation['operation_type']} {violation['file_path']}")
     
     elif args.command == 'monitor':
-        print(f"🔍 启动实时监控，持续时间: {args.duration}秒")
+        print(f"[监控] 启动实时监控，持续时间: {args.duration}秒")
         print(f"监控目录: {args.watch_dir}")
         print("按 Ctrl+C 停止监控")
         
@@ -759,7 +759,7 @@ def main():
     
     elif args.command == 'config':
         if args.action == 'show':
-            print("\n⚙️ 当前配置:")
+            print("\n[配置] 当前配置:")
             print("基础配置:")
             print(yaml.dump(checker.config, default_flow_style=False, allow_unicode=True))
             if checker.enhanced_config:
@@ -767,7 +767,7 @@ def main():
                 print(yaml.dump(checker.enhanced_config, default_flow_style=False, allow_unicode=True))
         
         elif args.action == 'reset':
-            print("🔄 重置配置到默认值")
+            print("[重置] 重置配置到默认值")
             default_config = checker._get_default_enhanced_config()
             checker._save_enhanced_config(default_config)
             print("配置已重置")
@@ -777,7 +777,7 @@ def main():
                 print("错误: 更新配置需要指定 --key 和 --value")
                 sys.exit(1)
             
-            print(f"🔧 更新配置: {args.key} = {args.value}")
+            print(f"[更新] 更新配置: {args.key} = {args.value}")
             # 这里可以实现配置更新逻辑
             print("配置更新功能待实现")
 

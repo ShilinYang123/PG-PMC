@@ -583,7 +583,7 @@ class ProjectKanban:
             print(f"❌ 更新看板.md文件失败: {e}")
             return False
     
-        def print_summary(self, non_interactive=False):
+    def print_summary(self, non_interactive=False):
         """打印项目摘要信息"""
         print("\n" + "="*80)
         print("🚀 PG-PMC项目开发进度摘要")
