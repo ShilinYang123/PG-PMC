@@ -88,11 +88,27 @@ def run_structure_check():
             errors="ignore",
         )
 
+        # 根据退出码判断结果
+        # 0: 优秀/良好 (>=95%)
+        # 1: 合格/需要改进 (80-95%)
+        # 2: 不合格 (<80%)
+        # 3+: 系统错误
         if result.returncode == 0:
-            logger.info("目录结构检查完成")
+            logger.info("目录结构检查完成 - 优秀/良好")
             return True
+        elif result.returncode == 1:
+            logger.info("目录结构检查完成 - 合格状态，允许继续")
+            # 显示检查结果但不阻止流程
+            if result.stdout:
+                print(result.stdout)
+            return True
+        elif result.returncode == 2:
+            logger.error("目录结构检查失败 - 不合格状态")
+            if result.stdout:
+                print(result.stdout)
+            return False
         else:
-            logger.error(f"目录结构检查失败: {result.stderr}")
+            logger.error(f"目录结构检查系统错误 (退出码: {result.returncode}): {result.stderr}")
             return False
 
     except Exception as e:
