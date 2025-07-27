@@ -52,6 +52,51 @@ from .settings import (
     is_debug
 )
 
+# 新增的配置管理模块
+from .config_validator import (
+    ConfigValidator as NewConfigValidator,
+    ConfigMigrator,
+    validate_config,
+    migrate_configs
+)
+
+from .default_config import (
+    DefaultConfigProvider as NewDefaultConfigProvider,
+    get_default_provider,
+    get_default_config,
+    get_minimal_config
+)
+
+from .config_cli import (
+    ConfigCLI
+)
+
+from .config_watcher import (
+    ConfigWatcher,
+    get_config_watcher,
+    start_config_watching,
+    stop_config_watching,
+    add_config_change_callback,
+    remove_config_change_callback
+)
+
+from .config_templates import (
+    ConfigTemplateGenerator,
+    get_template_generator,
+    generate_template
+)
+
+from .config_sync import (
+    ConfigSyncManager,
+    SyncTarget,
+    SyncDirection,
+    SyncStatus,
+    get_sync_manager,
+    sync_config_to_target,
+    sync_config_from_target,
+    sync_all_targets
+)
+
 # 版本信息
 __version__ = "1.0.0"
 __author__ = "PG-PMC Team"
@@ -62,6 +107,9 @@ __all__ = [
     # 配置管理器
     'ConfigManager',
     'get_config_manager',
+    'get_config',
+    'set_config',
+    'save_config',
     'load_project_config',
     'save_project_config',
     'get_config_value',
@@ -85,8 +133,9 @@ __all__ = [
     'get_project_path',
     'normalize_project_path',
     'validate_project_paths',
+    'validate_paths',
     
-    # 配置验证器
+    # 配置验证器（原有）
     'ConfigValidator',
     'DefaultConfigProvider',
     
@@ -100,12 +149,95 @@ __all__ = [
     'get_secret_key',
     'is_debug',
     
+    # 新增配置管理功能
+    'NewConfigValidator',
+    'ConfigMigrator',
+    'validate_config',
+    'migrate_configs',
+    'NewDefaultConfigProvider',
+    'get_default_provider',
+    'get_default_config',
+    'get_minimal_config',
+    'ConfigCLI',
+    'ConfigWatcher',
+    'get_config_watcher',
+    'start_config_watching',
+    'stop_config_watching',
+    'add_config_change_callback',
+    'remove_config_change_callback',
+    'ConfigTemplateGenerator',
+    'get_template_generator',
+    'generate_template',
+    'ConfigSyncManager',
+    'SyncTarget',
+    'SyncDirection',
+    'SyncStatus',
+    'get_sync_manager',
+    'sync_config_to_target',
+    'sync_config_from_target',
+    'sync_all_targets',
+    
     # 便捷函数
     'init_config',
     'validate_all_configs',
     'export_all_env_vars',
-    'create_default_env_file'
+    'create_default_env_file',
+    'initialize_config_system',
+    'get_system_status',
+    'cleanup_config_system',
+    'quick_setup'
 ]
+
+
+def get_config(key: str = None, default=None):
+    """
+    获取配置值
+    
+    Args:
+        key: 配置键名，支持点分隔的嵌套键（如 'database.host'）
+        default: 默认值
+    
+    Returns:
+        配置值或默认值
+    """
+    config_manager = get_config_manager()
+    if key is None:
+        return config_manager.get_config()
+    return config_manager.get_config(key, default)
+
+
+def set_config(key: str, value, save: bool = True):
+    """
+    设置配置值
+    
+    Args:
+        key: 配置键名，支持点分隔的嵌套键（如 'database.host'）
+        value: 配置值
+        save: 是否立即保存到文件
+    """
+    config_manager = get_config_manager()
+    config_manager.set_config(key, value)
+    if save:
+        config_manager.save_config()
+
+
+def save_config():
+    """
+    保存配置到文件
+    """
+    config_manager = get_config_manager()
+    config_manager.save_config()
+
+
+def validate_paths():
+    """
+    验证项目路径
+    
+    Returns:
+        dict: 路径验证结果
+    """
+    path_manager = get_path_manager()
+    return path_manager.validate_paths()
 
 
 def init_config(config_file=None, env=None, project_root=None):
@@ -328,6 +460,227 @@ def _auto_init():
         print(f"配置模块初始化警告: {e}")
 
 
+# 新增的配置系统管理功能
+def initialize_config_system(config_file: str = None, 
+                            auto_migrate: bool = True,
+                            start_watching: bool = False) -> dict:
+    """
+    初始化完整配置系统
+    
+    Args:
+        config_file: 配置文件路径（可选）
+        auto_migrate: 是否自动迁移配置
+        start_watching: 是否启动配置监控
+    
+    Returns:
+        dict: 初始化结果
+    """
+    result = {
+        'success': True,
+        'errors': [],
+        'warnings': [],
+        'components': {}
+    }
+    
+    try:
+        # 1. 初始化原有配置系统
+        if config_file:
+            init_config(config_file=config_file)
+        else:
+            init_config()
+        result['components']['legacy_config'] = 'initialized'
+        
+        # 2. 初始化新配置验证器
+        try:
+            validator = NewConfigValidator()
+            validation_result = validator.validate_all()
+            
+            if not validation_result['valid']:
+                result['warnings'].extend(validation_result['errors'])
+            
+            result['components']['validator'] = 'initialized'
+        except Exception as e:
+            result['warnings'].append(f"配置验证器初始化警告: {e}")
+        
+        # 3. 自动迁移（如果需要）
+        if auto_migrate:
+            try:
+                migrate_configs()
+                result['components']['migrator'] = 'initialized'
+            except Exception as e:
+                result['warnings'].append(f"配置迁移警告: {e}")
+        
+        # 4. 启动配置监控（如果需要）
+        if start_watching:
+            try:
+                watcher = start_config_watching()
+                result['components']['watcher'] = 'started'
+            except Exception as e:
+                result['warnings'].append(f"配置监控启动失败: {e}")
+        
+        # 5. 初始化其他组件
+        try:
+            get_template_generator()
+            result['components']['template_generator'] = 'initialized'
+        except Exception as e:
+            result['warnings'].append(f"模板生成器初始化警告: {e}")
+        
+        try:
+            get_sync_manager()
+            result['components']['sync_manager'] = 'initialized'
+        except Exception as e:
+            result['warnings'].append(f"同步管理器初始化警告: {e}")
+        
+    except Exception as e:
+        result['success'] = False
+        result['errors'].append(f"配置系统初始化失败: {e}")
+    
+    return result
+
+
+def get_system_status() -> dict:
+    """
+    获取配置系统状态
+    
+    Returns:
+        dict: 系统状态信息
+    """
+    status = {
+        'timestamp': None,
+        'environment': None,
+        'legacy_config': {},
+        'new_config': {},
+        'overall_health': 'unknown'
+    }
+    
+    try:
+        from datetime import datetime
+        status['timestamp'] = datetime.now().isoformat()
+        
+        # 环境信息
+        status['environment'] = get_current_environment()
+        
+        # 原有配置系统状态
+        try:
+            validation = validate_all_configs()
+            status['legacy_config'] = {
+                'total_errors': validation['total_errors'],
+                'total_warnings': validation['total_warnings'],
+                'details': validation['details']
+            }
+        except Exception as e:
+            status['legacy_config'] = {'error': str(e)}
+        
+        # 新配置系统状态
+        try:
+            validator = NewConfigValidator()
+            validation_result = validator.validate_all()
+            status['new_config'] = {
+                'config_valid': validation_result['valid'],
+                'errors_count': len(validation_result['errors']),
+                'warnings_count': len(validation_result['warnings'])
+            }
+        except Exception as e:
+            status['new_config'] = {'error': str(e)}
+        
+        # 整体健康状态
+        health_issues = 0
+        
+        if status['legacy_config'].get('total_errors', 0) > 0:
+            health_issues += 1
+        
+        if not status['new_config'].get('config_valid', True):
+            health_issues += 1
+        
+        if health_issues == 0:
+            status['overall_health'] = 'healthy'
+        elif health_issues == 1:
+            status['overall_health'] = 'warning'
+        else:
+            status['overall_health'] = 'critical'
+    
+    except Exception as e:
+        status['overall_health'] = 'error'
+        status['error'] = str(e)
+    
+    return status
+
+
+def cleanup_config_system():
+    """
+    清理配置系统资源
+    """
+    try:
+        # 停止配置监控
+        try:
+            stop_config_watching()
+        except Exception:
+            pass
+        
+        # 清理同步历史
+        try:
+            sync_manager = get_sync_manager()
+            sync_manager.cleanup_history()
+        except Exception:
+            pass
+        
+        print("✅ 配置系统清理完成")
+        
+    except Exception as e:
+        print(f"❌ 配置系统清理失败: {e}")
+
+
+def quick_setup(environment: str = 'development', 
+               enable_watching: bool = True,
+               enable_validation: bool = True) -> bool:
+    """
+    快速设置配置系统
+    
+    Args:
+        environment: 环境名称
+        enable_watching: 是否启用配置监控
+        enable_validation: 是否启用配置验证
+    
+    Returns:
+        bool: 设置是否成功
+    """
+    try:
+        print(f"🚀 快速设置配置系统 - 环境: {environment}")
+        
+        # 初始化配置系统
+        result = initialize_config_system(
+            auto_migrate=True,
+            start_watching=enable_watching
+        )
+        
+        if not result['success']:
+            print(f"❌ 配置系统初始化失败: {result['errors']}")
+            return False
+        
+        if result['warnings']:
+            print(f"⚠️  警告: {result['warnings']}")
+        
+        # 验证配置（如果启用）
+        if enable_validation:
+            try:
+                if not validate_config():
+                    print("⚠️  配置验证发现问题，请检查配置")
+            except Exception as e:
+                print(f"⚠️  配置验证失败: {e}")
+        
+        print("✅ 配置系统设置完成")
+        
+        # 显示状态
+        status = get_system_status()
+        print(f"📊 系统健康状态: {status['overall_health']}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ 快速设置失败: {e}")
+        return False
+
+
 # 执行自动初始化
 _auto_init()
 
@@ -341,3 +694,41 @@ if __name__ == '__main__':
     
     print("\n" + "=" * 50)
     print_config_summary()
+    
+    # 显示新配置系统状态
+    print("\n" + "=" * 50)
+    print("配置系统状态")
+    print("=" * 50)
+    
+    status = get_system_status()
+    print(f"整体健康状态: {status['overall_health']}")
+    print(f"当前环境: {status['environment']}")
+    print(f"时间戳: {status['timestamp']}")
+    
+    if 'legacy_config' in status:
+        legacy = status['legacy_config']
+        if 'error' not in legacy:
+            print(f"\n原有配置系统: {legacy['total_errors']} 错误, {legacy['total_warnings']} 警告")
+        else:
+            print(f"\n原有配置系统: {legacy['error']}")
+    
+    if 'new_config' in status:
+        new_config = status['new_config']
+        if 'error' not in new_config:
+            print(f"新配置系统: {'有效' if new_config['config_valid'] else '无效'}, {new_config['errors_count']} 错误, {new_config['warnings_count']} 警告")
+        else:
+            print(f"新配置系统: {new_config['error']}")
+    
+    print("\n可用的新功能:")
+    print("  • 配置验证和迁移")
+    print("  • 配置热重载监控")
+    print("  • 配置模板生成")
+    print("  • 配置同步管理")
+    print("  • 命令行工具")
+    print("  • 默认配置提供")
+    
+    print("\n快速开始:")
+    print("  from config import quick_setup")
+    print("  quick_setup('development')")
+    
+    print("=" * 50)

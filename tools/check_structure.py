@@ -635,7 +635,7 @@ class EnhancedStructureChecker:
                 # 移除代码块标记
                 tree_lines = tree_block.strip("`").strip().split("\n")
 
-                # 跳过空行，保留树结构行和顶级目录行
+                # 跳过空行，保留树结构行、顶级目录行和根目录文件
                 tree_lines = [
                     line
                     for line in tree_lines
@@ -646,6 +646,13 @@ class EnhancedStructureChecker:
                             line.strip().endswith("/")
                             and not line.startswith(" ")
                             and not line.startswith("\t")
+                        )
+                        or (
+                            # 根目录文件（没有缩进且不以/结尾）
+                            not line.startswith(" ")
+                            and not line.startswith("\t")
+                            and not line.strip().endswith("/")
+                            and not any(symbol in line for symbol in ["├──", "└──", "│"])
                         )
                     )
                 ]
@@ -663,7 +670,7 @@ class EnhancedStructureChecker:
                     try:
                         self.logger.debug(f"解析行 {line_num}: '{line.strip()}'")
 
-                        # 检查是否是顶级目录（没有树形符号且没有缩进的行）
+                        # 检查是否是顶级目录（没有树形符号且没有缩进的行，以/结尾）
                         if (
                             line.strip().endswith("/")
                             and not any(
@@ -678,6 +685,20 @@ class EnhancedStructureChecker:
                                 structure["directories"].add(dir_name)
                                 current_top_level = dir_name
                                 path_stack = [dir_name]  # 重置路径栈
+                            continue
+
+                        # 检查是否是根目录文件（没有缩进且不以/结尾）
+                        if (
+                            not line.startswith(" ")
+                            and not line.startswith("\t")
+                            and not line.strip().endswith("/")
+                            and not any(symbol in line for symbol in ["├──", "└──", "│"])
+                        ):
+                            # 根目录文件
+                            file_name = line.strip()
+                            if file_name:
+                                structure["files"].add(file_name)
+                                self.logger.debug(f"添加根目录文件: {file_name}")
                             continue
 
                         # 如果没有当前顶级目录，跳过
