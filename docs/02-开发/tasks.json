@@ -2479,6 +2479,142 @@
         }
       ],
       "completed": false
+    },
+    {
+      "requestId": "req-46",
+      "originalRequest": "继续PG-PMC项目开发，完成剩余的核心功能模块和系统优化",
+      "splitDetails": "继续PG-PMC项目开发，完成剩余的核心功能模块和系统优化",
+      "tasks": [
+        {
+          "id": "task-266",
+          "title": "完善图表组件库开发",
+          "description": "开发ECharts图表组件，包括生产进度图表、订单状态统计图、物料库存图表等，提升数据可视化效果",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-267",
+          "title": "实现微信集成通知功能",
+          "description": "开发微信企业号或服务号集成，实现催办通知、状态更新等消息推送功能",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-268",
+          "title": "完善邮件通知系统",
+          "description": "开发完整的邮件通知系统，支持HTML模板、附件发送、批量通知等功能",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-269",
+          "title": "开发文件导入导出功能",
+          "description": "实现Excel文件的导入导出功能，支持订单数据、生产计划、物料清单等数据的批量处理",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-270",
+          "title": "移动端响应式适配",
+          "description": "优化前端界面的移动端适配，确保在手机和平板设备上的良好用户体验",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-271",
+          "title": "系统性能优化",
+          "description": "对数据库查询、API响应时间、前端渲染性能进行全面优化，提升系统整体性能",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-272",
+          "title": "完善测试覆盖率",
+          "description": "编写单元测试、集成测试和端到端测试，将测试覆盖率提升到80%以上",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-273",
+          "title": "Docker部署优化",
+          "description": "完善Docker容器化配置，优化镜像大小和启动时间，确保生产环境稳定部署",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        }
+      ],
+      "completed": false
+    },
+    {
+      "requestId": "req-47",
+      "originalRequest": "继续PMC系统开发，完善剩余功能模块",
+      "splitDetails": "基于看板分析，当前项目进度72.5%，主要待开发模块集中在系统集成部分。按优先级和依赖关系安排开发顺序。",
+      "tasks": [
+        {
+          "id": "task-274",
+          "title": "完成报表生成模块开发",
+          "description": "当前进度50%，需要完成剩余的报表功能，包括生产报表、质量报表、设备状态报表等",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-275",
+          "title": "开发通知推送模块",
+          "description": "实现后端API的通知推送功能，支持实时消息推送和批量通知",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-276",
+          "title": "开发微信集成模块",
+          "description": "实现微信企业号集成，支持微信消息推送和接收",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-277",
+          "title": "开发邮件系统模块",
+          "description": "实现邮件发送功能，支持HTML邮件和附件发送",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-278",
+          "title": "开发短信通知模块",
+          "description": "集成短信服务商API，实现短信通知功能",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-279",
+          "title": "开发文件导入导出模块",
+          "description": "实现Excel文件的导入导出功能，支持订单数据、生产数据等",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-280",
+          "title": "开发数据备份恢复模块",
+          "description": "实现数据库备份和恢复功能，确保数据安全",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        }
+      ],
+      "completed": false
     }
   ]
 }

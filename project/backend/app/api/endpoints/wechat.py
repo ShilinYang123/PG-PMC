@@ -3,10 +3,20 @@ from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from pydantic import BaseModel
 from datetime import datetime
 
-from app.services.wechat_service import WeChatService, MessageType, Priority, NotificationRule
+from app.services.wechat_service import WeChatService, MessageType, Priority, NotificationRule, WeChatConfig
+from app.core.config import settings
 
 router = APIRouter()
-wechat_service = WeChatService()
+
+# 创建微信配置
+wechat_config = WeChatConfig(
+    corp_id=getattr(settings, 'WECHAT_CORP_ID', ''),
+    corp_secret=getattr(settings, 'WECHAT_CORP_SECRET', ''),
+    agent_id=getattr(settings, 'WECHAT_AGENT_ID', '')
+)
+
+# 初始化微信服务
+wechat_service = WeChatService(wechat_config)
 
 # 请求模型
 class SendMessageRequest(BaseModel):

@@ -435,3 +435,18 @@ class ProgressConfig(BaseModel):
     report_generation: bool = Field(True, description="报告生成")
     data_retention_days: int = Field(365, description="数据保留天数")
     backup_enabled: bool = Field(True, description="备份启用")
+
+# 进度汇总
+class ProgressSummary(BaseModel):
+    total_tasks: int = Field(..., description="总任务数")
+    completed_tasks: int = Field(..., description="已完成任务数")
+    in_progress_tasks: int = Field(..., description="进行中任务数")
+    pending_tasks: int = Field(..., description="待开始任务数")
+    overdue_tasks: int = Field(..., description="逾期任务数")
+    completion_rate: float = Field(..., description="完成率")
+    average_progress: float = Field(..., description="平均进度")
+    on_time_rate: float = Field(..., description="按时完成率")
+    quality_pass_rate: float = Field(..., description="质量通过率")
+    
+    class Config:
+        from_attributes = True

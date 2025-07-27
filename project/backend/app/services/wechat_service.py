@@ -20,6 +20,7 @@ from jinja2 import Template
 
 class MessageType(Enum):
     """消息类型枚举"""
+    TEXT = "text"  # 文本消息
     PROGRESS_UPDATE = "progress_update"  # 进度更新
     DUE_DATE_WARNING = "due_date_warning"  # 交期预警
     EXCEPTION_ALERT = "exception_alert"  # 异常告警

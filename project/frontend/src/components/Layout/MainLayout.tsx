@@ -15,7 +15,8 @@ import {
   CalendarOutlined,
   PieChartOutlined,
   NotificationOutlined,
-  AlertOutlined
+  AlertOutlined,
+  FileTextOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
@@ -69,6 +70,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       key: '/charts',
       icon: <PieChartOutlined />,
       label: '图表演示',
+    },
+    {
+      key: '/reports',
+      icon: <FileTextOutlined />,
+      label: '报表生成',
     },
     {
       key: '/notifications',

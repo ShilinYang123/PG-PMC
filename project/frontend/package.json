@@ -4,7 +4,9 @@
   "description": "PMC全流程图表界面应用软件 - 前端项目",
   "private": true,
   "dependencies": {
+    "@ant-design/charts": "^2.6.1",
     "@ant-design/icons": "^5.2.6",
+    "@ant-design/plots": "^2.6.2",
     "@ant-design/pro-components": "^2.6.43",
     "@ant-design/pro-layout": "^7.17.16",
     "@types/node": "^20.10.5",

@@ -152,7 +152,7 @@ async def escalate_reminder(
     reminder_id: int,
     request: EscalateReminderRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_permissions([Permission.REMINDER_MANAGE]))
+    current_user: User = Depends(require_permissions([Permission.REMINDER_WRITE]))
 ) -> Dict[str, Any]:
     """升级催办（需要管理权限）"""
     try:
@@ -424,7 +424,7 @@ async def get_statistics(
 
 @router.post("/scheduler/check-overdue", summary="立即检查逾期催办")
 async def trigger_overdue_check(
-    current_user: User = Depends(require_permissions([Permission.REMINDER_MANAGE]))
+    current_user: User = Depends(require_permissions([Permission.REMINDER_WRITE]))
 ) -> Dict[str, Any]:
     """立即触发逾期催办检查（需要管理权限）"""
     try:
@@ -440,7 +440,7 @@ async def trigger_overdue_check(
 
 @router.post("/scheduler/send-summary", summary="立即发送催办汇总")
 async def trigger_summary_send(
-    current_user: User = Depends(require_permissions([Permission.REMINDER_MANAGE]))
+    current_user: User = Depends(require_permissions([Permission.REMINDER_WRITE]))
 ) -> Dict[str, Any]:
     """立即触发催办汇总发送（需要管理权限）"""
     try:
@@ -456,7 +456,7 @@ async def trigger_summary_send(
 
 @router.get("/scheduler/status", summary="获取调度器状态")
 async def get_scheduler_status(
-    current_user: User = Depends(require_permissions([Permission.SYSTEM_MONITOR]))
+    current_user: User = Depends(require_permissions([Permission.SYSTEM_CONFIG]))
 ) -> Dict[str, Any]:
     """获取调度器状态（需要监控权限）"""
     try:
@@ -476,7 +476,7 @@ async def get_scheduler_status(
 async def send_daily_summary(
     target_date: Optional[datetime] = Query(None, description="目标日期，默认为今天"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_permissions([Permission.REMINDER_MANAGE]))
+    current_user: User = Depends(require_permissions([Permission.REMINDER_WRITE]))
 ) -> Dict[str, Any]:
     """发送每日催办汇总（需要管理权限）"""
     try:

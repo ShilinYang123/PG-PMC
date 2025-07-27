@@ -180,6 +180,11 @@ class Settings(BaseSettings):
     RATE_LIMIT_CALLS: int = 100  # 速率限制调用次数
     RATE_LIMIT_PERIOD: int = 60  # 速率限制时间窗口（秒）
     
+    # 微信配置
+    WECHAT_CORP_ID: str = ""
+    WECHAT_CORP_SECRET: str = ""
+    WECHAT_AGENT_ID: str = ""
+    
     class Config:
         env_file = ".env"
         case_sensitive = True

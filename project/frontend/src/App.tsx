@@ -12,7 +12,8 @@ import ProductionPlan from '@/pages/ProductionPlan';
 import MaterialManagement from '@/pages/MaterialManagement';
 import ProgressTracking from '@/pages/ProgressTracking';
 import Scheduling from '@/pages/Scheduling';
-import ChartsDemo from '@/pages/ChartsDemo';
+import ChartDemo from './pages/ChartDemo';
+import Reports from '@/pages/Reports';
 import NotificationCenter from '@/pages/NotificationCenter';
 import ReminderCenter from '@/pages/ReminderCenter';
 import { initializeAuth } from './stores/authStore';
@@ -65,7 +66,12 @@ const App: React.FC = () => {
                         <Scheduling />
                       </ProtectedRoute>
                     } />
-                    <Route path="/charts" element={<ChartsDemo />} />
+                    <Route path="/charts" element={<ChartDemo />} />
+                    <Route path="/reports" element={
+                      <ProtectedRoute requiredPermission="report:read">
+                        <Reports />
+                      </ProtectedRoute>
+                    } />
                     <Route path="/notifications" element={<NotificationCenter />} />
                     <Route path="/reminders" element={<ReminderCenter />} />
                   </Routes>

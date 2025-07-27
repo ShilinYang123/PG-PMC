@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.endpoints import auth, users, orders, production_plans, materials, progress, scheduling, wechat, notifications, reminder, reminder_notifications, import_export
+from app.api.endpoints import auth, users, orders, production_plans, materials, progress, scheduling, wechat, notifications, reminder, reminder_notifications, import_export, reports
 from app.api.v1.endpoints import config
 
 api_router = APIRouter()
@@ -42,3 +42,6 @@ api_router.include_router(reminder_notifications.router, prefix="/reminder-notif
 
 # 导入导出路由
 api_router.include_router(import_export.router, prefix="/import-export", tags=["数据导入导出"])
+
+# 报表生成路由
+api_router.include_router(reports.router, prefix="/reports", tags=["报表生成"])

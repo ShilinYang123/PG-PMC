@@ -6,6 +6,7 @@ export interface ProductionProgressData {
   orderName: string;
   totalQuantity: number;
   completedQuantity: number;
+  plannedQuantity: number;
   progress: number;
   status: 'pending' | 'in_progress' | 'completed' | 'delayed';
   startDate: string;
@@ -54,10 +55,68 @@ export interface MaterialInventoryData {
 export interface ChartConfig {
   title?: string;
   height?: number;
-  width?: number;
   showLegend?: boolean;
   showTooltip?: boolean;
-  theme?: 'light' | 'dark';
+}
+
+// 仪表盘图表数据类型
+export interface DashboardData {
+  title: string;
+  value: number;
+  max: number;
+  unit: string;
+  status: 'normal' | 'warning' | 'critical';
+  trend?: number;
+}
+
+// 雷达图数据类型
+export interface RadarDataItem {
+  name: string;
+  values: number[];
+  color?: string;
+}
+
+export interface RadarIndicator {
+  name: string;
+  max: number;
+  unit?: string;
+}
+
+// 热力图数据类型
+export interface HeatmapDataItem {
+  date: string;
+  hour: number;
+  value: number;
+  label?: string;
+}
+
+// 多轴图表数据类型
+export interface SeriesData {
+  name: string;
+  data: number[];
+  type: 'line' | 'bar';
+  yAxisIndex: number;
+  color?: string;
+  unit?: string;
+  smooth?: boolean;
+  stack?: string;
+}
+
+export interface YAxisConfig {
+  name: string;
+  unit: string;
+  position: 'left' | 'right';
+  min?: number;
+  max?: number;
+  color?: string;
+}
+
+// 实时图表数据类型
+export interface RealTimeDataPoint {
+  timestamp: number;
+  value: number;
+  status?: 'normal' | 'warning' | 'error';
+  label?: string;
 }
 
 // 图表颜色主题
@@ -88,3 +147,32 @@ export const STATUS_COLORS = {
   overstock: CHART_COLORS.purple,
   success: CHART_COLORS.success
 };
+
+// 基础图表组件类型
+export type {
+  LineChartData,
+  LineChartProps
+} from './LineChart';
+
+export type {
+  BarChartData,
+  BarChartProps
+} from './BarChart';
+
+export type {
+  PieChartData,
+  PieChartProps
+} from './PieChart';
+
+// 别名导出
+export type {
+  BarChartData as ColumnChartData,
+  BarChartProps as ColumnChartProps
+} from './BarChart';
+
+export type {
+  PieChartData as DonutChartData,
+  PieChartProps as DonutChartProps
+} from './PieChart';
+
+// 业务图表组件类型已在上方定义，无需重复导出

@@ -95,7 +95,7 @@
         "files": [
           "reminder_notifications.py"
         ],
-        "last_modified": "2025-07-27T10:42:52.854001",
+        "last_modified": "2025-07-28T00:30:22.097756",
         "lines": 408,
         "functions": 0,
         "classes": 5
@@ -163,7 +163,7 @@
         "files": [
           "components/Charts/"
         ],
-        "last_modified": "2025-07-27T06:42:14.344196",
+        "last_modified": "2025-07-27T23:29:32.178173",
         "lines": 0,
         "functions": 0,
         "classes": 0
@@ -248,26 +248,26 @@
         "classes": 5
       },
       "质量记录模型": {
-        "status": "待开发",
-        "progress": 0,
+        "status": "完成",
+        "progress": 100,
         "files": [
           "quality.py"
         ],
-        "last_modified": null,
-        "lines": 0,
+        "last_modified": "2025-07-28T00:31:18.350032",
+        "lines": 153,
         "functions": 0,
-        "classes": 0
+        "classes": 7
       },
       "设备模型": {
-        "status": "待开发",
-        "progress": 0,
+        "status": "完成",
+        "progress": 100,
         "files": [
           "equipment.py"
         ],
-        "last_modified": null,
-        "lines": 0,
+        "last_modified": "2025-07-28T00:32:47.306054",
+        "lines": 180,
         "functions": 0,
-        "classes": 0
+        "classes": 9
       },
       "催办模型": {
         "status": "完成",
@@ -405,6 +405,6 @@
       }
     }
   },
-  "last_update": "2025-07-27T22:38:39.289641",
+  "last_update": "2025-07-28T02:16:19.397268",
   "version": "1.0"
 }
