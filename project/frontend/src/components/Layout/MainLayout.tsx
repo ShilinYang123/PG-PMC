@@ -12,7 +12,9 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   BellOutlined,
-  CalendarOutlined
+  CalendarOutlined,
+  PieChartOutlined,
+  NotificationOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import type { MenuProps } from 'antd';
@@ -59,6 +61,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       key: '/progress',
       icon: <BarChartOutlined />,
       label: '进度跟踪',
+    },
+    {
+      key: '/charts',
+      icon: <PieChartOutlined />,
+      label: '图表演示',
+    },
+    {
+      key: '/notifications',
+      icon: <NotificationOutlined />,
+      label: '通知中心',
     },
   ];
 
@@ -150,7 +162,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <Badge count={5}>
-              <Button type="text" icon={<BellOutlined />} size="large" />
+              <Button 
+                type="text" 
+                icon={<BellOutlined />} 
+                size="large" 
+                onClick={() => navigate('/notifications')}
+              />
             </Badge>
             
             <Dropdown

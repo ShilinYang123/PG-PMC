@@ -8,6 +8,8 @@ import ProductionPlan from '@/pages/ProductionPlan';
 import MaterialManagement from '@/pages/MaterialManagement';
 import ProgressTracking from '@/pages/ProgressTracking';
 import Scheduling from '@/pages/Scheduling';
+import ChartsDemo from '@/pages/ChartsDemo';
+import NotificationCenter from '@/pages/NotificationCenter';
 import './App.css';
 
 const App: React.FC = () => {
@@ -25,6 +27,8 @@ const App: React.FC = () => {
                 <Route path="/materials" element={<MaterialManagement />} />
                 <Route path="/progress" element={<ProgressTracking />} />
                 <Route path="/scheduling" element={<Scheduling />} />
+                <Route path="/charts" element={<ChartsDemo />} />
+                <Route path="/notifications" element={<NotificationCenter />} />
               </Routes>
             </MainLayout>
           } />

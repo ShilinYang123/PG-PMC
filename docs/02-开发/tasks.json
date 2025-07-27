@@ -2247,6 +2247,62 @@
         }
       ],
       "completed": false
+    },
+    {
+      "requestId": "req-42",
+      "originalRequest": "按优先级持续进行PG-PMC项目开发，完成未完成的核心功能模块",
+      "splitDetails": "基于项目当前62.1%的完成度，按照业务重要性和技术依赖关系进行任务排序，优先完成核心业务功能，再进行体验优化",
+      "tasks": [
+        {
+          "id": "task-241",
+          "title": "完善前端图表组件库",
+          "description": "开发通用图表组件，包括生产进度图表、订单状态图表、设备状态图表等，提升数据可视化能力",
+          "done": true,
+          "approved": false,
+          "completedDetails": "已成功完善前端图表组件库，包括：\n1. 创建了5个核心图表组件：生产进度图表、订单状态图表、设备状态图表、质量趋势图表、物料库存图表\n2. 定义了完整的数据类型和配置接口\n3. 实现了响应式设计和交互功能\n4. 添加了图表演示页面用于测试和展示\n5. 更新了路由和导航菜单\n6. 前端服务已成功编译运行，图表功能正常"
+        },
+        {
+          "id": "task-242",
+          "title": "开发通知催办系统",
+          "description": "实现多渠道通知功能，包括系统内通知、邮件通知、微信通知等，确保重要信息及时传达",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-243",
+          "title": "完善质量记录模型",
+          "description": "开发质量检测记录、质量问题跟踪、质量报告生成等功能模块",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-244",
+          "title": "开发设备模型和管理",
+          "description": "完善设备信息管理、设备状态监控、设备维护记录等功能",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-245",
+          "title": "实现文件导入导出功能",
+          "description": "支持Excel、PDF等格式的数据导入导出，提升数据交换能力",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-246",
+          "title": "开发移动端适配",
+          "description": "优化前端界面的移动端显示效果，提升移动设备使用体验",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        }
+      ],
+      "completed": false
     }
   ]
 }

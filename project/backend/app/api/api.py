@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.endpoints import auth, users, orders, production_plans, materials, progress, scheduling, wechat
+from app.api.endpoints import auth, users, orders, production_plans, materials, progress, scheduling, wechat, notifications
 from app.api.v1.endpoints import config
 
 api_router = APIRouter()
@@ -30,3 +30,6 @@ api_router.include_router(scheduling.router, prefix="/scheduling", tags=["排产
 
 # 微信通知路由
 api_router.include_router(wechat.router, prefix="/wechat", tags=["微信通知"])
+
+# 通知系统路由
+api_router.include_router(notifications.router, prefix="/notifications", tags=["通知系统"])

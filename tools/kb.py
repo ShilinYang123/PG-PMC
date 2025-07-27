@@ -263,7 +263,7 @@ class ProjectKanban:
     
     def _draw_completion_pie(self, ax):
         """绘制完成度饼图"""
-        status_counts = {"完成": 0, "进行中": 0, "待开发": 0, "待完善": 0}
+        status_counts = {"完成": 0, "进行中": 0, "待开发": 0, "待完善": 0, "开始开发": 0, "待检测": 0}
         
         for category, items in self.modules.items():
             for module_name, info in items.items():
@@ -271,7 +271,7 @@ class ProjectKanban:
         
         labels = list(status_counts.keys())
         sizes = list(status_counts.values())
-        colors = ['#2ecc71', '#f39c12', '#e74c3c', '#9b59b6']
+        colors = ['#2ecc71', '#f39c12', '#e74c3c', '#9b59b6', '#ff6b35', '#34495e']
         
         wedges, texts, autotexts = ax.pie(sizes, labels=labels, colors=colors, 
                                           autopct='%1.1f%%', startangle=90)
