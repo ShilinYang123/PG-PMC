@@ -446,7 +446,7 @@ def main():
                     text=True,
                     encoding='utf-8',
                     errors='replace',
-                    check=True,
+
                     cwd=str(TOOLS_DIR)
                 )
 
