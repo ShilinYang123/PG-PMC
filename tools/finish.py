@@ -436,27 +436,42 @@ def main():
         logger.info("\n[STEP 0/4] 更新项目看板")
         kb_success = False
         try:
-            kb_script = PROJECT_ROOT / "tools" / "kb.py"
+            kb_script = TOOLS_DIR / "kb.py"
             if kb_script.exists():
+                # 使用 kb.py --update 更新看板
+                command = [sys.executable, "kb.py", "--update", "--non-interactive"]
                 result = subprocess.run(
-                    [sys.executable, str(kb_script), '--no-chart'],
-                    cwd=PROJECT_ROOT,
+                    command,
                     capture_output=True,
                     text=True,
-                    encoding='utf-8'
+                    encoding='utf-8',
+                    errors='replace',
+                    check=True,
+                    cwd=str(TOOLS_DIR)
                 )
-                if result.returncode == 0:
-                    logger.info("✅ 看板更新完成")
-                    print(result.stdout)
-                    kb_success = True
-                else:
-                    logger.warning(f"⚠️ 看板更新失败: {result.stderr}")
+
+                # 将 kb.py 的输出通过 logger 记录
+                if result.stdout and result.stdout.strip():
+                    output = result.stdout.rstrip()
+                    logger.info(f"\n---看板更新脚本输出---\n{output}\n----------------------")
+                if result.stderr and result.stderr.strip():
+                    logger.warning(f"看板更新脚本错误输出:\n{result.stderr.strip()}")
+
+                logger.info("✅ 看板更新完成")
+                kb_success = True
             else:
                 logger.warning("⚠️ 未找到kb.py脚本")
                 kb_success = True  # 如果脚本不存在，视为成功（可选步骤）
+
+        except subprocess.CalledProcessError as e:
+            logger.error(f"看板更新失败: {e}")
+            if e.stdout and e.stdout.strip():
+                logger.error(f"STDOUT: {e.stdout.strip()}")
+            if e.stderr and e.stderr.strip():
+                logger.error(f"STDERR: {e.stderr.strip()}")
         except Exception as e:
             logger.warning(f"⚠️ 看板更新异常: {e}")
-        
+
         if kb_success:
             success_count += 1
             logger.info("[SUCCESS] 看板更新完成")

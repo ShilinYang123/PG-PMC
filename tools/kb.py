@@ -274,7 +274,11 @@ class ProjectKanban:
         plt.savefig(output_path, dpi=300, bbox_inches='tight')
         print(f"看板图表已保存到: {output_path}")
         
-        plt.show()
+        # 只有在交互模式下才显示图表
+        if not plt.isinteractive():
+            plt.close(fig)
+        else:
+            plt.show()
     
     def _draw_completion_pie(self, ax):
         """绘制完成度饼图"""
@@ -579,7 +583,7 @@ class ProjectKanban:
             print(f"❌ 更新看板.md文件失败: {e}")
             return False
     
-    def print_summary(self):
+        def print_summary(self, non_interactive=False):
         """打印项目摘要信息"""
         print("\n" + "="*80)
         print("🚀 PG-PMC项目开发进度摘要")
@@ -602,6 +606,13 @@ class ProjectKanban:
             
             for module_name, info in items.items():
                 status_icon = {
+                    "完成": "[V]",
+                    "进行中": "[>]", 
+                    "待开发": "[ ]",
+                    "待完善": "[~]",
+                    "开始开发": "[+]",
+                    "待检测": "[?]"
+                }.get(info["status"], "[?]") if non_interactive else {
                     "完成": "✅",
                     "进行中": "🔄", 
                     "待开发": "⏳",
@@ -610,7 +621,7 @@ class ProjectKanban:
                     "待检测": "❓"
                 }.get(info["status"], "❓")
                 
-                progress_bar = "█" * (info["progress"] // 10) + "░" * (10 - info["progress"] // 10)
+                progress_bar = "#" * (info["progress"] // 10) + "." * (10 - info["progress"] // 10) if non_interactive else "█" * (info["progress"] // 10) + "░" * (10 - info["progress"] // 10)
                 
                 # 显示代码统计信息
                 lines = info.get("lines", 0)
@@ -710,6 +721,7 @@ def main():
     parser.add_argument('--update', '-u', action='store_true', help='强制更新看板数据')
     parser.add_argument('--no-chart', '-n', action='store_true', help='只显示摘要，不生成图表')
     parser.add_argument('--config', '-c', help='指定配置文件路径')
+    parser.add_argument('--non-interactive', action='store_true', help='非交互模式，不显示图表窗口并使用ASCII字符')
     
     args = parser.parse_args()
     
@@ -732,12 +744,17 @@ def main():
         kanban.update_kanban_md()
         
         # 打印摘要信息
-        kanban.print_summary()
+        kanban.print_summary(non_interactive=args.non_interactive)
         
         # 生成图形化看板（除非指定了 --no-chart）
         if not args.no_chart:
             print("\n🎨 正在生成图形化看板...")
+            # 在非交互模式下，不显示图表窗口
+            if args.non_interactive:
+                plt.ioff()
             kanban.generate_overview_chart()
+            if args.non_interactive:
+                plt.ion()
         else:
             print("\n📋 仅显示摘要信息（跳过图表生成）")
         
