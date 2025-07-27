@@ -43,10 +43,16 @@ try:
 except ImportError:
     # 如果导入失败，使用标准logging
     import logging
+    # 如果导入失败，使用标准logging
+    log_file = PROJECT_ROOT / "finish_log.txt"
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s [%(levelname)s] %(name)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        datefmt='%Y-%m-%d %H:%M:%S',
+        handlers=[
+            logging.FileHandler(log_file, encoding='utf-8'),
+            logging.StreamHandler(sys.stdout) # 仍然输出到控制台
+        ]
     )
     logger = logging.getLogger("finish")
 
