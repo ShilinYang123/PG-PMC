@@ -12,10 +12,14 @@ from app.core.exceptions import setup_exception_handlers
 from app.core.database import init_database, close_database
 from app.db.database import engine, Base
 from app.api.v1.api import api_router
+from app.services.reminder_scheduler import ReminderScheduler
 
 # 设置日志
 setup_logging(log_level=settings.LOG_LEVEL, debug=settings.DEBUG)
 logger = get_logger(__name__)
+
+# 全局调度器实例
+scheduler = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -45,12 +49,30 @@ async def lifespan(app: FastAPI):
     if settings.DEBUG:
         logger.info("调试模式已启用")
     
+    # 启动催办调度器
+    try:
+        global scheduler
+        scheduler = ReminderScheduler()
+        await scheduler.start()
+        logger.info("催办调度器启动完成")
+    except Exception as e:
+        logger.error(f"催办调度器启动失败: {e}")
+    
     logger.info("PMC系统启动完成")
     
     yield
     
     # 关闭时
     logger.info("PMC系统关闭中...")
+    
+    try:
+        # 停止催办调度器
+        global scheduler
+        if scheduler:
+            await scheduler.stop()
+            logger.info("催办调度器已停止")
+    except Exception as e:
+        logger.error(f"催办调度器停止失败: {e}")
     
     try:
         # 关闭数据库连接

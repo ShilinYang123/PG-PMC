@@ -1,7 +1,7 @@
 import json
 import smtplib
-from email.mime.text import MimeText
-from email.mime.multipart import MimeMultipart
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
@@ -24,7 +24,14 @@ class NotificationService:
     
     def __init__(self, db: Session):
         self.db = db
-        self.wechat_service = WeChatService()
+        # 创建默认的微信配置
+        from ..services.wechat_service import WeChatConfig
+        wechat_config = WeChatConfig(
+            corp_id=getattr(settings, 'WECHAT_CORP_ID', ''),
+            corp_secret=getattr(settings, 'WECHAT_CORP_SECRET', ''),
+            agent_id=getattr(settings, 'WECHAT_AGENT_ID', '')
+        )
+        self.wechat_service = WeChatService(wechat_config)
     
     def create_notification(self, notification_data: NotificationCreate, sender_id: Optional[int] = None) -> Notification:
         """创建单个通知"""
@@ -149,12 +156,12 @@ class NotificationService:
             if not notification.recipient_email:
                 return False
             
-            msg = MimeMultipart()
+            msg = MIMEMultipart()
             msg['From'] = settings.SMTP_USER
             msg['To'] = notification.recipient_email
             msg['Subject'] = notification.title
             
-            msg.attach(MimeText(notification.content, 'html', 'utf-8'))
+            msg.attach(MIMEText(notification.content, 'html', 'utf-8'))
             
             server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT)
             server.starttls()
