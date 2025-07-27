@@ -422,8 +422,13 @@ def main():
             logger.info("[模式] 仅备份模式")
         logger.info("-" * 60)
 
+        success_count = 0
+        total_steps = 1 if args.backup_only else 4  # 包含看板更新步骤
+        logger.debug(f"初始化完成，准备执行 {total_steps} 个步骤")
+        
         # 0. 更新看板（在备份和Git推送之前）
-        logger.info("\n[STEP 0] 更新项目看板")
+        logger.info("\n[STEP 0/4] 更新项目看板")
+        kb_success = False
         try:
             kb_script = PROJECT_ROOT / "tools" / "kb.py"
             if kb_script.exists():
@@ -437,20 +442,24 @@ def main():
                 if result.returncode == 0:
                     logger.info("✅ 看板更新完成")
                     print(result.stdout)
+                    kb_success = True
                 else:
                     logger.warning(f"⚠️ 看板更新失败: {result.stderr}")
             else:
                 logger.warning("⚠️ 未找到kb.py脚本")
+                kb_success = True  # 如果脚本不存在，视为成功（可选步骤）
         except Exception as e:
             logger.warning(f"⚠️ 看板更新异常: {e}")
-
-        success_count = 0
-        total_steps = 1 if args.backup_only else 3
-        logger.debug(f"初始化完成，准备执行 {total_steps} 个步骤")
+        
+        if kb_success:
+            success_count += 1
+            logger.info("[SUCCESS] 看板更新完成")
+        else:
+            logger.error("[FAILED] 看板更新失败")
 
         if not args.backup_only:
             # 1. 目录结构检查
-            logger.info("\n[STEP 1/3] 目录结构检查")
+            logger.info("\n[STEP 1/4] 目录结构检查")
             check_result = run_structure_check()
             logger.debug(f"目录结构检查返回值: {check_result}")
             if check_result:
@@ -460,7 +469,7 @@ def main():
                 logger.error("[FAILED] 目录结构检查失败")
 
         # 2. 备份操作
-        step_num = "1/1" if args.backup_only else "2/3"
+        step_num = "1/1" if args.backup_only else "2/4"
         logger.info(f"\n[STEP {step_num}] 备份操作")
         backup_result = run_backup(full_backup=args.full_backup)
         logger.debug(f"备份操作返回值: {backup_result}")
@@ -472,7 +481,7 @@ def main():
 
         if not args.backup_only:
             # 3. Git推送
-            logger.info("\n[STEP 3/3] Git推送")
+            logger.info("\n[STEP 3/4] Git推送")
             if run_git_push():
                 success_count += 1
                 logger.info("[SUCCESS] Git推送完成")
