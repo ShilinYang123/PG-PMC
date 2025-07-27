@@ -406,6 +406,28 @@ def main():
             logger.info("[模式] 仅备份模式")
         logger.info("-" * 60)
 
+        # 0. 更新看板（在备份和Git推送之前）
+        logger.info("\n[STEP 0] 更新项目看板")
+        try:
+            kb_script = PROJECT_ROOT / "tools" / "kb.py"
+            if kb_script.exists():
+                result = subprocess.run(
+                    [sys.executable, str(kb_script)],
+                    cwd=PROJECT_ROOT,
+                    capture_output=True,
+                    text=True,
+                    encoding='utf-8'
+                )
+                if result.returncode == 0:
+                    logger.info("✅ 看板更新完成")
+                    print(result.stdout)
+                else:
+                    logger.warning(f"⚠️ 看板更新失败: {result.stderr}")
+            else:
+                logger.warning("⚠️ 未找到kb.py脚本")
+        except Exception as e:
+            logger.warning(f"⚠️ 看板更新异常: {e}")
+
         success_count = 0
         total_steps = 1 if args.backup_only else 3
         logger.debug(f"初始化完成，准备执行 {total_steps} 个步骤")

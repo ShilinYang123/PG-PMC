@@ -2303,6 +2303,142 @@
         }
       ],
       "completed": false
+    },
+    {
+      "requestId": "req-43",
+      "originalRequest": "基于PMC系统开发状况评估，制定优先级明确的持续开发计划，完成剩余功能模块和项目管理任务",
+      "splitDetails": "根据系统评估结果，当前项目完成度约75-80%，需要按优先级完成剩余的核心功能、项目管理任务和系统完善工作。将按照业务价值和技术依赖关系进行任务优先级排序。",
+      "tasks": [
+        {
+          "id": "task-247",
+          "title": "【高优先级】完善数据导入导出功能",
+          "description": "实现Excel文件导入导出、文件上传处理、批量数据操作等核心业务功能，这是用户日常使用的重要功能",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-248",
+          "title": "【高优先级】建立统一配置管理中心",
+          "description": "完成task-13和task-16，建立系统配置管理中心，统一管理应用配置、数据库配置、通知配置等",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-249",
+          "title": "【高优先级】完善错误处理和日志系统",
+          "description": "完成task-10和task-17，设计统一日志系统，完善错误处理机制，提升系统稳定性",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-250",
+          "title": "【中优先级】实现数据备份恢复机制",
+          "description": "建立完整的数据备份和恢复功能，确保数据安全，包括定时备份、手动备份、数据恢复等",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-251",
+          "title": "【中优先级】完善短信通知功能",
+          "description": "实现短信通知的具体功能，完善多渠道通知系统，提升通知覆盖率",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-252",
+          "title": "【中优先级】建立代码质量保障机制",
+          "description": "完成task-14、task-19，建立代码质量检查、架构合规性检查、自动化测试等机制",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-253",
+          "title": "【中优先级】重构核心工具脚本",
+          "description": "完成task-11、task-12，重构check_structure.py和finish.py，提升工具的可维护性和功能完整性",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-254",
+          "title": "【低优先级】整理项目目录结构",
+          "description": "完成req-5至req-10相关的目录整理任务，包括creo_work目录处理、文档规范化、项目结构优化",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-255",
+          "title": "【低优先级】实现高级报表功能",
+          "description": "开发复杂的数据分析和报表生成功能，提供更丰富的业务洞察",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-256",
+          "title": "【低优先级】完善权限管理系统",
+          "description": "实现细粒度的用户权限控制，包括角色管理、权限分配、访问控制等",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        }
+      ],
+      "completed": false
+    },
+    {
+      "requestId": "req-44",
+      "originalRequest": "继续PMC项目开发 - 完成剩余核心功能模块",
+      "splitDetails": "基于项目评估结果，需要完成认证授权系统、图表组件库、通知系统集成、移动端适配等关键模块",
+      "tasks": [
+        {
+          "id": "task-257",
+          "title": "完善JWT认证授权系统",
+          "description": "实现完整的JWT + OAuth2认证机制，包括用户权限管理、角色控制、token刷新机制和安全中间件",
+          "done": true,
+          "approved": false,
+          "completedDetails": "JWT认证授权系统已完善完成：\n\n✅ 后端认证模块：\n- 完善了JWT token生成和验证机制\n- 实现了用户权限管理和角色控制\n- 添加了token刷新机制和安全中间件\n- 更新了用户模型，支持权限和角色管理\n\n✅ 前端认证系统：\n- 创建了完整的认证状态管理(authStore)\n- 实现了路由保护组件(ProtectedRoute)\n- 开发了权限检查组件(PermissionGuard)\n- 创建了登录页面和403无权限页面\n- 更新了主布局组件集成认证功能\n- 修复了请求拦截器，支持自动token刷新\n\n✅ 系统集成：\n- 修复了前端配置文件的API引用问题\n- 前后端服务器都已正常启动运行\n- 认证流程完整，支持登录、权限验证、自动刷新等功能\n\n系统现在具备完整的JWT + OAuth2认证机制，包括用户权限管理、角色控制、token刷新机制和安全中间件。"
+        },
+        {
+          "id": "task-258",
+          "title": "开发甘特图组件",
+          "description": "基于ECharts开发生产计划甘特图组件，支持任务依赖关系、进度跟踪和交互操作",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-259",
+          "title": "集成第三方通知服务",
+          "description": "完成短信、邮件、钉钉等第三方通知服务的API集成和配置管理",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-260",
+          "title": "移动端响应式适配",
+          "description": "优化前端界面的移动端适配，包括响应式布局、触摸交互和移动端专用组件",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-261",
+          "title": "完善数据模型和API",
+          "description": "补充质量记录模型、设备模型，完善相关API端点和业务逻辑",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        }
+      ],
+      "completed": false
     }
   ]
 }

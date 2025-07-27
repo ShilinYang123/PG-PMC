@@ -307,7 +307,7 @@ class TaskInfo(BaseModel):
 
 # 进度趋势
 class ProgressTrend(BaseModel):
-    date: date = Field(..., description="日期")
+    trend_date: date = Field(..., description="日期")
     total_records: int = Field(..., description="总记录数")
     completed_records: int = Field(..., description="完成记录数")
     avg_progress: float = Field(..., description="平均进度")

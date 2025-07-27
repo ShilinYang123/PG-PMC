@@ -251,6 +251,20 @@ class ConfigManager {
       },
     };
   }
+
+  /**
+   * 获取API基础URL
+   */
+  public getApiBaseUrl(): string {
+    return this.config.apiBaseUrl + this.config.apiVersion;
+  }
+
+  /**
+   * 获取API超时时间
+   */
+  public getApiTimeout(): number {
+    return this.config.apiTimeout;
+  }
   
   /**
    * 获取主题配置

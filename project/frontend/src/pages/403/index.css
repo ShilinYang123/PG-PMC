@@ -1,0 +1,173 @@
+.forbidden-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.forbidden-page .ant-result {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 600px;
+  width: 100%;
+}
+
+.forbidden-page .ant-result-title {
+  color: #ff4d4f !important;
+  font-size: 72px !important;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.forbidden-page .ant-result-subtitle {
+  color: #666 !important;
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.forbidden-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.forbidden-actions .ant-btn {
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.forbidden-actions .ant-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.forbidden-actions .ant-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+}
+
+.forbidden-actions .ant-btn:not(.ant-btn-primary) {
+  border-color: #d9d9d9;
+  color: #666;
+}
+
+.forbidden-actions .ant-btn:not(.ant-btn-primary):hover {
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateY(-1px);
+}
+
+/* 调试信息样式 */
+.debug-info {
+  margin-top: 40px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  border-left: 4px solid #faad14;
+  max-width: 600px;
+  width: 100%;
+}
+
+.debug-info h4 {
+  color: #faad14;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.debug-info p {
+  margin: 8px 0;
+  font-size: 12px;
+  color: #666;
+  font-family: 'Courier New', monospace;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .forbidden-page {
+    padding: 16px;
+  }
+  
+  .forbidden-page .ant-result {
+    padding: 24px 20px;
+  }
+  
+  .forbidden-page .ant-result-title {
+    font-size: 48px !important;
+  }
+  
+  .forbidden-page .ant-result-subtitle {
+    font-size: 14px;
+  }
+  
+  .forbidden-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .forbidden-actions .ant-btn {
+    width: 200px;
+  }
+  
+  .debug-info {
+    margin-top: 24px;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .forbidden-page .ant-result-title {
+    font-size: 36px !important;
+  }
+  
+  .forbidden-actions .ant-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+}
+
+/* 动画效果 */
+.forbidden-page .ant-result {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 图标动画 */
+.forbidden-page .ant-result-icon {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

@@ -67,7 +67,8 @@ class ProjectKanban:
                 "订单管理模块": {"status": "待检测", "progress": 0, "files": ["orders.py"], "last_modified": None},
                 "生产计划模块": {"status": "待检测", "progress": 0, "files": ["production_plans.py"], "last_modified": None},
                 "进度跟踪模块": {"status": "待检测", "progress": 0, "files": ["progress.py"], "last_modified": None},
-                "用户管理模块": {"status": "待检测", "progress": 0, "files": ["users.py"], "last_modified": None}
+                "用户管理模块": {"status": "待检测", "progress": 0, "files": ["users.py"], "last_modified": None},
+                "催办通知API": {"status": "待检测", "progress": 0, "files": ["reminder_notifications.py"], "last_modified": None}
             },
             "前端界面模块": {
                 "仪表板页面": {"status": "待检测", "progress": 0, "files": ["Dashboard/index.tsx"], "last_modified": None},
@@ -86,10 +87,16 @@ class ProjectKanban:
                 "进度记录模型": {"status": "待检测", "progress": 0, "files": ["progress.py"], "last_modified": None},
                 "用户模型": {"status": "待检测", "progress": 0, "files": ["user.py"], "last_modified": None},
                 "质量记录模型": {"status": "待检测", "progress": 0, "files": ["quality.py"], "last_modified": None},
-                "设备模型": {"status": "待检测", "progress": 0, "files": ["equipment.py"], "last_modified": None}
+                "设备模型": {"status": "待检测", "progress": 0, "files": ["equipment.py"], "last_modified": None},
+                "催办模型": {"status": "待检测", "progress": 0, "files": ["reminder.py"], "last_modified": None},
+                "通知模型": {"status": "待检测", "progress": 0, "files": ["notification.py"], "last_modified": None}
             },
             "系统集成模块": {
-                "通知催办系统": {"status": "待检测", "progress": 0, "files": ["notifications/"], "last_modified": None},
+                "催办通知服务": {"status": "待检测", "progress": 0, "files": ["services/reminder_notification_service.py"], "last_modified": None},
+                "多渠道通知服务": {"status": "待检测", "progress": 0, "files": ["services/multi_channel_notification_service.py"], "last_modified": None},
+                "催办调度器": {"status": "待检测", "progress": 0, "files": ["services/reminder_scheduler.py"], "last_modified": None},
+                "催办服务": {"status": "待检测", "progress": 0, "files": ["services/reminder_service.py"], "last_modified": None},
+                "通知服务": {"status": "待检测", "progress": 0, "files": ["services/notification_service.py"], "last_modified": None},
                 "微信集成": {"status": "待检测", "progress": 0, "files": ["integrations/wechat.py"], "last_modified": None},
                 "邮件系统": {"status": "待检测", "progress": 0, "files": ["integrations/email.py"], "last_modified": None},
                 "短信通知": {"status": "待检测", "progress": 0, "files": ["integrations/sms.py"], "last_modified": None},
@@ -177,7 +184,9 @@ class ProjectKanban:
         elif category == "数据模型层":
             return backend_path / "models" / file_name
         elif category == "系统集成模块":
-            if file_name.endswith('/'):
+            if file_name.startswith('services/'):
+                return backend_path / file_name
+            elif file_name.endswith('/'):
                 return backend_path / file_name.rstrip('/')
             return backend_path / file_name
         return None
@@ -390,6 +399,180 @@ class ProjectKanban:
         ax.text(today, len(timeline_data)-0.5, '今天', rotation=90, 
                ha='right', va='top', color='red', fontweight='bold')
     
+    def evaluate_task_completion(self):
+        """评估任务完成情况"""
+        print("\n🔍 正在评估任务完成情况...")
+        
+        # 从TaskManager获取任务状态
+        task_evaluation = {
+            "total_modules": 0,
+            "completed_modules": 0,
+            "in_progress_modules": 0,
+            "pending_modules": 0,
+            "overall_progress": 0,
+            "critical_issues": [],
+            "recommendations": []
+        }
+        
+        for category, items in self.modules.items():
+            for module_name, info in items.items():
+                task_evaluation["total_modules"] += 1
+                
+                if info["status"] == "完成":
+                    task_evaluation["completed_modules"] += 1
+                elif info["status"] in ["进行中", "开始开发"]:
+                    task_evaluation["in_progress_modules"] += 1
+                else:
+                    task_evaluation["pending_modules"] += 1
+                
+                # 检查关键问题
+                if info["progress"] < 30 and info.get("last_modified"):
+                    try:
+                        mod_time = datetime.fromisoformat(info["last_modified"])
+                        days_ago = (datetime.now() - mod_time).days
+                        if days_ago > 7:
+                            task_evaluation["critical_issues"].append(
+                                f"{module_name} ({category}): 进度低且超过7天未更新"
+                            )
+                    except:
+                        pass
+        
+        # 计算整体进度
+        if task_evaluation["total_modules"] > 0:
+            task_evaluation["overall_progress"] = (
+                task_evaluation["completed_modules"] * 100 + 
+                task_evaluation["in_progress_modules"] * 50
+            ) / task_evaluation["total_modules"]
+        
+        # 生成建议
+        if task_evaluation["overall_progress"] < 50:
+            task_evaluation["recommendations"].append("项目进度偏慢，建议加强资源投入")
+        if len(task_evaluation["critical_issues"]) > 0:
+            task_evaluation["recommendations"].append("存在长期未更新的模块，需要重点关注")
+        if task_evaluation["pending_modules"] > task_evaluation["completed_modules"]:
+            task_evaluation["recommendations"].append("待开发模块较多，建议优化开发计划")
+        
+        return task_evaluation
+    
+    def update_kanban_md(self):
+        """更新看板.md文件"""
+        print("\n📝 正在更新看板.md文件...")
+        
+        kanban_file = self.project_root / "docs" / "03-管理" / "看板.md"
+        
+        # 评估任务完成情况
+        task_eval = self.evaluate_task_completion()
+        
+        # 生成更新内容
+        update_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # 读取现有看板内容
+        existing_content = ""
+        if kanban_file.exists():
+            try:
+                with open(kanban_file, 'r', encoding='utf-8') as f:
+                    existing_content = f.read()
+            except Exception as e:
+                print(f"⚠️  读取现有看板文件失败: {e}")
+        
+        # 生成新的项目进度部分
+        progress_section = f"""## 项目开发进度总结 (自动更新)
+
+### 📊 整体进度统计
+- **最后更新时间**: {update_time}
+- **总模块数**: {task_eval['total_modules']}
+- **已完成模块**: {task_eval['completed_modules']} ({task_eval['completed_modules']/task_eval['total_modules']*100:.1f}%)
+- **进行中模块**: {task_eval['in_progress_modules']} ({task_eval['in_progress_modules']/task_eval['total_modules']*100:.1f}%)
+- **待开发模块**: {task_eval['pending_modules']} ({task_eval['pending_modules']/task_eval['total_modules']*100:.1f}%)
+- **整体完成度**: {task_eval['overall_progress']:.1f}%
+
+### 📋 各模块详细状态
+"""
+        
+        # 添加各模块详细状态
+        for category, items in self.modules.items():
+            progress_section += f"\n#### {category}\n"
+            for module_name, info in items.items():
+                status_icon = {
+                    "完成": "✅",
+                    "进行中": "🔄", 
+                    "待开发": "⏳",
+                    "待完善": "🔧",
+                    "开始开发": "🚧",
+                    "待检测": "❓"
+                }.get(info["status"], "❓")
+                
+                progress_bar = "█" * (info["progress"] // 10) + "░" * (10 - info["progress"] // 10)
+                
+                # 显示代码统计信息
+                lines = info.get("lines", 0)
+                functions = info.get("functions", 0)
+                classes = info.get("classes", 0)
+                
+                code_info = f"({lines}行/{functions}函数/{classes}类)" if lines > 0 else "(未检测到代码)"
+                
+                # 显示最后修改时间
+                last_modified = "未知"
+                if info.get("last_modified"):
+                    try:
+                        mod_time = datetime.fromisoformat(info["last_modified"])
+                        days_ago = (datetime.now() - mod_time).days
+                        if days_ago == 0:
+                            last_modified = "今天"
+                        elif days_ago == 1:
+                            last_modified = "昨天"
+                        else:
+                            last_modified = f"{days_ago}天前"
+                    except:
+                        pass
+                
+                progress_section += f"- {status_icon} **{module_name}**: [{progress_bar}] {info['progress']:3.0f}% {code_info} (更新: {last_modified})\n"
+        
+        # 添加关键问题和建议
+        if task_eval['critical_issues']:
+            progress_section += "\n### ⚠️ 关键问题\n"
+            for issue in task_eval['critical_issues']:
+                progress_section += f"- {issue}\n"
+        
+        if task_eval['recommendations']:
+            progress_section += "\n### 💡 改进建议\n"
+            for rec in task_eval['recommendations']:
+                progress_section += f"- {rec}\n"
+        
+        # 更新看板文件
+        try:
+            # 如果存在现有内容，尝试替换项目开发进度总结部分
+            if "## 项目开发进度总结" in existing_content:
+                # 找到项目开发进度总结的开始位置
+                start_marker = "## 项目开发进度总结"
+                start_pos = existing_content.find(start_marker)
+                
+                # 找到下一个二级标题的位置作为结束位置
+                remaining_content = existing_content[start_pos + len(start_marker):]
+                next_section_pos = remaining_content.find("\n## ")
+                
+                if next_section_pos != -1:
+                    # 保留后续内容
+                    end_pos = start_pos + len(start_marker) + next_section_pos
+                    new_content = existing_content[:start_pos] + progress_section + existing_content[end_pos:]
+                else:
+                    # 没有找到下一个二级标题，替换到文件末尾
+                    new_content = existing_content[:start_pos] + progress_section
+            else:
+                # 如果没有找到项目开发进度总结部分，添加到文件末尾
+                new_content = existing_content + "\n\n" + progress_section
+            
+            # 写入文件
+            with open(kanban_file, 'w', encoding='utf-8') as f:
+                f.write(new_content)
+            
+            print(f"✅ 看板.md文件已更新: {kanban_file}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ 更新看板.md文件失败: {e}")
+            return False
+    
     def print_summary(self):
         """打印项目摘要信息"""
         print("\n" + "="*80)
@@ -527,6 +710,10 @@ def main():
         if args.update:
             kanban.update_kanban()
         
+        # 全面检查评估任务完成情况并更新看板.md
+        print("\n🔄 开始全面检查评估任务完成情况...")
+        kanban.update_kanban_md()
+        
         # 打印摘要信息
         kanban.print_summary()
         
@@ -536,6 +723,8 @@ def main():
             kanban.generate_overview_chart()
         else:
             print("\n📋 仅显示摘要信息（跳过图表生成）")
+        
+        print("\n✅ 看板更新完成！")
         
         print("\n💡 使用提示:")
         print("   python kb.py --update     # 强制更新看板数据")

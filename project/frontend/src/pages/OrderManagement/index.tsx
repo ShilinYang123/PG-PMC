@@ -11,7 +11,6 @@ import {
   InputNumber,
   DatePicker,
   Select,
-  Upload,
   message,
   Popconfirm,
   Row,
@@ -41,9 +40,9 @@ import {
   SyncOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import type { UploadProps } from 'antd';
 import dayjs from 'dayjs';
 import axios from 'axios';
+import ImportExportModal from '../../components/ImportExport';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -119,6 +118,8 @@ const OrderManagement: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [importExportVisible, setImportExportVisible] = useState(false);
+  const [importExportType, setImportExportType] = useState<'import' | 'export'>('import');
   const [editingRecord, setEditingRecord] = useState<OrderRecord | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<OrderRecord | null>(null);
   const [form] = Form.useForm();
@@ -468,19 +469,22 @@ const OrderManagement: React.FC = () => {
     fetchOrders(newParams);
   };
 
-  const uploadProps: UploadProps = {
-    name: 'file',
-    action: '/api/orders/import',
-    headers: {
-      authorization: 'authorization-text',
-    },
-    onChange(info) {
-      if (info.file.status === 'done') {
-        message.success(`${info.file.name} 文件上传成功`);
-      } else if (info.file.status === 'error') {
-        message.error(`${info.file.name} 文件上传失败`);
-      }
-    },
+  // 导入导出处理函数
+  const handleImport = () => {
+    setImportExportType('import');
+    setImportExportVisible(true);
+  };
+
+  const handleExport = () => {
+    setImportExportType('export');
+    setImportExportVisible(true);
+  };
+
+  const handleImportExportSuccess = () => {
+    // 导入导出成功后刷新数据
+    fetchOrders();
+    fetchOrderStats();
+    message.success('操作完成');
   };
 
   return (
@@ -582,10 +586,12 @@ const OrderManagement: React.FC = () => {
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             新增订单
           </Button>
-          <Upload {...uploadProps}>
-            <Button icon={<UploadOutlined />}>批量导入</Button>
-          </Upload>
-          <Button icon={<DownloadOutlined />}>导出数据</Button>
+          <Button icon={<UploadOutlined />} onClick={handleImport}>
+            批量导入
+          </Button>
+          <Button icon={<DownloadOutlined />} onClick={handleExport}>
+            导出数据
+          </Button>
         </Space>
       }>
         <Table
@@ -904,6 +910,15 @@ const OrderManagement: React.FC = () => {
           </Descriptions>
         )}
       </Modal>
+
+      {/* 导入导出弹窗 */}
+      <ImportExportModal
+        visible={importExportVisible}
+        mode={importExportType}
+        dataType="orders"
+        onCancel={() => setImportExportVisible(false)}
+        onSuccess={handleImportExportSuccess}
+      />
     </div>
   );
 };

@@ -88,6 +88,17 @@
         "lines": 399,
         "functions": 1,
         "classes": 0
+      },
+      "催办通知API": {
+        "status": "完成",
+        "progress": 100,
+        "files": [
+          "reminder_notifications.py"
+        ],
+        "last_modified": "2025-07-27T10:42:52.854001",
+        "lines": 408,
+        "functions": 0,
+        "classes": 5
       }
     },
     "前端界面模块": {
@@ -108,10 +119,10 @@
         "files": [
           "OrderManagement/index.tsx"
         ],
-        "last_modified": "2025-07-24T22:05:47.147061",
-        "lines": 499,
-        "functions": 10,
-        "classes": 1
+        "last_modified": "2025-07-27T01:36:21.859804",
+        "lines": 869,
+        "functions": 15,
+        "classes": 3
       },
       "生产计划页面": {
         "status": "完成",
@@ -147,12 +158,12 @@
         "classes": 3
       },
       "图表组件库": {
-        "status": "待开发",
-        "progress": 0,
+        "status": "开始开发",
+        "progress": 10,
         "files": [
           "components/Charts/"
         ],
-        "last_modified": null,
+        "last_modified": "2025-07-27T06:42:14.344196",
         "lines": 0,
         "functions": 0,
         "classes": 0
@@ -257,19 +268,85 @@
         "lines": 0,
         "functions": 0,
         "classes": 0
+      },
+      "催办模型": {
+        "status": "完成",
+        "progress": 100,
+        "files": [
+          "reminder.py"
+        ],
+        "last_modified": "2025-07-27T11:35:28.329075",
+        "lines": 163,
+        "functions": 6,
+        "classes": 7
+      },
+      "通知模型": {
+        "status": "完成",
+        "progress": 100,
+        "files": [
+          "notification.py"
+        ],
+        "last_modified": "2025-07-27T07:31:53.634075",
+        "lines": 79,
+        "functions": 0,
+        "classes": 6
       }
     },
     "系统集成模块": {
-      "通知催办系统": {
-        "status": "待开发",
-        "progress": 0,
+      "催办通知服务": {
+        "status": "完成",
+        "progress": 100,
         "files": [
-          "notifications/"
+          "services/reminder_notification_service.py"
         ],
-        "last_modified": null,
-        "lines": 0,
-        "functions": 0,
-        "classes": 0
+        "last_modified": "2025-07-27T11:34:18.064594",
+        "lines": 542,
+        "functions": 8,
+        "classes": 1
+      },
+      "多渠道通知服务": {
+        "status": "完成",
+        "progress": 100,
+        "files": [
+          "services/multi_channel_notification_service.py"
+        ],
+        "last_modified": "2025-07-27T11:34:39.866082",
+        "lines": 460,
+        "functions": 8,
+        "classes": 6
+      },
+      "催办调度器": {
+        "status": "完成",
+        "progress": 100,
+        "files": [
+          "services/reminder_scheduler.py"
+        ],
+        "last_modified": "2025-07-27T11:33:38.238936",
+        "lines": 346,
+        "functions": 15,
+        "classes": 1
+      },
+      "催办服务": {
+        "status": "完成",
+        "progress": 100,
+        "files": [
+          "services/reminder_service.py"
+        ],
+        "last_modified": "2025-07-27T10:10:24.476041",
+        "lines": 389,
+        "functions": 15,
+        "classes": 1
+      },
+      "通知服务": {
+        "status": "完成",
+        "progress": 100,
+        "files": [
+          "services/notification_service.py"
+        ],
+        "last_modified": "2025-07-27T10:11:20.444702",
+        "lines": 322,
+        "functions": 18,
+        "classes": 1
       },
       "微信集成": {
         "status": "待开发",
@@ -328,6 +405,6 @@
       }
     }
   },
-  "last_update": "2025-07-26T21:45:39.881215",
+  "last_update": "2025-07-27T11:55:29.864779",
   "version": "1.0"
 }

@@ -11,8 +11,9 @@ from app.core.middleware import setup_middleware
 from app.core.exceptions import setup_exception_handlers
 from app.core.database import init_database, close_database
 from app.db.database import engine, Base
-from app.api.v1.api import api_router
+from app.api.api import api_router
 from app.services.reminder_scheduler import ReminderScheduler
+from app.services.task_service import task_service
 
 # 设置日志
 setup_logging(log_level=settings.LOG_LEVEL, debug=settings.DEBUG)
@@ -58,6 +59,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"催办调度器启动失败: {e}")
     
+    # 启动任务服务
+    try:
+        await task_service.start()
+        logger.info("任务服务启动完成")
+    except Exception as e:
+        logger.error(f"任务服务启动失败: {e}")
+    
     logger.info("PMC系统启动完成")
     
     yield
@@ -67,12 +75,18 @@ async def lifespan(app: FastAPI):
     
     try:
         # 停止催办调度器
-        global scheduler
         if scheduler:
             await scheduler.stop()
             logger.info("催办调度器已停止")
     except Exception as e:
         logger.error(f"催办调度器停止失败: {e}")
+    
+    try:
+        # 停止任务服务
+        await task_service.stop()
+        logger.info("任务服务已停止")
+    except Exception as e:
+        logger.error(f"任务服务停止失败: {e}")
     
     try:
         # 关闭数据库连接

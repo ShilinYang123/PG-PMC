@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Layout } from 'antd';
-import MainLayout from '@/components/Layout/MainLayout';
+import { ConfigProvider } from 'antd';
+import zhCN from 'antd/locale/zh_CN';
+import MainLayout from './components/Layout/MainLayout';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './pages/Login';
+import Forbidden from './pages/403';
 import Dashboard from '@/pages/Dashboard';
 import OrderManagement from '@/pages/OrderManagement';
 import ProductionPlan from '@/pages/ProductionPlan';
@@ -10,31 +14,68 @@ import ProgressTracking from '@/pages/ProgressTracking';
 import Scheduling from '@/pages/Scheduling';
 import ChartsDemo from '@/pages/ChartsDemo';
 import NotificationCenter from '@/pages/NotificationCenter';
+import ReminderCenter from '@/pages/ReminderCenter';
+import { initializeAuth } from './stores/authStore';
 import './App.css';
 
 const App: React.FC = () => {
+  useEffect(() => {
+    // 初始化认证状态
+    initializeAuth();
+  }, []);
+
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/*" element={
-            <MainLayout>
-              <Routes>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/orders" element={<OrderManagement />} />
-                <Route path="/production" element={<ProductionPlan />} />
-                <Route path="/materials" element={<MaterialManagement />} />
-                <Route path="/progress" element={<ProgressTracking />} />
-                <Route path="/scheduling" element={<Scheduling />} />
-                <Route path="/charts" element={<ChartsDemo />} />
-                <Route path="/notifications" element={<NotificationCenter />} />
-              </Routes>
-            </MainLayout>
-          } />
-        </Routes>
-      </div>
-    </Router>
+    <ConfigProvider locale={zhCN}>
+      <Router>
+        <div className="App">
+          <Routes>
+            {/* 公开路由 */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/403" element={<Forbidden />} />
+            
+            {/* 受保护的路由 */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/*" element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Routes>
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/orders" element={
+                      <ProtectedRoute requiredPermission="order:read">
+                        <OrderManagement />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/production" element={
+                      <ProtectedRoute requiredPermission="production:read">
+                        <ProductionPlan />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/materials" element={
+                      <ProtectedRoute requiredPermission="material:read">
+                        <MaterialManagement />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/progress" element={
+                      <ProtectedRoute requiredPermission="progress:read">
+                        <ProgressTracking />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/scheduling" element={
+                      <ProtectedRoute requiredPermission="schedule:read">
+                        <Scheduling />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/charts" element={<ChartsDemo />} />
+                    <Route path="/notifications" element={<NotificationCenter />} />
+                    <Route path="/reminders" element={<ReminderCenter />} />
+                  </Routes>
+                </MainLayout>
+              </ProtectedRoute>
+            } />
+          </Routes>
+        </div>
+      </Router>
+    </ConfigProvider>
   );
 };
 

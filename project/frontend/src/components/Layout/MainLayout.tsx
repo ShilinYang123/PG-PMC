@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Badge, Button } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Layout, Menu, Avatar, Dropdown, Badge, Button, message } from 'antd';
 import {
   DashboardOutlined,
   ShoppingCartOutlined,
@@ -14,9 +14,11 @@ import {
   BellOutlined,
   CalendarOutlined,
   PieChartOutlined,
-  NotificationOutlined
+  NotificationOutlined,
+  AlertOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../../stores/authStore';
 import type { MenuProps } from 'antd';
 
 const { Header, Sider, Content } = Layout;
@@ -29,6 +31,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout, isLoading } = useAuthStore();
 
   // 菜单项配置
   const menuItems: MenuProps['items'] = [
@@ -72,6 +75,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       icon: <NotificationOutlined />,
       label: '通知中心',
     },
+    {
+      key: '/reminders',
+      icon: <AlertOutlined />,
+      label: '催办中心',
+    },
   ];
 
   // 用户下拉菜单
@@ -100,12 +108,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     navigate(key);
   };
 
-  const handleUserMenuClick = ({ key }: { key: string }) => {
+  const handleUserMenuClick = async ({ key }: { key: string }) => {
     if (key === 'logout') {
-      // 处理退出登录逻辑
-      console.log('退出登录');
-    } else {
-      console.log('用户菜单点击:', key);
+      try {
+        await logout();
+        message.success('退出登录成功');
+        navigate('/login');
+      } catch (error) {
+        console.error('退出登录失败:', error);
+        message.error('退出登录失败');
+      }
+    } else if (key === 'profile') {
+      navigate('/profile');
+    } else if (key === 'settings') {
+      navigate('/settings');
     }
   };
 
@@ -178,8 +194,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               placement="bottomRight"
             >
               <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                <Avatar icon={<UserOutlined />} />
-                <span style={{ marginLeft: 8 }}>管理员</span>
+                <Avatar 
+                  src={user?.avatar} 
+                  icon={<UserOutlined />} 
+                />
+                <span style={{ marginLeft: 8 }}>
+                  {user?.full_name || user?.username || '用户'}
+                </span>
               </div>
             </Dropdown>
           </div>

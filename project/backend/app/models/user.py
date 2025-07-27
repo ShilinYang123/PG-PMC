@@ -201,6 +201,7 @@ class UserLoginLog(Base):
     duration = Column(Integer, comment="在线时长(分钟)")
     
     # 结果信息
+    success = Column(Boolean, default=True, comment="是否成功")
     login_result = Column(String(20), nullable=False, comment="登录结果")
     failure_reason = Column(String(100), comment="失败原因")
     

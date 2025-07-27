@@ -1,0 +1,425 @@
+/* 导入导出组件样式 */
+.import-export-modal {
+  .ant-modal-body {
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+}
+
+/* 导入步骤样式 */
+.import-step-1 {
+  .ant-upload-drag {
+    border: 2px dashed #d9d9d9;
+    border-radius: 8px;
+    background: #fafafa;
+    transition: all 0.3s;
+    
+    &:hover {
+      border-color: #1890ff;
+      background: #f0f8ff;
+    }
+  }
+  
+  .ant-upload-drag-icon {
+    font-size: 48px;
+    color: #1890ff;
+    margin-bottom: 16px;
+  }
+  
+  .ant-upload-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #262626;
+    margin-bottom: 8px;
+  }
+  
+  .ant-upload-hint {
+    font-size: 14px;
+    color: #8c8c8c;
+  }
+}
+
+.import-step-2 {
+  .ant-table-wrapper {
+    border: 1px solid #f0f0f0;
+    border-radius: 6px;
+  }
+  
+  .ant-table-thead > tr > th {
+    background: #fafafa;
+    font-weight: 600;
+  }
+  
+  .ant-table-tbody > tr > td {
+    padding: 8px 16px;
+  }
+}
+
+.import-step-3 {
+  .ant-card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+  
+  .ant-progress {
+    margin: 16px 0;
+  }
+  
+  .ant-card-body {
+    padding: 32px;
+  }
+}
+
+/* 导出表单样式 */
+.export-form {
+  .ant-form-item-label > label {
+    font-weight: 500;
+  }
+  
+  .ant-select-selector {
+    border-radius: 6px;
+  }
+  
+  .ant-input {
+    border-radius: 6px;
+  }
+  
+  .ant-btn {
+    border-radius: 6px;
+    height: 40px;
+    font-weight: 500;
+  }
+}
+
+/* 导出结果样式 */
+.export-result {
+  .ant-card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+  
+  .ant-card-body {
+    padding: 32px;
+  }
+  
+  .ant-progress {
+    margin: 16px 0;
+  }
+  
+  .ant-btn-lg {
+    height: 48px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 8px;
+  }
+}
+
+/* 状态图标样式 */
+.status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin-bottom: 16px;
+  
+  &.processing {
+    background: #e6f7ff;
+    color: #1890ff;
+  }
+  
+  &.completed {
+    background: #f6ffed;
+    color: #52c41a;
+  }
+  
+  &.failed {
+    background: #fff2f0;
+    color: #ff4d4f;
+  }
+}
+
+/* 统计卡片样式 */
+.stats-card {
+  text-align: center;
+  
+  .stats-number {
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 4px;
+    
+    &.success {
+      color: #52c41a;
+    }
+    
+    &.error {
+      color: #ff4d4f;
+    }
+    
+    &.total {
+      color: #1890ff;
+    }
+  }
+  
+  .stats-label {
+    font-size: 14px;
+    color: #8c8c8c;
+  }
+}
+
+/* 字段映射样式 */
+.field-mapping {
+  .mapping-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #fafafa;
+    border-radius: 6px;
+    
+    .source-field {
+      flex: 1;
+      font-weight: 500;
+      color: #262626;
+    }
+    
+    .mapping-arrow {
+      margin: 0 16px;
+      color: #8c8c8c;
+    }
+    
+    .target-field {
+      flex: 1;
+    }
+  }
+}
+
+/* 预览表格样式 */
+.preview-table {
+  .ant-table {
+    font-size: 12px;
+  }
+  
+  .ant-table-thead > tr > th {
+    padding: 8px;
+    background: #f0f8ff;
+    border-bottom: 2px solid #1890ff;
+    font-weight: 600;
+    color: #1890ff;
+  }
+  
+  .ant-table-tbody > tr > td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .ant-table-tbody > tr:hover > td {
+    background: #f0f8ff;
+  }
+}
+
+/* 文件列表样式 */
+.file-list {
+  .ant-upload-list-item {
+    border-radius: 6px;
+    border: 1px solid #d9d9d9;
+    
+    &:hover {
+      border-color: #1890ff;
+    }
+  }
+  
+  .ant-upload-list-item-name {
+    font-weight: 500;
+  }
+}
+
+/* 进度条样式 */
+.progress-wrapper {
+  .ant-progress-text {
+    font-weight: 500;
+  }
+  
+  .ant-progress-bg {
+    border-radius: 10px;
+  }
+  
+  .ant-progress-inner {
+    border-radius: 10px;
+    background: #f5f5f5;
+  }
+}
+
+/* 警告信息样式 */
+.alert-info {
+  .ant-alert-message {
+    font-weight: 500;
+  }
+  
+  .ant-alert-description {
+    p {
+      margin-bottom: 4px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+/* 按钮组样式 */
+.button-group {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  
+  .ant-btn {
+    min-width: 100px;
+  }
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+  .import-export-modal {
+    .ant-modal {
+      width: 95% !important;
+      margin: 10px;
+    }
+    
+    .ant-modal-body {
+      padding: 16px;
+    }
+  }
+  
+  .import-step-1 {
+    .ant-upload-drag {
+      padding: 20px 16px;
+    }
+    
+    .ant-upload-drag-icon {
+      font-size: 36px;
+    }
+  }
+  
+  .export-form {
+    .ant-col {
+      margin-bottom: 16px;
+    }
+  }
+  
+  .stats-card {
+    margin-bottom: 16px;
+  }
+  
+  .button-group {
+    flex-direction: column;
+    
+    .ant-btn {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 576px) {
+  .preview-table {
+    .ant-table {
+      font-size: 11px;
+    }
+    
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 4px;
+    }
+  }
+  
+  .field-mapping {
+    .mapping-item {
+      flex-direction: column;
+      text-align: center;
+      
+      .mapping-arrow {
+        margin: 8px 0;
+        transform: rotate(90deg);
+      }
+    }
+  }
+}
+
+/* 动画效果 */
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 加载状态样式 */
+.loading-overlay {
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    z-index: 1;
+  }
+  
+  .ant-spin {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+  }
+}
+
+/* 错误状态样式 */
+.error-message {
+  .ant-alert {
+    border-radius: 6px;
+  }
+  
+  .ant-alert-message {
+    font-weight: 500;
+  }
+}
+
+/* 成功状态样式 */
+.success-message {
+  .ant-result-success {
+    .ant-result-icon {
+      color: #52c41a;
+    }
+  }
+}

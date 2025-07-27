@@ -19,7 +19,6 @@ import {
   Form,
   Input,
   Select,
-  DatePicker,
   Statistic,
   Row,
   Col,
@@ -29,7 +28,6 @@ import {
   message,
   Popconfirm,
   Progress,
-  Timeline,
   Descriptions,
   Alert
 } from 'antd';
@@ -105,7 +103,7 @@ const ReminderCenter: React.FC = () => {
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
-  const [filters, setFilters] = useState({
+  const [filters] = useState({
     reminder_type: undefined,
     is_responded: undefined,
     escalated: undefined
@@ -616,7 +614,7 @@ const ReminderCenter: React.FC = () => {
     fetchReminders();
     fetchStatistics();
     fetchRules();
-  }, [pagination.current, pagination.pageSize, filters]);
+  }, [fetchReminders, fetchStatistics, fetchRules, pagination.current, pagination.pageSize, filters]);
 
   return (
     <div style={{ padding: 24 }}>
