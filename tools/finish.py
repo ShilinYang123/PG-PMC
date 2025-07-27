@@ -44,7 +44,9 @@ except ImportError:
     # 如果导入失败，使用标准logging
     import logging
     # 如果导入失败，使用标准logging
-    log_file = PROJECT_ROOT / "finish_log.txt"
+    log_file = PROJECT_ROOT / "logs" / "finish_log.txt"
+    # 确保logs目录存在
+    log_file.parent.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s [%(levelname)s] %(name)s - %(message)s',
