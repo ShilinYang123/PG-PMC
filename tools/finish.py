@@ -439,7 +439,7 @@ def main():
             kb_script = TOOLS_DIR / "kb.py"
             if kb_script.exists():
                 # 使用 kb.py --update 更新看板
-                command = [sys.executable, "kb.py", "--update", "--non-interactive"]
+                command = [sys.executable, str(kb_script), "--update", "--non-interactive"]
                 result = subprocess.run(
                     command,
                     capture_output=True,
