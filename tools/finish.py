@@ -433,12 +433,11 @@ def main():
             kb_script = PROJECT_ROOT / "tools" / "kb.py"
             if kb_script.exists():
                 result = subprocess.run(
-                    [sys.executable, str(kb_script), "--no-chart"],
+                    [sys.executable, str(kb_script), '--no-chart'],
                     cwd=PROJECT_ROOT,
                     capture_output=True,
                     text=True,
-                    encoding='utf-8',
-                    timeout=30  # 添加30秒超时
+                    encoding='utf-8'
                 )
                 if result.returncode == 0:
                     logger.info("✅ 看板更新完成")
