@@ -1,0 +1,228 @@
+.gantt-chart-card {
+  .ant-card-head {
+    border-bottom: 1px solid #f0f0f0;
+    
+    .ant-card-head-title {
+      font-weight: 600;
+      font-size: 16px;
+    }
+  }
+  
+  .ant-card-body {
+    padding: 16px;
+  }
+}
+
+.gantt-chart-container {
+  position: relative;
+  
+  &:fullscreen {
+    background: white;
+    padding: 20px;
+    
+    .gantt-chart-card {
+      height: 100%;
+      
+      .ant-card-body {
+        height: calc(100% - 60px);
+        
+        > div {
+          height: 100% !important;
+        }
+      }
+    }
+  }
+}
+
+// 甘特图工具栏样式
+.gantt-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 6px;
+  
+  .toolbar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .toolbar-label {
+      font-size: 14px;
+      color: #666;
+      white-space: nowrap;
+    }
+  }
+}
+
+// 甘特图图例样式
+.gantt-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+  padding: 8px 0;
+  border-top: 1px solid #f0f0f0;
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+    
+    .legend-text {
+      color: #666;
+    }
+  }
+}
+
+// 状态颜色
+.status-draft {
+  background-color: #d9d9d9;
+}
+
+.status-confirmed {
+  background-color: #1890ff;
+}
+
+.status-in-progress {
+  background-color: #52c41a;
+}
+
+.status-completed {
+  background-color: #13c2c2;
+}
+
+.status-cancelled {
+  background-color: #ff4d4f;
+}
+
+.status-paused {
+  background-color: #fa8c16;
+}
+
+// 优先级颜色
+.priority-urgent {
+  background-color: #ff4d4f;
+}
+
+.priority-high {
+  background-color: #fa8c16;
+}
+
+.priority-medium {
+  background-color: #1890ff;
+}
+
+.priority-low {
+  background-color: #52c41a;
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .gantt-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    
+    .toolbar-item {
+      justify-content: space-between;
+    }
+  }
+  
+  .gantt-legend {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+// 加载状态
+.gantt-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  
+  .ant-spin {
+    font-size: 24px;
+  }
+}
+
+// 空状态
+.gantt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #999;
+  
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+  
+  .empty-text {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  
+  .empty-description {
+    font-size: 14px;
+    color: #ccc;
+  }
+}
+
+// 甘特图任务悬浮效果
+.gantt-chart-container {
+  .echarts-tooltip {
+    background: rgba(0, 0, 0, 0.8) !important;
+    border: none !important;
+    border-radius: 6px !important;
+    color: white !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+    
+    .tooltip-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 4px;
+    }
+    
+    .tooltip-item {
+      margin: 2px 0;
+    }
+  }
+}
+
+// 甘特图滚动条样式
+.gantt-chart-container {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+}

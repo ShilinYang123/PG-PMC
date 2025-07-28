@@ -10,6 +10,9 @@ from app.api.endpoints.auth import get_current_user, get_current_active_user
 from app.schemas.order import OrderCreate, OrderUpdate, OrderQuery, OrderDetail, OrderSummary, OrderStats
 from datetime import datetime, timedelta
 import logging
+from fastapi import UploadFile, File
+from io import BytesIO
+from app.utils.bd400_importer import BD400OrderImporter
 
 logger = logging.getLogger(__name__)
 
@@ -473,3 +476,113 @@ async def get_order_stats(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="获取订单统计服务异常"
         )
+
+@router.post("/import/bd400", response_model=ResponseModel[dict])
+async def import_bd400_orders(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """导入BD400订单表"""
+    try:
+        # 验证文件格式
+         if not file.filename or not file.filename.lower().endswith(('.xlsx', '.xls')):
+             return ResponseModel(
+                 success=False,
+                 message="只支持Excel文件格式(.xlsx, .xls)",
+                 data=None
+             )
+        
+        # 读取文件内容
+        file_content = await file.read()
+        
+        # 创建BD400导入器
+        importer = BD400OrderImporter(db)
+        
+        # 执行导入
+        result = importer.import_from_excel(file_content)
+        
+        if result['success']:
+             logger.info(f"用户 {current_user.username} 成功导入BD400订单: {result['imported_count']}条")
+             return ResponseModel(
+                 success=True,
+                 message=result['message'],
+                 data={
+                     'imported_count': result['imported_count'],
+                     'skipped_count': result.get('skipped_count', 0),
+                     'errors': result.get('errors', []),
+                     'warnings': result.get('warnings', [])
+                 }
+             )
+         else:
+             return ResponseModel(
+                 success=False,
+                 message=result['message'],
+                 data={
+                     'errors': result.get('errors', []),
+                     'imported_count': result.get('imported_count', 0)
+                 }
+             )
+            
+    except Exception as e:
+         logger.error(f"BD400订单导入失败: {str(e)}")
+         return ResponseModel(
+             success=False,
+             message=f"导入失败: {str(e)}",
+             data=None
+         )
+
+@router.get("/export/template", response_model=ResponseModel[dict])
+async def get_order_template(
+    current_user: User = Depends(get_current_active_user)
+):
+    """获取订单导入模板"""
+    try:
+        template_data = {
+            'filename': 'BD400订单导入模板.xlsx',
+            'columns': [
+                {'field': 'order_number', 'title': '订单号', 'required': True, 'example': 'ORD20240101001'},
+                {'field': 'customer_name', 'title': '客户名称', 'required': True, 'example': '某某公司'},
+                {'field': 'customer_code', 'title': '客户代码', 'required': False, 'example': 'CUST001'},
+                {'field': 'product_name', 'title': '产品名称', 'required': True, 'example': '某某产品'},
+                {'field': 'product_model', 'title': '产品型号', 'required': False, 'example': 'MODEL-001'},
+                {'field': 'product_spec', 'title': '产品规格', 'required': False, 'example': '100*200*300'},
+                {'field': 'quantity', 'title': '数量', 'required': True, 'example': '100'},
+                {'field': 'unit', 'title': '单位', 'required': False, 'example': '件'},
+                {'field': 'unit_price', 'title': '单价', 'required': False, 'example': '10.50'},
+                {'field': 'total_amount', 'title': '总金额', 'required': False, 'example': '1050.00'},
+                {'field': 'currency', 'title': '币种', 'required': False, 'example': 'CNY'},
+                {'field': 'order_date', 'title': '下单日期', 'required': False, 'example': '2024-01-01'},
+                {'field': 'delivery_date', 'title': '交货日期', 'required': True, 'example': '2024-02-01'},
+                {'field': 'priority', 'title': '优先级', 'required': False, 'example': '中'},
+                {'field': 'contact_person', 'title': '联系人', 'required': False, 'example': '张三'},
+                {'field': 'contact_phone', 'title': '联系电话', 'required': False, 'example': '13800138000'},
+                {'field': 'contact_email', 'title': '联系邮箱', 'required': False, 'example': 'zhangsan@example.com'},
+                {'field': 'delivery_address', 'title': '交货地址', 'required': False, 'example': '某某市某某区某某街道'},
+                {'field': 'technical_requirements', 'title': '技术要求', 'required': False, 'example': '按图纸要求'},
+                {'field': 'quality_standards', 'title': '质量标准', 'required': False, 'example': 'GB/T标准'},
+                {'field': 'remark', 'title': '备注', 'required': False, 'example': '特殊要求'}
+            ],
+            'notes': [
+                '1. 标记为"必填"的字段不能为空',
+                '2. 订单号必须唯一，重复的订单号将被跳过',
+                '3. 日期格式支持: 2024-01-01, 2024/01/01等',
+                '4. 优先级可选值: 低、中、高、紧急',
+                '5. 数量必须为正整数',
+                '6. 单价和总金额为数值格式'
+            ]
+        }
+        
+        return ResponseModel(
+             success=True,
+             message="获取模板信息成功",
+             data=template_data
+         )
+        
+    except Exception as e:
+         logger.error(f"获取订单模板失败: {str(e)}")
+         return ResponseModel(
+             success=False,
+             message=f"获取模板失败: {str(e)}",
+             data=None
+         )

@@ -2663,6 +2663,62 @@
         }
       ],
       "completed": false
+    },
+    {
+      "requestId": "req-49",
+      "originalRequest": "继续PG-PMC项目开发，完成剩余的核心功能模块和系统优化",
+      "splitDetails": "继续PG-PMC项目开发，完成剩余的核心功能模块和系统优化",
+      "tasks": [
+        {
+          "id": "task-286",
+          "title": "完善订单管理模块",
+          "description": "基于BD400订单表，完善订单导入、处理、状态跟踪等功能，包括前后端完整实现",
+          "done": true,
+          "approved": true,
+          "completedDetails": "已完成订单管理模块的完善工作：\n1. 创建了BD400OrderImporter类用于处理BD400订单表导入\n2. 在后端添加了BD400订单导入API端点(/api/orders/import/bd400)\n3. 添加了订单导入模板下载API端点(/api/orders/export/template)\n4. 在前端订单管理页面添加了BD400导入按钮和模态框\n5. 实现了完整的文件上传、数据验证、错误处理和用户反馈功能\n6. 支持Excel文件格式验证、文件大小限制和重复订单检查\n7. 提供了友好的用户界面和详细的导入说明"
+        },
+        {
+          "id": "task-287",
+          "title": "开发生产计划排程功能",
+          "description": "实现智能排程算法，开发甘特图组件，完成生产计划的可视化管理",
+          "done": true,
+          "approved": false,
+          "completedDetails": "生产计划排程功能已完成开发。后端实现了ProductionScheduler类，包含多种排程策略（最早交期优先、最短加工时间优先、优先级优先、平衡策略）和三个新的API端点（/schedule、/gantt/{plan_ids}、/optimize-schedule）。前端创建了GanttChart组件并在生产计划页面集成了智能排程、优化排程和甘特图视图功能，支持批量排程和结果可视化。基于资源约束的智能排程算法和多种策略选择已实现。项目结构检查显示100%合规率，系统运行正常。"
+        },
+        {
+          "id": "task-288",
+          "title": "完善图表可视化组件",
+          "description": "集成ECharts，开发高级图表组件，实现数据的多维度可视化展示",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-289",
+          "title": "开发通知催办系统",
+          "description": "实现微信、邮件、短信等多渠道通知功能，建立智能催办机制",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-290",
+          "title": "完善前端界面集成",
+          "description": "完成所有页面组件的业务逻辑集成，优化用户体验和界面交互",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-291",
+          "title": "系统测试与优化",
+          "description": "进行全面的功能测试，性能优化，修复bug，完善文档",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        }
+      ],
+      "completed": false
     }
   ]
 }

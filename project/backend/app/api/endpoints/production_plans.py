@@ -13,7 +13,12 @@ from app.schemas.production_plan import (
     ProductionStageCreate, ProductionStageUpdate, ProductionStageDetail,
     ProductionPlanStats, ProductionPlanSummary
 )
-from datetime import datetime, timedelta
+from app.services.production_scheduling_service import (
+    get_production_scheduling_service, SchedulingStrategy
+)
+from app.utils.scheduler import ProductionScheduler, ScheduleStrategy
+from datetime import datetime, timedelta, date
+from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)
@@ -562,4 +567,435 @@ async def get_production_plan_stats(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="获取生产计划统计服务异常"
+        )
+
+@router.post("/scheduling/auto", response_model=ResponseModel[List[Dict[str, Any]]])
+async def auto_schedule_plans(
+    plan_ids: Optional[List[int]] = None,
+    strategy: Optional[str] = Query("balanced", description="排程策略"),
+    start_date: Optional[datetime] = Query(None, description="排程开始时间"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """自动排程生产计划"""
+    try:
+        # 获取排程服务
+        scheduling_service = get_production_scheduling_service(db)
+        
+        # 转换策略
+        strategy_map = {
+            "earliest_due_date": SchedulingStrategy.EARLIEST_DUE_DATE,
+            "shortest_processing_time": SchedulingStrategy.SHORTEST_PROCESSING_TIME,
+            "critical_ratio": SchedulingStrategy.CRITICAL_RATIO,
+            "priority_first": SchedulingStrategy.PRIORITY_FIRST,
+            "balanced": SchedulingStrategy.BALANCED
+        }
+        
+        scheduling_strategy = strategy_map.get(strategy, SchedulingStrategy.BALANCED)
+        
+        # 执行自动排程
+        results = scheduling_service.auto_schedule_plans(
+            plan_ids=plan_ids,
+            strategy=scheduling_strategy,
+            start_date=start_date
+        )
+        
+        # 转换结果为字典格式
+        result_data = []
+        for result in results:
+            result_data.append({
+                "plan_id": result.plan_id,
+                "scheduled_start_date": result.scheduled_start_date.isoformat(),
+                "scheduled_end_date": result.scheduled_end_date.isoformat(),
+                "assigned_resources": result.assigned_resources,
+                "estimated_duration_hours": result.estimated_duration.total_seconds() / 3600,
+                "conflicts": result.conflicts,
+                "feasibility_score": result.feasibility_score
+            })
+        
+        return ResponseModel(
+            success=True,
+            message=f"成功排程 {len(results)} 个生产计划",
+            data=result_data
+        )
+        
+    except Exception as e:
+        logger.error(f"自动排程失败: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"自动排程失败: {str(e)}"
+        )
+
+@router.post("/scheduling/manual/{plan_id}", response_model=ResponseModel[Dict[str, Any]])
+async def manual_schedule_plan(
+    plan_id: int,
+    start_date: datetime,
+    end_date: datetime,
+    workshop: Optional[str] = None,
+    production_line: Optional[str] = None,
+    responsible_person: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """手动排程单个生产计划"""
+    try:
+        # 获取排程服务
+        scheduling_service = get_production_scheduling_service(db)
+        
+        # 构建资源分配
+        resources = {}
+        if workshop:
+            resources["workshop"] = workshop
+        if production_line:
+            resources["production_line"] = production_line
+        if responsible_person:
+            resources["responsible_person"] = responsible_person
+        
+        # 执行手动排程
+        result = scheduling_service.manual_schedule_plan(
+            plan_id=plan_id,
+            start_date=start_date,
+            end_date=end_date,
+            resources=resources
+        )
+        
+        # 转换结果
+        result_data = {
+            "plan_id": result.plan_id,
+            "scheduled_start_date": result.scheduled_start_date.isoformat(),
+            "scheduled_end_date": result.scheduled_end_date.isoformat(),
+            "assigned_resources": result.assigned_resources,
+            "estimated_duration_hours": result.estimated_duration.total_seconds() / 3600,
+            "conflicts": result.conflicts,
+            "feasibility_score": result.feasibility_score
+        }
+        
+        return ResponseModel(
+            success=True,
+            message="手动排程成功",
+            data=result_data
+        )
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"手动排程失败: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"手动排程失败: {str(e)}"
+        )
+
+@router.post("/scheduling/reschedule/{plan_id}", response_model=ResponseModel[Dict[str, Any]])
+async def reschedule_plan(
+    plan_id: int,
+    new_priority: Optional[PlanPriority] = None,
+    new_due_date: Optional[date] = None,
+    strategy: Optional[str] = Query("balanced", description="排程策略"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """重新排程生产计划"""
+    try:
+        # 获取排程服务
+        scheduling_service = get_production_scheduling_service(db)
+        
+        # 转换策略
+        strategy_map = {
+            "earliest_due_date": SchedulingStrategy.EARLIEST_DUE_DATE,
+            "shortest_processing_time": SchedulingStrategy.SHORTEST_PROCESSING_TIME,
+            "critical_ratio": SchedulingStrategy.CRITICAL_RATIO,
+            "priority_first": SchedulingStrategy.PRIORITY_FIRST,
+            "balanced": SchedulingStrategy.BALANCED
+        }
+        
+        scheduling_strategy = strategy_map.get(strategy, SchedulingStrategy.BALANCED)
+        
+        # 执行重新排程
+        result = scheduling_service.reschedule_plan(
+            plan_id=plan_id,
+            new_priority=new_priority,
+            new_due_date=new_due_date,
+            strategy=scheduling_strategy
+        )
+        
+        # 转换结果
+        result_data = {
+            "plan_id": result.plan_id,
+            "scheduled_start_date": result.scheduled_start_date.isoformat(),
+            "scheduled_end_date": result.scheduled_end_date.isoformat(),
+            "assigned_resources": result.assigned_resources,
+            "estimated_duration_hours": result.estimated_duration.total_seconds() / 3600,
+            "conflicts": result.conflicts,
+            "feasibility_score": result.feasibility_score
+        }
+        
+        return ResponseModel(
+            success=True,
+            message="重新排程成功",
+            data=result_data
+        )
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"重新排程失败: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"重新排程失败: {str(e)}"
+        )
+
+@router.get("/scheduling/gantt-data", response_model=ResponseModel[Dict[str, Any]])
+async def get_scheduling_gantt_data(
+    start_date: Optional[date] = Query(None, description="开始日期"),
+    end_date: Optional[date] = Query(None, description="结束日期"),
+    workshop: Optional[str] = Query(None, description="车间筛选"),
+    production_line: Optional[str] = Query(None, description="生产线筛选"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """获取排程甘特图数据"""
+    try:
+        # 获取排程服务
+        scheduling_service = get_production_scheduling_service(db)
+        
+        # 获取甘特图数据
+        gantt_data = scheduling_service.get_gantt_chart_data(
+            start_date=start_date,
+            end_date=end_date,
+            workshop=workshop,
+            production_line=production_line
+        )
+        
+        return ResponseModel(
+            success=True,
+            message="获取甘特图数据成功",
+            data=gantt_data
+        )
+        
+    except Exception as e:
+        logger.error(f"获取甘特图数据失败: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取甘特图数据失败: {str(e)}"
+        )
+
+@router.get("/scheduling/conflicts", response_model=ResponseModel[Dict[str, Any]])
+async def analyze_scheduling_conflicts(
+    start_date: Optional[date] = Query(None, description="分析开始日期"),
+    end_date: Optional[date] = Query(None, description="分析结束日期"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """分析排程冲突"""
+    try:
+        # 获取排程服务
+        scheduling_service = get_production_scheduling_service(db)
+        
+        # 分析冲突
+        conflicts = scheduling_service.analyze_scheduling_conflicts(
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        return ResponseModel(
+            success=True,
+            message="排程冲突分析完成",
+            data=conflicts
+        )
+        
+    except Exception as e:
+        logger.error(f"排程冲突分析失败: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"排程冲突分析失败: {str(e)}"
+        )
+
+@router.post("/schedule", response_model=ResponseModel[List[dict]])
+async def schedule_production_plans(
+    plan_ids: List[int],
+    strategy: ScheduleStrategy = ScheduleStrategy.BALANCED,
+    start_date: Optional[datetime] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """执行生产计划排程"""
+    try:
+        scheduler = ProductionScheduler(db)
+        results = scheduler.schedule_production_plans(plan_ids, strategy, start_date)
+        
+        # 更新数据库中的排程结果
+        for result in results:
+            plan = db.query(ProductionPlan).filter(ProductionPlan.id == result.plan_id).first()
+            if plan:
+                plan.plan_start_date = result.scheduled_start
+                plan.plan_end_date = result.scheduled_end
+                plan.workshop = result.assigned_workshop
+                plan.production_line = result.assigned_line
+                plan.updated_by = current_user.username
+                plan.updated_at = datetime.now()
+        
+        db.commit()
+        
+        # 转换为响应格式
+        schedule_data = []
+        for result in results:
+            schedule_data.append({
+                "plan_id": result.plan_id,
+                "scheduled_start": result.scheduled_start.isoformat(),
+                "scheduled_end": result.scheduled_end.isoformat(),
+                "assigned_workshop": result.assigned_workshop,
+                "assigned_line": result.assigned_line,
+                "resource_utilization": result.resource_utilization
+            })
+        
+        logger.info(f"Successfully scheduled {len(results)} production plans")
+        return ResponseModel(
+            code=200,
+            message="生产计划排程成功",
+            data=schedule_data
+        )
+        
+    except Exception as e:
+        logger.error(f"Error scheduling production plans: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"排程失败: {str(e)}"
+        )
+
+@router.get("/gantt/{plan_ids}", response_model=ResponseModel[dict])
+async def get_gantt_chart_data(
+    plan_ids: str,  # 逗号分隔的计划ID列表
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """获取甘特图数据"""
+    try:
+        # 解析计划ID列表
+        plan_id_list = [int(id.strip()) for id in plan_ids.split(',') if id.strip().isdigit()]
+        
+        if not plan_id_list:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="无效的计划ID列表"
+            )
+        
+        scheduler = ProductionScheduler(db)
+        
+        # 获取现有的排程结果
+        plans = db.query(ProductionPlan).filter(
+            ProductionPlan.id.in_(plan_id_list),
+            ProductionPlan.plan_start_date.isnot(None),
+            ProductionPlan.plan_end_date.isnot(None)
+        ).all()
+        
+        # 构建排程结果
+        from app.utils.scheduler import ScheduleResult
+        results = []
+        for plan in plans:
+            result = ScheduleResult(
+                plan_id=plan.id,
+                scheduled_start=plan.plan_start_date,
+                scheduled_end=plan.plan_end_date,
+                assigned_workshop=plan.workshop or "默认车间",
+                assigned_line=plan.production_line or "默认生产线",
+                resource_utilization=0.8  # 默认利用率
+            )
+            results.append(result)
+        
+        # 生成甘特图数据
+        gantt_data = scheduler.get_gantt_data(results)
+        
+        logger.info(f"Generated Gantt chart data for {len(results)} plans")
+        return ResponseModel(
+            code=200,
+            message="获取甘特图数据成功",
+            data=gantt_data
+        )
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"参数错误: {str(e)}"
+        )
+    except Exception as e:
+        logger.error(f"Error getting Gantt chart data: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"获取甘特图数据失败: {str(e)}"
+        )
+
+@router.post("/optimize-schedule", response_model=ResponseModel[List[dict]])
+async def optimize_production_schedule(
+    plan_ids: List[int],
+    constraints: Optional[dict] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """优化生产排程"""
+    try:
+        scheduler = ProductionScheduler(db)
+        
+        # 使用平衡策略进行优化排程
+        results = scheduler.schedule_production_plans(
+            plan_ids, 
+            ScheduleStrategy.BALANCED,
+            datetime.now()
+        )
+        
+        # 计算优化指标
+        optimization_metrics = {
+            "total_plans": len(results),
+            "avg_utilization": sum(r.resource_utilization for r in results) / len(results) if results else 0,
+            "total_duration": 0,
+            "resource_distribution": {}
+        }
+        
+        if results:
+            start_time = min(r.scheduled_start for r in results)
+            end_time = max(r.scheduled_end for r in results)
+            optimization_metrics["total_duration"] = (end_time - start_time).days
+            
+            # 统计资源分布
+            for result in results:
+                workshop = result.assigned_workshop
+                if workshop not in optimization_metrics["resource_distribution"]:
+                    optimization_metrics["resource_distribution"][workshop] = 0
+                optimization_metrics["resource_distribution"][workshop] += 1
+        
+        # 转换为响应格式
+        schedule_data = []
+        for result in results:
+            schedule_data.append({
+                "plan_id": result.plan_id,
+                "scheduled_start": result.scheduled_start.isoformat(),
+                "scheduled_end": result.scheduled_end.isoformat(),
+                "assigned_workshop": result.assigned_workshop,
+                "assigned_line": result.assigned_line,
+                "resource_utilization": result.resource_utilization
+            })
+        
+        response_data = {
+            "schedule": schedule_data,
+            "metrics": optimization_metrics
+        }
+        
+        logger.info(f"Optimized schedule for {len(results)} production plans")
+        return ResponseModel(
+            code=200,
+            message="生产排程优化成功",
+            data=response_data
+        )
+        
+    except Exception as e:
+        logger.error(f"Error optimizing production schedule: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"排程优化失败: {str(e)}"
         )

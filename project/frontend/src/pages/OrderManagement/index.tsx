@@ -43,6 +43,9 @@ import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import axios from 'axios';
 import ImportExportModal from '../../components/ImportExport';
+import { Upload, message as antdMessage } from 'antd';
+import type { UploadProps } from 'antd';
+import * as XLSX from 'xlsx';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -120,6 +123,8 @@ const OrderManagement: React.FC = () => {
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [importExportVisible, setImportExportVisible] = useState(false);
   const [importExportType, setImportExportType] = useState<'import' | 'export'>('import');
+  const [bd400ImportVisible, setBd400ImportVisible] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
   const [editingRecord, setEditingRecord] = useState<OrderRecord | null>(null);
   const [selectedRecord, setSelectedRecord] = useState<OrderRecord | null>(null);
   const [form] = Form.useForm();
@@ -487,6 +492,94 @@ const OrderManagement: React.FC = () => {
     message.success('操作完成');
   };
 
+  // BD400导入处理函数
+  const handleBd400Import = async (file: File) => {
+    setImportLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await axios.post('/api/orders/import/bd400', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        const { imported_count, skipped_count, errors, warnings } = response.data.data;
+        let messageText = `导入完成！成功导入 ${imported_count} 条订单`;
+        if (skipped_count > 0) {
+          messageText += `，跳过 ${skipped_count} 条重复订单`;
+        }
+        message.success(messageText);
+        
+        if (errors && errors.length > 0) {
+          console.warn('导入错误:', errors);
+          message.warning(`存在 ${errors.length} 个错误，请检查控制台`);
+        }
+        
+        if (warnings && warnings.length > 0) {
+          console.warn('导入警告:', warnings);
+          message.warning(`存在 ${warnings.length} 个警告，请检查控制台`);
+        }
+        
+        setBd400ImportVisible(false);
+        fetchOrders();
+        fetchOrderStats();
+      } else {
+        message.error(response.data.message || 'BD400导入失败');
+      }
+    } catch (error) {
+      console.error('BD400导入失败:', error);
+      message.error('BD400导入失败');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  // 下载BD400导入模板
+  const downloadBd400Template = async () => {
+    try {
+      const response = await axios.get('/api/orders/export/template');
+      if (response.data.success) {
+        const templateData = response.data.data;
+        // 创建Excel文件并下载
+        const worksheet = XLSX.utils.json_to_sheet([templateData]);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'BD400订单模板');
+        XLSX.writeFile(workbook, 'BD400订单导入模板.xlsx');
+        message.success('模板下载成功');
+      } else {
+        message.error('模板下载失败');
+      }
+    } catch (error) {
+      console.error('模板下载失败:', error);
+      message.error('模板下载失败');
+    }
+  };
+
+  // 上传配置
+  const uploadProps: UploadProps = {
+    name: 'file',
+    accept: '.xlsx,.xls',
+    showUploadList: false,
+    beforeUpload: (file) => {
+      const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+                     file.type === 'application/vnd.ms-excel';
+      if (!isExcel) {
+        message.error('只能上传Excel文件！');
+        return false;
+      }
+      const isLt10M = file.size / 1024 / 1024 < 10;
+      if (!isLt10M) {
+        message.error('文件大小不能超过10MB！');
+        return false;
+      }
+      handleBd400Import(file);
+      return false; // 阻止自动上传
+    },
+  };
+
   return (
     <div className="order-management">
       {/* 统计卡片 */}
@@ -588,6 +681,9 @@ const OrderManagement: React.FC = () => {
           </Button>
           <Button icon={<UploadOutlined />} onClick={handleImport}>
             批量导入
+          </Button>
+          <Button icon={<UploadOutlined />} onClick={() => setBd400ImportVisible(true)}>
+            BD400导入
           </Button>
           <Button icon={<DownloadOutlined />} onClick={handleExport}>
             导出数据
@@ -919,6 +1015,53 @@ const OrderManagement: React.FC = () => {
         onCancel={() => setImportExportVisible(false)}
         onSuccess={handleImportExportSuccess}
       />
+
+      {/* BD400导入弹窗 */}
+      <Modal
+        title="BD400订单导入"
+        open={bd400ImportVisible}
+        onCancel={() => setBd400ImportVisible(false)}
+        footer={[
+          <Button key="template" onClick={downloadBd400Template}>
+            下载模板
+          </Button>,
+          <Button key="cancel" onClick={() => setBd400ImportVisible(false)}>
+            取消
+          </Button>
+        ]}
+        width={600}
+      >
+        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <Upload.Dragger {...uploadProps} disabled={importLoading}>
+            <p className="ant-upload-drag-icon">
+              <UploadOutlined style={{ fontSize: '48px', color: '#1890ff' }} />
+            </p>
+            <p className="ant-upload-text">
+              {importLoading ? '正在导入中...' : '点击或拖拽BD400订单表到此区域'}
+            </p>
+            <p className="ant-upload-hint">
+              支持Excel格式文件(.xlsx, .xls)，文件大小不超过10MB
+            </p>
+          </Upload.Dragger>
+          
+          {importLoading && (
+            <div style={{ marginTop: '20px' }}>
+              <Progress percent={50} status="active" />
+              <p style={{ marginTop: '10px', color: '#666' }}>正在解析并导入订单数据...</p>
+            </div>
+          )}
+          
+          <div style={{ marginTop: '20px', textAlign: 'left' }}>
+            <h4>导入说明：</h4>
+            <ul style={{ color: '#666', fontSize: '14px' }}>
+              <li>请确保Excel文件包含必要的列：订单号、客户名称、产品名称、数量、交货日期</li>
+              <li>系统会自动跳过重复的订单号</li>
+              <li>导入过程中如有错误，请查看控制台详细信息</li>
+              <li>建议先下载模板，按照模板格式整理数据</li>
+            </ul>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
