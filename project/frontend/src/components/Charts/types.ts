@@ -175,4 +175,38 @@ export type {
   PieChartProps as DonutChartProps
 } from './PieChart';
 
+// 高级图表组件类型
+export type {
+  Map3DDataItem,
+  Map3DChartProps
+} from './Map3DChart';
+
+export type {
+  TimeSeriesDataPoint,
+  TimeSeriesChartProps
+} from './TimeSeriesChart';
+
+export type {
+  Bar3DDataItem,
+  Bar3DChartProps
+} from './Bar3DChart';
+
+export type {
+  NetworkNode,
+  NetworkLink,
+  NetworkCategory,
+  NetworkChartProps
+} from './NetworkChart';
+
+export type {
+  SankeyNode,
+  SankeyLink,
+  SankeyChartProps
+} from './SankeyChart';
+
+export type {
+  FunnelDataItem,
+  FunnelChartProps
+} from './FunnelChart';
+
 // 业务图表组件类型已在上方定义，无需重复导出

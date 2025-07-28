@@ -6,7 +6,7 @@
 """
 
 from typing import List, Union, Optional
-from pydantic import AnyHttpUrl, validator
+from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings
 import os
 import sys
@@ -96,13 +96,16 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3001"
     ]
     
-    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
         elif isinstance(v, (list, str)):
             return v
         raise ValueError(v)
+    
+    # ALLOWED_EXTENSIONS 字段验证器已移除，使用默认值
     
     # 数据库配置
     DATABASE_URL: str = "sqlite:///./pmc.db"

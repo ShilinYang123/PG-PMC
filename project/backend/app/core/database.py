@@ -58,19 +58,22 @@ class DatabaseManager:
         
         try:
             # 初始化数据库连接
-            await self._init_postgresql()
+            await self._init_database()
             
-            # 初始化Redis连接
-            await self._init_redis()
+            # 初始化Redis连接（可选）
+            try:
+                await self._init_redis()
+            except Exception as e:
+                logger.warning(f"Redis连接失败，将跳过缓存功能: {str(e)}")
             
             self._initialized = True
-            logger.info("数据库连接初始化完成")
+            logger.info("数据库管理器初始化完成")
             
         except Exception as e:
             log_error(e, {"component": "database_manager"})
             raise DatabaseException(f"数据库初始化失败: {str(e)}")
     
-    async def _init_postgresql(self):
+    async def _init_database(self):
         """
         初始化数据库连接
         """

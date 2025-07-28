@@ -13,6 +13,7 @@ import MaterialManagement from '@/pages/MaterialManagement';
 import ProgressTracking from '@/pages/ProgressTracking';
 import Scheduling from '@/pages/Scheduling';
 import ChartDemo from './pages/ChartDemo';
+import AdvancedChartsDemo from './pages/AdvancedChartsDemo';
 import Reports from '@/pages/Reports';
 import NotificationCenter from '@/pages/NotificationCenter';
 import ReminderCenter from '@/pages/ReminderCenter';
@@ -67,6 +68,7 @@ const App: React.FC = () => {
                       </ProtectedRoute>
                     } />
                     <Route path="/charts" element={<ChartDemo />} />
+                    <Route path="/advanced-charts" element={<AdvancedChartsDemo />} />
                     <Route path="/reports" element={
                       <ProtectedRoute requiredPermission="report:read">
                         <Reports />

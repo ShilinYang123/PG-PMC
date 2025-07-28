@@ -77,7 +77,7 @@ const defaultConfig: AppConfig = {
   version: '1.0.0',
   description: 'PMC全流程管理系统前端应用',
   
-  apiBaseUrl: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000',
+  apiBaseUrl: process.env.REACT_APP_API_BASE_URL || (process.env.NODE_ENV === 'development' ? '' : 'http://localhost:8000'),
   apiVersion: process.env.REACT_APP_API_VERSION || '/api/v1',
   apiTimeout: parseInt(process.env.REACT_APP_API_TIMEOUT || '30000'),
   

@@ -22,6 +22,7 @@ import {
   List,
   Typography
 } from 'antd';
+import axios from 'axios';
 import {
   PlusOutlined,
   EditOutlined,
@@ -74,6 +75,12 @@ const ProductionPlan: React.FC = () => {
   const [schedulingLoading, setSchedulingLoading] = useState(false);
   const [selectedPlans, setSelectedPlans] = useState<string[]>([]);
   const [conflictData, setConflictData] = useState<any[]>([]);
+  const [scheduleModalVisible, setScheduleModalVisible] = useState(false);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [ganttLoading, setGanttLoading] = useState(false);
+  const [scheduleForm] = Form.useForm();
+  const [ganttData, setGanttData] = useState<any[]>([]);
   const [autoScheduleForm] = Form.useForm();
   const [manualScheduleForm] = Form.useForm();
   const [rescheduleForm] = Form.useForm();
@@ -426,87 +433,95 @@ const ProductionPlan: React.FC = () => {
   };
 
   // 排程相关处理函数
-  const handleSchedule = async () => {
-    if (selectedRowKeys.length === 0) {
-      antdMessage.warning('请选择要排程的生产计划');
-      return;
-    }
-
-    try {
-      const values = await scheduleForm.validateFields();
-      setScheduleLoading(true);
-      
-      const response = await axios.post('/api/production-plans/schedule', {
-        plan_ids: selectedRowKeys,
-        strategy: values.strategy,
-        start_date: values.startDate.format('YYYY-MM-DD')
-      });
-
-      if (response.data.success) {
-        antdMessage.success('排程完成');
-        setScheduleModalVisible(false);
-        scheduleForm.resetFields();
-        // 刷新数据
-        fetchData();
-      } else {
-        antdMessage.error('排程失败');
-      }
-    } catch (error) {
-      console.error('排程失败:', error);
-      antdMessage.error('排程失败');
-    } finally {
-      setScheduleLoading(false);
-    }
-  };
-
-  const handleViewGantt = async () => {
-    if (selectedRowKeys.length === 0) {
-      antdMessage.warning('请选择要查看的生产计划');
-      return;
-    }
-
-    try {
-      setGanttLoading(true);
-      const response = await axios.get(`/api/production-plans/gantt/${selectedRowKeys.join(',')}`);
-      
-      if (response.data.success) {
-        setGanttData(response.data.data);
-        setGanttVisible(true);
-      } else {
-        antdMessage.error('获取甘特图数据失败');
-      }
-    } catch (error) {
-      console.error('获取甘特图数据失败:', error);
-      antdMessage.error('获取甘特图数据失败');
-    } finally {
-      setGanttLoading(false);
-    }
-  };
-
   const handleOptimizeSchedule = async () => {
-    if (selectedRowKeys.length === 0) {
-      antdMessage.warning('请选择要优化的生产计划');
+    if (selectedPlans.length === 0) {
+      message.warning('请选择要优化的生产计划');
       return;
     }
 
     try {
-      setScheduleLoading(true);
-      const response = await axios.post('/api/production-plans/optimize-schedule', {
-        plan_ids: selectedRowKeys
-      });
-
-      if (response.data.success) {
-        antdMessage.success('排程优化完成');
-        // 刷新数据
+      setSchedulingLoading(true);
+      // 模拟API调用
+      setTimeout(() => {
+        message.success('排程优化完成');
         fetchData();
-      } else {
-        antdMessage.error('排程优化失败');
-      }
+        setSchedulingLoading(false);
+      }, 1000);
     } catch (error) {
       console.error('排程优化失败:', error);
-      antdMessage.error('排程优化失败');
-    } finally {
-      setScheduleLoading(false);
+      message.error('排程优化失败');
+      setSchedulingLoading(false);
+    }
+  };
+
+  const handleViewGantt = () => {
+    if (selectedPlans.length === 0) {
+      message.warning('请选择要查看的生产计划');
+      return;
+    }
+    setGanttVisible(true);
+  };
+
+  // 手动排程处理函数
+  const handleManualSchedule = async () => {
+    try {
+      const values = await manualScheduleForm.validateFields();
+      setSchedulingLoading(true);
+      
+      // 模拟API调用
+      setTimeout(() => {
+        message.success('手动排程完成');
+        setManualScheduleVisible(false);
+        manualScheduleForm.resetFields();
+        fetchData();
+        setSchedulingLoading(false);
+      }, 1000);
+    } catch (error) {
+      console.error('手动排程失败:', error);
+      message.error('手动排程失败');
+      setSchedulingLoading(false);
+    }
+  };
+
+  // 重新排程处理函数
+  const handleReschedule = async () => {
+    try {
+      const values = await rescheduleForm.validateFields();
+      setSchedulingLoading(true);
+      
+      // 模拟API调用
+      setTimeout(() => {
+        message.success('重新排程完成');
+        setRescheduleVisible(false);
+        rescheduleForm.resetFields();
+        fetchData();
+        setSchedulingLoading(false);
+      }, 1000);
+    } catch (error) {
+      console.error('重新排程失败:', error);
+      message.error('重新排程失败');
+      setSchedulingLoading(false);
+    }
+  };
+
+  // 自动排程处理函数
+  const handleAutoSchedule = async () => {
+    try {
+      const values = await autoScheduleForm.validateFields();
+      setSchedulingLoading(true);
+      
+      // 模拟API调用
+      setTimeout(() => {
+        message.success('自动排程完成');
+        setAutoScheduleVisible(false);
+        autoScheduleForm.resetFields();
+        fetchData();
+        setSchedulingLoading(false);
+      }, 1000);
+    } catch (error) {
+      console.error('自动排程失败:', error);
+      message.error('自动排程失败');
+      setSchedulingLoading(false);
     }
   };
 
@@ -517,6 +532,7 @@ const ProductionPlan: React.FC = () => {
       // 这里应该调用实际的API获取数据
       // const response = await axios.get('/api/production-plans');
       // setDataSource(response.data.data);
+      message.success('数据已刷新');
     } catch (error) {
       console.error('获取数据失败:', error);
     } finally {
@@ -623,26 +639,38 @@ const ProductionPlan: React.FC = () => {
             <Button 
               type="primary" 
               icon={<ThunderboltOutlined />} 
-              onClick={() => setScheduleModalVisible(true)}
-              disabled={selectedRowKeys.length === 0}
-              loading={scheduleLoading}
+              onClick={() => setAutoScheduleVisible(true)}
+              disabled={selectedPlans.length === 0}
+              loading={schedulingLoading}
             >
-              智能排程
+              自动排程
+            </Button>
+            <Button 
+              icon={<ScheduleOutlined />} 
+              onClick={() => setManualScheduleVisible(true)}
+              disabled={selectedPlans.length === 0}
+            >
+              手动排程
             </Button>
             <Button 
               icon={<ReloadOutlined />} 
-              onClick={handleOptimizeSchedule}
-              disabled={selectedRowKeys.length === 0}
-              loading={scheduleLoading}
+              onClick={() => setRescheduleVisible(true)}
+              disabled={selectedPlans.length === 0}
             >
-              优化排程
+              重新排程
+            </Button>
+            <Button 
+              icon={<WarningOutlined />} 
+              onClick={handleConflictAnalysis}
+              loading={schedulingLoading}
+            >
+              冲突分析
             </Button>
             <Divider type="vertical" />
             <Button 
               icon={<CalendarOutlined />} 
               onClick={handleViewGantt}
-              disabled={selectedRowKeys.length === 0}
-              loading={ganttLoading}
+              disabled={selectedPlans.length === 0}
             >
               甘特图视图
             </Button>

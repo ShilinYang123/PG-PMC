@@ -486,12 +486,12 @@ async def import_bd400_orders(
     """导入BD400订单表"""
     try:
         # 验证文件格式
-         if not file.filename or not file.filename.lower().endswith(('.xlsx', '.xls')):
-             return ResponseModel(
-                 success=False,
-                 message="只支持Excel文件格式(.xlsx, .xls)",
-                 data=None
-             )
+        if not file.filename or not file.filename.lower().endswith(('.xlsx', '.xls')):
+            return ResponseModel(
+                success=False,
+                message="只支持Excel文件格式(.xlsx, .xls)",
+                data=None
+            )
         
         # 读取文件内容
         file_content = await file.read()
@@ -503,34 +503,34 @@ async def import_bd400_orders(
         result = importer.import_from_excel(file_content)
         
         if result['success']:
-             logger.info(f"用户 {current_user.username} 成功导入BD400订单: {result['imported_count']}条")
-             return ResponseModel(
-                 success=True,
-                 message=result['message'],
-                 data={
-                     'imported_count': result['imported_count'],
-                     'skipped_count': result.get('skipped_count', 0),
-                     'errors': result.get('errors', []),
-                     'warnings': result.get('warnings', [])
-                 }
-             )
-         else:
-             return ResponseModel(
-                 success=False,
-                 message=result['message'],
-                 data={
-                     'errors': result.get('errors', []),
-                     'imported_count': result.get('imported_count', 0)
-                 }
-             )
-            
+            logger.info(f"用户 {current_user.username} 成功导入BD400订单: {result['imported_count']}条")
+            return ResponseModel(
+                success=True,
+                message=result['message'],
+                data={
+                    'imported_count': result['imported_count'],
+                    'skipped_count': result.get('skipped_count', 0),
+                    'errors': result.get('errors', []),
+                    'warnings': result.get('warnings', [])
+                }
+            )
+        else:
+            return ResponseModel(
+                success=False,
+                message=result['message'],
+                data={
+                    'errors': result.get('errors', []),
+                    'imported_count': result.get('imported_count', 0)
+                }
+            )
+             
     except Exception as e:
-         logger.error(f"BD400订单导入失败: {str(e)}")
-         return ResponseModel(
-             success=False,
-             message=f"导入失败: {str(e)}",
-             data=None
-         )
+        logger.error(f"BD400订单导入失败: {str(e)}")
+        return ResponseModel(
+            success=False,
+            message=f"导入失败: {str(e)}",
+            data=None
+        )
 
 @router.get("/export/template", response_model=ResponseModel[dict])
 async def get_order_template(

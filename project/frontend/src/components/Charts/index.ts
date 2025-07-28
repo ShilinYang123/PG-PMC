@@ -16,19 +16,13 @@ export { default as HeatmapChart } from './HeatmapChart';
 export { default as MultiAxisChart } from './MultiAxisChart';
 export { default as RealTimeChart } from './RealTimeChart';
 
-// 类型导出
-export type {
-  ProductionProgressData,
-  OrderStatusData,
-  EquipmentStatusData,
-  QualityTrendData,
-  MaterialInventoryData,
-  ChartConfig,
-  DashboardData,
-  RadarDataItem,
-  RadarIndicator,
-  HeatmapDataItem,
-  SeriesData,
-  YAxisConfig,
-  RealTimeDataPoint
-} from './types';
+// 高级图表组件
+export { default as Map3DChart } from './Map3DChart';
+export { default as TimeSeriesChart } from './TimeSeriesChart';
+export { default as Bar3DChart } from './Bar3DChart';
+export { default as NetworkChart } from './NetworkChart';
+export { default as SankeyChart } from './SankeyChart';
+export { default as FunnelChart } from './FunnelChart';
+
+// 类型定义
+export * from './types';

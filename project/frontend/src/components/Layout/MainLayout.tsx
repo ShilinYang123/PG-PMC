@@ -72,6 +72,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       label: '图表演示',
     },
     {
+      key: '/advanced-charts',
+      icon: <BarChartOutlined />,
+      label: '高级图表',
+    },
+    {
       key: '/reports',
       icon: <FileTextOutlined />,
       label: '报表生成',
