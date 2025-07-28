@@ -462,41 +462,105 @@ async def get_reports_dashboard(
         logger.error(f"获取报表仪表板数据异常: {e}")
         raise HTTPException(status_code=500, detail="获取报表仪表板数据失败")
 
-@router.get("/export/{report_type}")
+@router.get("/download/{filename}")
+async def download_report_file(
+    filename: str,
+    current_user: User = Depends(get_current_user)
+):
+    """下载报表文件"""
+    try:
+        # 构建文件路径
+        file_path = os.path.join(tempfile.gettempdir(), filename)
+        
+        # 检查文件是否存在
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="文件不存在")
+        
+        # 返回文件
+        return FileResponse(
+            path=file_path,
+            filename=filename,
+            media_type='application/octet-stream'
+        )
+        
+    except Exception as e:
+        logger.error(f"下载报表文件异常: {e}")
+        raise HTTPException(status_code=500, detail="下载文件失败")
+
+@router.get("/export/{report_type}", response_model=ResponseModel[Dict[str, str]])
 async def export_report(
     report_type: str,
     start_date: date = Query(..., description="开始日期"),
     end_date: date = Query(..., description="结束日期"),
-    format: str = Query(default="excel", description="导出格式: excel, pdf, csv"),
+    format: str = Query("excel", description="导出格式: excel, pdf, csv"),
+    workshop: Optional[str] = Query(None, description="车间筛选"),
+    production_line: Optional[str] = Query(None, description="生产线筛选"),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """导出报表"""
     try:
-        if report_type not in ["production", "quality", "equipment"]:
-            raise HTTPException(status_code=400, detail="不支持的报表类型")
-        
         # 获取报表数据
         if report_type == "production":
-            # 构建查询条件
+            # 获取生产报表数据
             filters = [
                 ProductionPlan.planned_start_date >= start_date,
                 ProductionPlan.planned_start_date <= end_date
             ]
             
+            if workshop:
+                filters.append(ProductionPlan.workshop.contains(workshop))
+            if production_line:
+                filters.append(ProductionPlan.production_line.contains(production_line))
+            
             base_query = db.query(ProductionPlan).filter(and_(*filters))
             plans = base_query.all()
             
-            # 构建报表数据
+            # 计算车间统计
+            workshop_stats = []
+            workshops = db.query(ProductionPlan.workshop).filter(and_(*filters)).distinct().all()
+            for (ws,) in workshops:
+                if ws:
+                    ws_plans = [p for p in plans if p.workshop == ws]
+                    workshop_stats.append({
+                        'workshop': ws,
+                        'total_plans': len(ws_plans),
+                        'avg_progress': sum([p.progress for p in ws_plans]) / len(ws_plans) if ws_plans else 0
+                    })
+            
+            # 计算日产量统计
+            daily_production = []
+            current_date = start_date
+            while current_date <= end_date:
+                day_plans = [p for p in plans if p.planned_start_date == current_date]
+                daily_production.append({
+                    'date': current_date.isoformat(),
+                    'count': len(day_plans)
+                })
+                current_date += timedelta(days=1)
+            
+            # 计算逾期计划
+            today = datetime.now().date()
+            overdue_plans = len([
+                p for p in plans 
+                if p.planned_end_date < today and p.status in [PlanStatus.CONFIRMED, PlanStatus.IN_PROGRESS]
+            ])
+            
             report_data = {
                 "total_plans": len(plans),
                 "completed_plans": len([p for p in plans if p.status == PlanStatus.COMPLETED]),
                 "in_progress_plans": len([p for p in plans if p.status == PlanStatus.IN_PROGRESS]),
-                "overdue_plans": 0,  # 需要根据实际逻辑计算
+                "overdue_plans": overdue_plans,
                 "completion_rate": len([p for p in plans if p.status == PlanStatus.COMPLETED]) / len(plans) * 100 if plans else 0,
                 "avg_progress": sum([p.progress for p in plans]) / len(plans) if plans else 0,
-                "workshop_stats": [],
-                "daily_production": []
+                "workshop_stats": workshop_stats,
+                "daily_production": daily_production,
+                "efficiency_analysis": {
+                    'on_time_completion_rate': len([p for p in plans if p.status == PlanStatus.COMPLETED and (p.actual_end_date or today) <= p.planned_end_date]) / len(plans) * 100 if plans else 0,
+                    'average_delay_days': 0,  # 需要根据实际完成时间计算
+                    'resource_utilization': sum([p.progress for p in plans]) / len(plans) if plans else 0
+                }
             }
             
         elif report_type == "quality":
@@ -509,19 +573,118 @@ async def export_report(
             base_query = db.query(QualityCheck).filter(and_(*filters))
             checks = base_query.all()
             
+            # 计算缺陷分析
+            defect_analysis = []
+            defect_types = db.query(QualityCheck.defect_type).filter(
+                and_(*filters), QualityCheck.result == QualityResult.FAILED
+            ).distinct().all()
+            
+            total_defects = len([c for c in checks if c.result == QualityResult.FAILED])
+            for (defect_type,) in defect_types:
+                if defect_type:
+                    count = len([c for c in checks if c.defect_type == defect_type and c.result == QualityResult.FAILED])
+                    defect_analysis.append({
+                        'defect_type': defect_type,
+                        'count': count,
+                        'percentage': count / total_defects * 100 if total_defects > 0 else 0
+                    })
+            
+            # 计算产品质量统计
+            product_quality = []
+            products = db.query(QualityCheck.product_name).filter(and_(*filters)).distinct().all()
+            for (product_name,) in products:
+                if product_name:
+                    product_checks = [c for c in checks if c.product_name == product_name]
+                    passed = len([c for c in product_checks if c.result == QualityResult.PASSED])
+                    total = len(product_checks)
+                    product_quality.append({
+                        'product_name': product_name,
+                        'total_checks': total,
+                        'passed_checks': passed,
+                        'pass_rate': passed / total * 100 if total > 0 else 0
+                    })
+            
+            # 计算质量趋势
+            quality_trends = []
+            current_date = start_date
+            while current_date <= end_date:
+                day_checks = [c for c in checks if c.check_date == current_date]
+                passed_checks = len([c for c in day_checks if c.result == QualityResult.PASSED])
+                quality_trends.append({
+                    'date': current_date.isoformat(),
+                    'total_checks': len(day_checks),
+                    'pass_rate': passed_checks / len(day_checks) * 100 if day_checks else 0
+                })
+                current_date += timedelta(days=1)
+            
             report_data = {
                 "total_checks": len(checks),
                 "passed_checks": len([c for c in checks if c.result == QualityResult.PASSED]),
                 "failed_checks": len([c for c in checks if c.result == QualityResult.FAILED]),
                 "pass_rate": len([c for c in checks if c.result == QualityResult.PASSED]) / len(checks) * 100 if checks else 0,
                 "defect_rate": len([c for c in checks if c.result == QualityResult.FAILED]) / len(checks) * 100 if checks else 0,
-                "defect_analysis": [],
-                "product_quality": []
+                "quality_trends": quality_trends,
+                "defect_analysis": defect_analysis,
+                "product_quality": product_quality
             }
             
         elif report_type == "equipment":
             # 获取设备报表数据
             equipment = db.query(Equipment).all()
+            
+            # 获取维护记录
+            maintenance_records = db.query(MaintenanceRecord).filter(
+                and_(
+                    MaintenanceRecord.maintenance_date >= start_date,
+                    MaintenanceRecord.maintenance_date <= end_date
+                )
+            ).all()
+            
+            # 计算维护统计
+            maintenance_stats = []
+            maintenance_types = db.query(MaintenanceRecord.maintenance_type).filter(
+                and_(
+                    MaintenanceRecord.maintenance_date >= start_date,
+                    MaintenanceRecord.maintenance_date <= end_date
+                )
+            ).distinct().all()
+            
+            for (maintenance_type,) in maintenance_types:
+                if maintenance_type:
+                    type_records = [r for r in maintenance_records if r.maintenance_type == maintenance_type]
+                    avg_cost = sum([r.cost for r in type_records if r.cost]) / len(type_records) if type_records else 0
+                    maintenance_stats.append({
+                        'maintenance_type': maintenance_type,
+                        'count': len(type_records),
+                        'avg_cost': avg_cost
+                    })
+            
+            # 计算故障分析
+            fault_analysis = []
+            equipment_types = db.query(Equipment.equipment_type).distinct().all()
+            for (equipment_type,) in equipment_types:
+                if equipment_type:
+                    type_equipment = [e for e in equipment if e.equipment_type == equipment_type]
+                    fault_count = len([e for e in type_equipment if e.status == EquipmentStatus.FAULT])
+                    fault_analysis.append({
+                        'equipment_type': equipment_type,
+                        'fault_count': fault_count,
+                        'fault_rate': fault_count / len(type_equipment) * 100 if type_equipment else 0
+                    })
+            
+            # 计算效率趋势
+            efficiency_trends = []
+            current_date = start_date
+            while current_date <= end_date:
+                day_maintenance = len([r for r in maintenance_records if r.maintenance_date == current_date])
+                running_equipment = len([e for e in equipment if e.status == EquipmentStatus.RUNNING])
+                utilization_rate = running_equipment / len(equipment) * 100 if equipment else 0
+                efficiency_trends.append({
+                    'date': current_date.isoformat(),
+                    'utilization_rate': utilization_rate,
+                    'maintenance_count': day_maintenance
+                })
+                current_date += timedelta(days=1)
             
             report_data = {
                 "total_equipment": len(equipment),
@@ -529,37 +692,41 @@ async def export_report(
                 "maintenance_equipment": len([e for e in equipment if e.status == EquipmentStatus.MAINTENANCE]),
                 "fault_equipment": len([e for e in equipment if e.status == EquipmentStatus.FAULT]),
                 "utilization_rate": len([e for e in equipment if e.status == EquipmentStatus.RUNNING]) / len(equipment) * 100 if equipment else 0,
-                "maintenance_stats": [],
-                "fault_analysis": []
+                "maintenance_stats": maintenance_stats,
+                "fault_analysis": fault_analysis,
+                "efficiency_trends": efficiency_trends
             }
+        else:
+            raise HTTPException(status_code=400, detail="不支持的报表类型")
         
         # 生成文件名
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{report_type}_report_{timestamp}.{format}"
         
+        # 导出文件
         if format == "excel":
-            filename = f"{report_type}_report_{timestamp}.xlsx"
             if report_type == "production":
                 filepath = report_exporter.export_production_report_excel(report_data, filename)
             elif report_type == "quality":
                 filepath = report_exporter.export_quality_report_excel(report_data, filename)
             elif report_type == "equipment":
                 filepath = report_exporter.export_equipment_report_excel(report_data, filename)
-                
         elif format == "pdf":
-            filename = f"{report_type}_report_{timestamp}.pdf"
             filepath = report_exporter.export_to_pdf(report_data, report_type, filename)
-            
         elif format == "csv":
-            filename = f"{report_type}_report_{timestamp}.csv"
             filepath = report_exporter.export_to_csv(report_data, report_type, filename)
+        else:
+            raise HTTPException(status_code=400, detail="不支持的导出格式")
         
-        # 返回文件
-        return FileResponse(
-            path=filepath,
-            filename=filename,
-            media_type='application/octet-stream'
+        # 返回下载链接
+        download_url = f"/api/reports/download/{os.path.basename(filepath)}"
+        
+        return ResponseModel(
+            code=200,
+            message="报表导出成功",
+            data={"download_url": download_url, "filename": filename}
         )
         
     except Exception as e:
         logger.error(f"导出报表异常: {e}")
-        raise HTTPException(status_code=500, detail=f"导出失败: {str(e)}")
+        raise HTTPException(status_code=500, detail="导出报表失败")

@@ -106,10 +106,10 @@ class Equipment(Base):
     description = Column(Text, comment="设备描述")
     remarks = Column(Text, comment="备注")
     
-    # 关联关系
-    operator = relationship("User", foreign_keys=[operator_id])
-    maintainer = relationship("User", foreign_keys=[maintainer_id])
-    manager = relationship("User", foreign_keys=[manager_id])
+    # 关联关系 - 暂时注释掉，避免循环依赖
+    # operator = relationship(User, foreign_keys=[operator_id], lazy="select")
+    # maintainer = relationship(User, foreign_keys=[maintainer_id], lazy="select")
+    # manager = relationship(User, foreign_keys=[manager_id], lazy="select")
     maintenance_records = relationship("MaintenanceRecord", back_populates="equipment")
     operation_logs = relationship("EquipmentOperationLog", back_populates="equipment")
 
@@ -169,9 +169,9 @@ class MaintenanceRecord(Base):
     
     # 关联关系
     equipment = relationship("Equipment", back_populates="maintenance_records")
-    assignee = relationship("User", foreign_keys=[assigned_to])
-    performer = relationship("User", foreign_keys=[performed_by])
-    approver = relationship("User", foreign_keys=[approved_by])
+    # assignee = relationship(User, foreign_keys=[assigned_to], lazy="select")
+    # performer = relationship(User, foreign_keys=[performed_by], lazy="select")
+    # approver = relationship(User, foreign_keys=[approved_by], lazy="select")
 
 
 class EquipmentOperationLog(Base):
@@ -205,7 +205,7 @@ class EquipmentOperationLog(Base):
     
     # 关联关系
     equipment = relationship("Equipment", back_populates="operation_logs")
-    operator = relationship("User")
+    # operator = relationship(User, foreign_keys=[operator_id], lazy="select")
 
 
 class EquipmentAlert(Base):
@@ -239,7 +239,7 @@ class EquipmentAlert(Base):
     
     # 关联关系
     equipment = relationship("Equipment")
-    handler = relationship("User")
+    # handler = relationship(User, foreign_keys=[handled_by], lazy="select")
 
 
 class EquipmentSpare(Base):

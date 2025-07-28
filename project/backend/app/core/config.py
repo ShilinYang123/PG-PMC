@@ -105,20 +105,37 @@ class Settings(BaseSettings):
         raise ValueError(v)
     
     # 数据库配置
-    DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/pmc_db"
+    DATABASE_URL: str = "sqlite:///./pmc.db"
     
     # 如果使用SQLite（开发环境）
     SQLITE_URL: str = "sqlite:///./pmc.db"
     
+    # SQL Server配置
+    SQLSERVER_HOST: str = "localhost"
+    SQLSERVER_PORT: int = 1433
+    SQLSERVER_DATABASE: str = "pmc_db"
+    SQLSERVER_USERNAME: str = ""
+    SQLSERVER_PASSWORD: str = ""
+    SQLSERVER_DRIVER: str = "ODBC Driver 17 for SQL Server"
+    SQLSERVER_TRUSTED_CONNECTION: bool = False
+    
+    # 数据库类型选择
+    DATABASE_TYPE: str = "sqlite"  # sqlite, sqlserver
+    
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         """获取数据库URI"""
-        if unified_settings and unified_settings.database_url:
-            return unified_settings.database_url
-        elif is_development() if unified_settings else self.ENVIRONMENT == "development":
-            return self.SQLITE_URL
+        if self.DATABASE_TYPE.lower() == "sqlserver":
+            # SQL Server连接字符串
+            if self.SQLSERVER_TRUSTED_CONNECTION:
+                # Windows身份验证
+                return f"mssql+pyodbc://@{self.SQLSERVER_HOST}:{self.SQLSERVER_PORT}/{self.SQLSERVER_DATABASE}?driver={self.SQLSERVER_DRIVER.replace(' ', '+')}&trusted_connection=yes"
+            else:
+                # SQL Server身份验证
+                return f"mssql+pyodbc://{self.SQLSERVER_USERNAME}:{self.SQLSERVER_PASSWORD}@{self.SQLSERVER_HOST}:{self.SQLSERVER_PORT}/{self.SQLSERVER_DATABASE}?driver={self.SQLSERVER_DRIVER.replace(' ', '+')}"
         else:
-            return self.DATABASE_URL
+            # 默认使用SQLite
+            return self.SQLITE_URL
     
     # JWT配置
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
@@ -188,6 +205,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "allow"  # 允许额外的字段
         
         @classmethod
         def customise_sources(

@@ -194,6 +194,7 @@ class DirectoryStructureGenerator:
             ".env.production",
             ".env.template",
             ".env.example",
+            ".env.sqlserver",
             ".gitignore",
             ".dockerignore",
             ".eslintrc.js",

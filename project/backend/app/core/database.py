@@ -7,7 +7,7 @@ PMC系统数据库连接模块
 
 import asyncio
 from typing import AsyncGenerator, Optional, Dict, Any
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from sqlalchemy import create_engine, event, pool
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
@@ -57,7 +57,7 @@ class DatabaseManager:
             return
         
         try:
-            # 初始化PostgreSQL连接
+            # 初始化数据库连接
             await self._init_postgresql()
             
             # 初始化Redis连接
@@ -72,53 +72,46 @@ class DatabaseManager:
     
     async def _init_postgresql(self):
         """
-        初始化PostgreSQL连接
+        初始化数据库连接
         """
-        # 异步引擎配置
-        async_engine_kwargs = {
+        # 同步引擎配置
+        sync_engine_kwargs = {
             "echo": settings.DEBUG,
-            "echo_pool": settings.DEBUG,
-            "pool_size": settings.DB_POOL_SIZE,
-            "max_overflow": settings.DB_MAX_OVERFLOW,
-            "pool_timeout": settings.DB_POOL_TIMEOUT,
-            "pool_recycle": settings.DB_POOL_RECYCLE,
             "pool_pre_ping": True,
         }
         
         # 根据数据库类型选择连接池
         if settings.DATABASE_URL.startswith("sqlite"):
-            async_engine_kwargs["poolclass"] = NullPool
-            async_engine_kwargs.pop("pool_size", None)
-            async_engine_kwargs.pop("max_overflow", None)
-            async_engine_kwargs.pop("pool_timeout", None)
-            async_engine_kwargs.pop("pool_recycle", None)
+            sync_engine_kwargs["poolclass"] = NullPool
+        elif settings.DATABASE_URL.startswith("mssql"):
+            # SQL Server特定配置
+            sync_engine_kwargs.update({
+                "poolclass": QueuePool,
+                "pool_size": settings.DB_POOL_SIZE,
+                "max_overflow": settings.DB_MAX_OVERFLOW,
+                "pool_timeout": settings.DB_POOL_TIMEOUT,
+                "pool_recycle": settings.DB_POOL_RECYCLE,
+                # SQL Server特定参数
+                "connect_args": {
+                    "timeout": 30,  # 连接超时
+                    "autocommit": False,  # 禁用自动提交
+                    "check_same_thread": False,  # 允许多线程
+                }
+            })
         else:
-            async_engine_kwargs["poolclass"] = QueuePool
+            # 其他数据库（如PostgreSQL）
+            sync_engine_kwargs.update({
+                "poolclass": QueuePool,
+                "pool_size": settings.DB_POOL_SIZE,
+                "max_overflow": settings.DB_MAX_OVERFLOW,
+                "pool_timeout": settings.DB_POOL_TIMEOUT,
+                "pool_recycle": settings.DB_POOL_RECYCLE,
+            })
         
-        # 创建异步引擎
-        self.async_engine = create_async_engine(
-            settings.DATABASE_URL,
-            **async_engine_kwargs
-        )
-        
-        # 创建同步引擎（用于某些特殊场景）
-        sync_url = settings.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
-        sync_url = sync_url.replace("sqlite+aiosqlite://", "sqlite://")
-        
-        sync_engine_kwargs = async_engine_kwargs.copy()
-        sync_engine_kwargs.pop("echo_pool", None)
-        
-        self.sync_engine = create_engine(sync_url, **sync_engine_kwargs)
+        # 创建同步引擎
+        self.sync_engine = create_engine(settings.DATABASE_URL, **sync_engine_kwargs)
         
         # 创建会话工厂
-        self.async_session_factory = async_sessionmaker(
-            bind=self.async_engine,
-            class_=AsyncSession,
-            expire_on_commit=False,
-            autoflush=True,
-            autocommit=False
-        )
-        
         self.sync_session_factory = sessionmaker(
             bind=self.sync_engine,
             autoflush=True,
@@ -129,9 +122,9 @@ class DatabaseManager:
         self._setup_engine_events()
         
         # 测试连接
-        await self._test_postgresql_connection()
+        self._test_database_connection()
         
-        logger.info(f"PostgreSQL连接初始化完成: {settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}")
+        logger.info(f"数据库连接初始化完成: {settings.DATABASE_URL}")
     
     async def _init_redis(self):
         """
@@ -165,10 +158,11 @@ class DatabaseManager:
         """
         设置数据库引擎事件监听器
         """
-        @event.listens_for(self.async_engine.sync_engine, "connect")
-        def set_sqlite_pragma(dbapi_connection, connection_record):
-            """设置SQLite pragma"""
+        @event.listens_for(self.sync_engine, "connect")
+        def set_database_pragma(dbapi_connection, connection_record):
+            """设置数据库特定配置"""
             if settings.DATABASE_URL.startswith("sqlite"):
+                # SQLite配置
                 cursor = dbapi_connection.cursor()
                 cursor.execute("PRAGMA foreign_keys=ON")
                 cursor.execute("PRAGMA journal_mode=WAL")
@@ -176,34 +170,45 @@ class DatabaseManager:
                 cursor.execute("PRAGMA cache_size=1000")
                 cursor.execute("PRAGMA temp_store=MEMORY")
                 cursor.close()
+            elif settings.DATABASE_URL.startswith("mssql"):
+                # SQL Server配置
+                cursor = dbapi_connection.cursor()
+                # 设置连接超时
+                cursor.execute("SET LOCK_TIMEOUT 30000")  # 30秒锁超时
+                # 设置事务隔离级别
+                cursor.execute("SET TRANSACTION ISOLATION LEVEL READ COMMITTED")
+                # 启用ANSI_NULLS
+                cursor.execute("SET ANSI_NULLS ON")
+                # 启用QUOTED_IDENTIFIER
+                cursor.execute("SET QUOTED_IDENTIFIER ON")
+                cursor.close()
         
-        @event.listens_for(self.async_engine.sync_engine, "checkout")
+        @event.listens_for(self.sync_engine, "checkout")
         def receive_checkout(dbapi_connection, connection_record, connection_proxy):
             """连接检出事件"""
             logger.debug("数据库连接检出")
         
-        @event.listens_for(self.async_engine.sync_engine, "checkin")
+        @event.listens_for(self.sync_engine, "checkin")
         def receive_checkin(dbapi_connection, connection_record):
             """连接检入事件"""
             logger.debug("数据库连接检入")
         
-        @event.listens_for(self.async_engine.sync_engine, "invalidate")
+        @event.listens_for(self.sync_engine, "invalidate")
         def receive_invalidate(dbapi_connection, connection_record, exception):
             """连接失效事件"""
             logger.warning(f"数据库连接失效: {exception}")
     
-    async def _test_postgresql_connection(self):
+    def _test_database_connection(self):
         """
-        测试PostgreSQL连接
+        测试数据库连接
         """
         try:
-            async with self.async_session_factory() as session:
-                result = await session.execute(text("SELECT 1"))
-                result.scalar()
-                logger.info("PostgreSQL连接测试成功")
+            with self.sync_engine.begin() as conn:
+                result = conn.execute(text("SELECT 1"))
+                logger.info("数据库连接测试成功")
         except Exception as e:
-            log_error(e, {"component": "postgresql_test"})
-            raise DatabaseException(f"PostgreSQL连接测试失败: {str(e)}")
+            logger.error(f"数据库连接测试失败: {e}")
+            raise DatabaseException(f"数据库连接失败: {e}")
     
     async def _test_redis_connection(self):
         """
@@ -241,38 +246,16 @@ class DatabaseManager:
         except Exception as e:
             log_error(e, {"component": "database_close"})
     
-    @asynccontextmanager
-    async def get_async_session(self) -> AsyncGenerator[AsyncSession, None]:
-        """
-        获取异步数据库会话
-        
-        Yields:
-            AsyncSession: 异步数据库会话
-        """
-        if not self._initialized:
-            await self.initialize()
-        
-        session = self.async_session_factory()
-        try:
-            yield session
-            await session.commit()
-        except Exception as e:
-            await session.rollback()
-            log_error(e, {"component": "async_session"})
-            raise
-        finally:
-            await session.close()
-    
-    @asynccontextmanager
-    async def get_sync_session(self) -> Session:
+    @contextmanager
+    def get_sync_session(self) -> Session:
         """
         获取同步数据库会话
         
-        Yields:
+        Returns:
             Session: 同步数据库会话
         """
-        if not self._initialized:
-            await self.initialize()
+        if not self.is_initialized:
+            raise DatabaseException("数据库未初始化")
         
         session = self.sync_session_factory()
         try:
@@ -280,7 +263,7 @@ class DatabaseManager:
             session.commit()
         except Exception as e:
             session.rollback()
-            log_error(e, {"component": "sync_session"})
+            logger.error(f"数据库会话错误: {e}")
             raise
         finally:
             session.close()
@@ -368,14 +351,14 @@ db_manager = DatabaseManager()
 
 
 # 依赖注入函数
-async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
+def get_sync_db():
     """
-    获取异步数据库会话的依赖注入函数
+    获取同步数据库会话的依赖注入函数
     
     Yields:
-        AsyncSession: 异步数据库会话
+        Session: 同步数据库会话
     """
-    async with db_manager.get_async_session() as session:
+    with db_manager.get_sync_session() as session:
         yield session
 
 
@@ -402,20 +385,20 @@ def with_db_session(auto_commit: bool = True, reraise: bool = True):
         from functools import wraps
         
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs):
             try:
-                async with db_manager.get_async_session() as session:
+                with db_manager.get_sync_session() as session:
                     # 将session作为第一个参数传递
-                    result = await func(session, *args, **kwargs)
+                    result = func(session, *args, **kwargs)
                     
                     if auto_commit:
-                        await session.commit()
+                        session.commit()
                     
                     return result
             except Exception as e:
                 if reraise:
                     raise
-                log_error(e, {"function": func.__name__})
+                logger.error(f"数据库会话错误: {e}")
                 return None
         
         return wrapper
@@ -434,18 +417,18 @@ def with_transaction(isolation_level: str = None):
         from functools import wraps
         
         @wraps(func)
-        async def wrapper(*args, **kwargs):
-            async with db_manager.get_async_session() as session:
+        def wrapper(*args, **kwargs):
+            with db_manager.get_sync_session() as session:
                 if isolation_level:
-                    await session.execute(text(f"SET TRANSACTION ISOLATION LEVEL {isolation_level}"))
+                    session.execute(text(f"SET TRANSACTION ISOLATION LEVEL {isolation_level}"))
                 
                 try:
-                    result = await func(session, *args, **kwargs)
-                    await session.commit()
+                    result = func(session, *args, **kwargs)
+                    session.commit()
                     return result
                 except Exception as e:
-                    await session.rollback()
-                    log_error(e, {"function": func.__name__, "transaction": True})
+                    session.rollback()
+                    logger.error(f"事务错误: {e}")
                     raise
         
         return wrapper
@@ -462,13 +445,22 @@ def monitor_db_performance(operation_name: str = None):
     """
     def decorator(func):
         from functools import wraps
+        import time
         
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs):
             operation = operation_name or func.__name__
+            start_time = time.time()
             
-            with log_performance(f"db_operation_{operation}"):
-                return await func(*args, **kwargs)
+            try:
+                result = func(*args, **kwargs)
+                end_time = time.time()
+                logger.debug(f"数据库操作 {operation} 耗时: {(end_time - start_time) * 1000:.2f}ms")
+                return result
+            except Exception as e:
+                end_time = time.time()
+                logger.error(f"数据库操作 {operation} 失败，耗时: {(end_time - start_time) * 1000:.2f}ms，错误: {e}")
+                raise
         
         return wrapper
     return decorator
@@ -492,14 +484,14 @@ async def close_database():
 
 
 # 兼容性函数（保持向后兼容）
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
+def get_db():
     """
     获取数据库会话（兼容性函数）
     
     Yields:
-        AsyncSession: 异步数据库会话
+        Session: 同步数据库会话
     """
-    async with db_manager.get_async_session() as session:
+    with db_manager.get_sync_session() as session:
         yield session
 
 
@@ -507,7 +499,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 __all__ = [
     'DatabaseManager',
     'db_manager',
-    'get_async_db',
+    'get_sync_db',
     'get_redis',
     'get_db',
     'init_database',

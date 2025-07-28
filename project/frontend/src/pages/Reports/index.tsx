@@ -1,29 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Card,
   Row,
   Col,
   DatePicker,
+  Select,
   Button,
-  Tabs,
-  Statistic,
   Table,
-  Space,
+  Statistic,
+  Tabs,
   message,
   Spin,
-  Typography
+  Space,
+  Typography,
+  Divider,
+  Form,
+  Input,
+  Switch,
+  Tooltip,
+  Progress,
+  Tag,
+  Alert,
+  Dropdown
 } from 'antd';
 import {
+  DownloadOutlined,
+  FileExcelOutlined,
+  FilePdfOutlined,
   BarChartOutlined,
   LineChartOutlined,
-  FileExcelOutlined,
-  FilePdfOutlined
+  PieChartOutlined,
+  ReloadOutlined,
+  SettingOutlined,
+  EyeOutlined,
+  FilterOutlined,
+  MoreOutlined
 } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
+import * as echarts from 'echarts';
 import { LineChart, BarChart, PieChart } from '../../components/Charts';
+import { reportApi } from '../../services/api';
 
 const { RangePicker } = DatePicker;
+const { Option } = Select;
 const { TabPane } = Tabs;
 const { Title, Text } = Typography;
 
@@ -32,6 +52,7 @@ interface ReportRequest {
   start_date: string;
   end_date: string;
   format?: string;
+  filters?: FilterOptions;
 }
 
 interface ProductionReportData {
@@ -104,6 +125,24 @@ interface EquipmentReportData {
   }>;
 }
 
+// 筛选条件接口
+interface FilterOptions {
+  workshop?: string;
+  productionLine?: string;
+  equipmentType?: string;
+  productName?: string;
+}
+
+// 图表配置接口
+interface ChartConfig {
+  type: 'line' | 'bar' | 'pie' | 'area';
+  title: string;
+  dataKey: string;
+  color?: string;
+  showLegend?: boolean;
+  showGrid?: boolean;
+}
+
 const Reports: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
@@ -114,6 +153,13 @@ const Reports: React.FC = () => {
   const [productionData, setProductionData] = useState<ProductionReportData | null>(null);
   const [qualityData, setQualityData] = useState<QualityReportData | null>(null);
   const [equipmentData, setEquipmentData] = useState<EquipmentReportData | null>(null);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
+  const [chartConfigs, setChartConfigs] = useState<Record<string, ChartConfig>>({});
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState(30000); // 30秒
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const chartRefs = useRef<Record<string, echarts.ECharts>>({});
+  const refreshTimer = useRef<NodeJS.Timeout>();
 
   // API调用
   const fetchProductionReport = async (request: ReportRequest) => {
@@ -287,7 +333,8 @@ const Reports: React.FC = () => {
   const generateReport = () => {
     const request: ReportRequest = {
       start_date: dateRange[0].format('YYYY-MM-DD'),
-      end_date: dateRange[1].format('YYYY-MM-DD')
+      end_date: dateRange[1].format('YYYY-MM-DD'),
+      filters: filterOptions
     };
 
     switch (activeTab) {
@@ -303,46 +350,174 @@ const Reports: React.FC = () => {
     }
   };
 
-  const exportReport = async (format: string) => {
-    try {
-      message.info(`正在导出${format.toUpperCase()}格式报表...`);
-      
-      const params = new URLSearchParams({
-        start_date: dateRange[0].format('YYYY-MM-DD'),
-        end_date: dateRange[1].format('YYYY-MM-DD'),
-        format: format
-      });
-      
-      const response = await fetch(`/api/reports/export/${activeTab}?${params}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('导出请求失败');
-      }
-      
-      const result = await response.json();
-      if (result.code === 200) {
-        message.success(`${format.toUpperCase()}格式报表导出成功`);
-        // 这里可以处理下载链接
-        if (result.data.download_url) {
-          window.open(result.data.download_url, '_blank');
-        }
-      } else {
-        throw new Error(result.message || '导出失败');
-      }
-    } catch (error) {
-      console.error('导出报表失败:', error);
-      message.error(`导出${format.toUpperCase()}格式报表失败`);
+  // 自动刷新功能
+  const startAutoRefresh = () => {
+    if (refreshTimer.current) {
+      clearInterval(refreshTimer.current);
+    }
+    refreshTimer.current = setInterval(() => {
+      generateReport();
+    }, refreshInterval);
+  };
+
+  const stopAutoRefresh = () => {
+    if (refreshTimer.current) {
+      clearInterval(refreshTimer.current);
+      refreshTimer.current = undefined;
     }
   };
 
+  // 处理自动刷新开关
+  const handleAutoRefreshChange = (checked: boolean) => {
+    setAutoRefresh(checked);
+    if (checked) {
+      startAutoRefresh();
+    } else {
+      stopAutoRefresh();
+    }
+  };
+
+  // 更新筛选条件
+  const updateFilterOptions = (newFilters: Partial<FilterOptions>) => {
+    setFilterOptions(prev => ({ ...prev, ...newFilters }));
+  };
+
+  // 清除筛选条件
+  const clearFilters = () => {
+    setFilterOptions({});
+  };
+
+  const exportReport = async (format: string) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        start_date: dateRange[0].format('YYYY-MM-DD'),
+        end_date: dateRange[1].format('YYYY-MM-DD'),
+        format,
+        ...filterOptions
+      });
+      
+      // 调用导出API
+      const response = await fetch(`/api/reports/export/${activeTab}?${params}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.code === 200) {
+          // 获取下载链接
+          const downloadUrl = result.data.download_url;
+          const filename = result.data.filename;
+          
+          // 创建下载链接
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.setAttribute('download', filename);
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          message.success('报表导出成功');
+        } else {
+          message.error(result.message || '导出失败');
+        }
+      } else {
+        message.error('导出请求失败');
+      }
+    } catch (error) {
+      console.error('导出报表失败:', error);
+      message.error('导出报表失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 批量导出所有报表
+  const exportAllReports = async (format: string) => {
+    const reportTypes = ['production', 'quality', 'equipment'];
+    const exportPromises = reportTypes.map(type => {
+      const params = new URLSearchParams({
+        start_date: dateRange[0].format('YYYY-MM-DD'),
+        end_date: dateRange[1].format('YYYY-MM-DD'),
+        format
+      });
+      
+      return fetch(`/api/reports/export/${type}?${params}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+    });
+    
+    try {
+      setLoading(true);
+      const responses = await Promise.all(exportPromises);
+      
+      for (let i = 0; i < responses.length; i++) {
+        const response = responses[i];
+        if (response.ok) {
+          const result = await response.json();
+          if (result.code === 200) {
+            const link = document.createElement('a');
+            link.href = result.data.download_url;
+            link.setAttribute('download', result.data.filename);
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }
+        }
+      }
+      
+      message.success('所有报表导出成功');
+    } catch (error) {
+      console.error('批量导出失败:', error);
+      message.error('批量导出失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 初始化加载
   useEffect(() => {
     generateReport();
-  }, [activeTab, dateRange]);
+  }, [activeTab, dateRange, filterOptions]);
+
+  // 组件卸载时清理定时器
+  useEffect(() => {
+    return () => {
+      stopAutoRefresh();
+    };
+  }, []);
+
+  // 监听自动刷新状态变化
+  useEffect(() => {
+    if (autoRefresh) {
+      startAutoRefresh();
+    } else {
+      stopAutoRefresh();
+    }
+    return () => stopAutoRefresh();
+  }, [autoRefresh, refreshInterval, activeTab]);
+
+  // 切换标签页时重新生成报表
+  const handleTabChange = (key: string) => {
+    setActiveTab(key);
+    // 清除当前标签页的筛选条件
+    clearFilters();
+  };
+
+  // 手动刷新
+  const handleManualRefresh = () => {
+    generateReport();
+  };
 
   // 生产报表内容
   const renderProductionReport = () => {
@@ -473,9 +648,10 @@ const Reports: React.FC = () => {
     }));
 
     const pieData = qualityData.defect_analysis.map(item => ({
-       type: item.defect_type,
-       value: item.count
-     }));
+      name: item.defect_type,
+      value: item.count,
+      type: 'defect'
+    }));
 
     return (
       <div>
@@ -635,6 +811,52 @@ const Reports: React.FC = () => {
           </Col>
         </Row>
 
+        <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="设备利用率"
+                value={equipmentData.utilization_rate}
+                suffix="%"
+                precision={1}
+                valueStyle={{ color: equipmentData.utilization_rate >= 80 ? '#3f8600' : '#cf1322' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="平均故障间隔"
+                value={Math.round(720 / (equipmentData.fault_equipment || 1))}
+                suffix="小时"
+                valueStyle={{ color: '#1890ff' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="维护成本"
+                value={equipmentData.maintenance_stats.reduce((sum, item) => sum + (item.avg_cost * item.count), 0)}
+                prefix="¥"
+                precision={0}
+                valueStyle={{ color: '#722ed1' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="设备完好率"
+                value={((equipmentData.running_equipment + equipmentData.maintenance_equipment) / equipmentData.total_equipment * 100)}
+                suffix="%"
+                precision={1}
+                valueStyle={{ color: '#52c41a' }}
+              />
+            </Card>
+          </Col>
+        </Row>
+
         <Row gutter={[16, 16]}>
           <Col span={24}>
             <Card title="设备利用率趋势">
@@ -671,52 +893,203 @@ const Reports: React.FC = () => {
     );
   };
 
+  // 渲染高级筛选器
+  const renderAdvancedFilters = () => {
+    return (
+      <Card 
+        size="small" 
+        title="高级筛选" 
+        extra={
+          <Button size="small" onClick={clearFilters}>
+            清除筛选
+          </Button>
+        }
+        style={{ marginBottom: 16 }}
+      >
+        <Row gutter={[16, 8]}>
+          {activeTab === 'production' && (
+            <>
+              <Col span={6}>
+                <Form.Item label="车间" style={{ marginBottom: 8 }}>
+                  <Select
+                    placeholder="选择车间"
+                    allowClear
+                    value={filterOptions.workshop}
+                    onChange={(value) => updateFilterOptions({ workshop: value })}
+                  >
+                    <Option value="车间A">车间A</Option>
+                    <Option value="车间B">车间B</Option>
+                    <Option value="车间C">车间C</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={6}>
+                <Form.Item label="生产线" style={{ marginBottom: 8 }}>
+                  <Select
+                    placeholder="选择生产线"
+                    allowClear
+                    value={filterOptions.productionLine}
+                    onChange={(value) => updateFilterOptions({ productionLine: value })}
+                  >
+                    <Option value="生产线1">生产线1</Option>
+                    <Option value="生产线2">生产线2</Option>
+                    <Option value="生产线3">生产线3</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            </>
+          )}
+          {activeTab === 'quality' && (
+            <Col span={6}>
+              <Form.Item label="产品名称" style={{ marginBottom: 8 }}>
+                <Input
+                  placeholder="输入产品名称"
+                  allowClear
+                  value={filterOptions.productName}
+                  onChange={(e) => updateFilterOptions({ productName: e.target.value })}
+                />
+              </Form.Item>
+            </Col>
+          )}
+          {activeTab === 'equipment' && (
+            <Col span={6}>
+              <Form.Item label="设备类型" style={{ marginBottom: 8 }}>
+                <Select
+                  placeholder="选择设备类型"
+                  allowClear
+                  value={filterOptions.equipmentType}
+                  onChange={(value) => updateFilterOptions({ equipmentType: value })}
+                >
+                  <Option value="生产设备">生产设备</Option>
+                  <Option value="检测设备">检测设备</Option>
+                  <Option value="辅助设备">辅助设备</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          )}
+        </Row>
+      </Card>
+    );
+  };
+
   return (
     <div style={{ padding: 24 }}>
       <Title level={2}>报表生成</Title>
       
       <Card style={{ marginBottom: 24 }}>
-        <Row gutter={16} align="middle">
-          <Col>
-            <Text strong>时间范围：</Text>
-          </Col>
-          <Col>
-            <RangePicker
-              value={dateRange}
-              onChange={(dates) => {
-                if (dates && dates[0] && dates[1]) {
-                  setDateRange([dates[0], dates[1]]);
-                }
-              }}
-              format="YYYY-MM-DD"
-            />
-          </Col>
-          <Col>
-            <Button type="primary" onClick={generateReport} loading={loading}>
-              生成报表
-            </Button>
-          </Col>
-          <Col>
+        <Row gutter={[16, 16]} align="middle">
+          <Col span={8}>
             <Space>
-              <Button 
-                icon={<FileExcelOutlined />} 
-                onClick={() => exportReport('excel')}
-              >
-                导出Excel
+              <Text strong>时间范围：</Text>
+              <RangePicker
+                value={dateRange}
+                onChange={(dates) => {
+                  if (dates && dates[0] && dates[1]) {
+                    setDateRange([dates[0], dates[1]]);
+                  }
+                }}
+                format="YYYY-MM-DD"
+              />
+            </Space>
+          </Col>
+          <Col span={8}>
+            <Space>
+              <Button type="primary" onClick={() => generateReport()} loading={loading}>
+                生成报表
               </Button>
               <Button 
-                icon={<FilePdfOutlined />} 
-                onClick={() => exportReport('pdf')}
+                icon={<ReloadOutlined />}
+                onClick={handleManualRefresh}
+                loading={loading}
               >
-                导出PDF
+                刷新
+              </Button>
+              <Button 
+                icon={<FilterOutlined />}
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              >
+                {showAdvancedFilters ? '隐藏筛选' : '高级筛选'}
               </Button>
             </Space>
           </Col>
+          <Col span={8}>
+            <Space>
+              <Text>自动刷新:</Text>
+              <Switch
+                checked={autoRefresh}
+                onChange={handleAutoRefreshChange}
+                size="small"
+              />
+              <Button.Group>
+                <Button 
+                  type="primary" 
+                  icon={<FileExcelOutlined />}
+                  onClick={() => exportReport('excel')}
+                  loading={loading}
+                >
+                  导出Excel
+                </Button>
+                <Button 
+                  icon={<FilePdfOutlined />}
+                  onClick={() => exportReport('pdf')}
+                  loading={loading}
+                >
+                  导出PDF
+                </Button>
+                <Button 
+                  icon={<DownloadOutlined />}
+                  onClick={() => exportReport('csv')}
+                  loading={loading}
+                >
+                  导出CSV
+                </Button>
+              </Button.Group>
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: 'excel',
+                      label: '批量导出Excel',
+                      icon: <FileExcelOutlined />,
+                      onClick: () => exportAllReports('excel')
+                    },
+                    {
+                      key: 'pdf',
+                      label: '批量导出PDF',
+                      icon: <FilePdfOutlined />,
+                      onClick: () => exportAllReports('pdf')
+                    },
+                    {
+                      key: 'csv',
+                      label: '批量导出CSV',
+                      icon: <DownloadOutlined />,
+                      onClick: () => exportAllReports('csv')
+                    }
+                  ]
+                }}
+                placement="bottomRight"
+              >
+                <Button icon={<MoreOutlined />}>
+                  批量导出
+                </Button>
+              </Dropdown>
+            </Space>
+          </Col>
         </Row>
+        {autoRefresh && (
+          <Alert
+            message={`自动刷新已开启，每${refreshInterval/1000}秒刷新一次`}
+            type="info"
+            showIcon
+            style={{ marginTop: 16 }}
+          />
+        )}
       </Card>
+      
+      {showAdvancedFilters && renderAdvancedFilters()}
 
       <Spin spinning={loading}>
-        <Tabs activeKey={activeTab} onChange={setActiveTab}>
+        <Tabs activeKey={activeTab} onChange={handleTabChange}>
           <TabPane tab="生产报表" key="production">
             {renderProductionReport()}
           </TabPane>
