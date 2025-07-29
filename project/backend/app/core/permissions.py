@@ -63,6 +63,15 @@ class Permission(Enum):
     REMINDER_READ = "reminder:read"
     REMINDER_WRITE = "reminder:write"
     REMINDER_SEND = "reminder:send"
+    
+    # 备份管理权限
+    BACKUP_READ = "backup:read"
+    BACKUP_WRITE = "backup:write"
+    BACKUP_DELETE = "backup:delete"
+    BACKUP_RESTORE = "backup:restore"
+    
+    # 管理员权限（用于备份等高级功能）
+    ADMIN = "admin"
 
 
 class Role(Enum):
@@ -89,6 +98,8 @@ ROLE_PERMISSIONS = {
         Permission.SYSTEM_ADMIN, Permission.SYSTEM_CONFIG,
         Permission.NOTIFICATION_READ, Permission.NOTIFICATION_WRITE, Permission.NOTIFICATION_SEND,
         Permission.REMINDER_READ, Permission.REMINDER_WRITE, Permission.REMINDER_SEND,
+        Permission.BACKUP_READ, Permission.BACKUP_WRITE, Permission.BACKUP_DELETE, Permission.BACKUP_RESTORE,
+        Permission.ADMIN,
     ],
     Role.MANAGER: [
         # 经理权限

@@ -22,19 +22,21 @@ import json
 
 from ..database import get_db
 from ..services.file_service import file_service
-from ..models.progress import ProgressImport, ProgressExport
-from ..models.scheduling import EquipmentImport, EquipmentExport
-from ..models.material import MaterialImport, MaterialExport
-from ..models.production_plan import ProductionPlanImport, ProductionPlanExport
-from ..models.order import OrderImport
-from ..models.user import UserExport
+from ..models.progress import ProgressRecord
+from ..models.equipment import Equipment
+from ..models.material import Material
+from ..models.production_plan import ProductionPlan
+from ..models.order import Order
+from ..models.user import User
+from ..models.quality import QualityRecord
+from ..models.notification import NotificationRecord
 from ..schemas.import_export import (
     ImportRequest, ExportRequest, ImportResponse, ExportResponse,
     FileUploadResponse, TemplateRequest
 )
 from ..core.exceptions import ValidationException, BusinessException
 from ..core.auth import get_current_user
-from ..models.user import User
+from ..core.celery_app import celery_app
 
 router = APIRouter(prefix="/import-export", tags=["数据导入导出"])
 
@@ -133,17 +135,15 @@ async def import_data(
         # 数据验证和清理
         df = _clean_import_data(df, data_type)
         
-        # 启动后台导入任务
-        task_id = f"import_{data_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        # 启动Celery后台任务处理数据
+        from ..tasks.import_export_tasks import process_import_data_task
         
-        background_tasks.add_task(
-            _process_import_data,
-            task_id=task_id,
+        task = process_import_data_task.delay(
             data_type=data_type,
             data=df.to_dict('records'),
-            user_id=current_user.id,
-            db=db
+            user_id=current_user.id
         )
+        task_id = task.id
         
         return ImportResponse(
             success=True,
@@ -192,17 +192,15 @@ async def export_data(
                 f"支持的类型: {', '.join(supported_types)}"
             )
         
-        # 启动后台导出任务
-        task_id = f"export_{data_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        # 启动Celery后台任务处理数据
+        from ..tasks.import_export_tasks import process_export_data_task
         
-        background_tasks.add_task(
-            _process_export_data,
-            task_id=task_id,
+        task = process_export_data_task.delay(
             data_type=data_type,
-            request=request,
-            user_id=current_user.id,
-            db=db
+            request=request.dict(),
+            user_id=current_user.id
         )
+        task_id = task.id
         
         return ExportResponse(
             success=True,
@@ -312,19 +310,43 @@ async def get_task_status(
         Dict: 任务状态
     """
     try:
-        # 这里应该从任务队列或数据库查询任务状态
-        # 暂时返回模拟状态
-        return {
-            "task_id": task_id,
-            "status": "completed",
-            "progress": 100,
-            "message": "任务已完成",
-            "result": {
-                "success_count": 100,
-                "error_count": 0,
-                "total_count": 100
+        # 从Celery获取任务状态
+        task_result = celery_app.AsyncResult(task_id)
+        
+        if task_result.state == 'PENDING':
+            response = {
+                "task_id": task_id,
+                "status": "pending",
+                "progress": 0,
+                "message": "任务等待处理",
+                "result": None
             }
-        }
+        elif task_result.state == 'PROGRESS':
+            response = {
+                "task_id": task_id,
+                "status": "processing",
+                "progress": task_result.info.get('progress', 0),
+                "message": task_result.info.get('message', '任务处理中'),
+                "result": task_result.info.get('result', None)
+            }
+        elif task_result.state == 'SUCCESS':
+            response = {
+                "task_id": task_id,
+                "status": "completed",
+                "progress": 100,
+                "message": "任务已完成",
+                "result": task_result.result
+            }
+        else:  # FAILURE
+            response = {
+                "task_id": task_id,
+                "status": "failed",
+                "progress": 0,
+                "message": str(task_result.info),
+                "result": None
+            }
+        
+        return response
         
     except Exception as e:
         logger.error(f"获取任务状态失败: {e}")

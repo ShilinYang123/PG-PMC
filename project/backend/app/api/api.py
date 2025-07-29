@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.endpoints import auth, users, orders, production_plans, materials, progress, scheduling, wechat, notifications, reminder, reminder_notifications, import_export, reports
+from app.api.endpoints import auth, users, orders, production_plans, materials, progress, scheduling, wechat, notifications, reminder, reminder_notifications, import_export, reports, backup
 from app.api.v1.endpoints import config
 
 api_router = APIRouter()
@@ -45,3 +45,6 @@ api_router.include_router(import_export.router, prefix="/import-export", tags=["
 
 # 报表生成路由
 api_router.include_router(reports.router, prefix="/reports", tags=["报表生成"])
+
+# 数据备份恢复路由
+api_router.include_router(backup.router, prefix="/backup", tags=["数据备份恢复"])

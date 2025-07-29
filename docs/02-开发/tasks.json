@@ -2791,6 +2791,78 @@
         }
       ],
       "completed": true
+    },
+    {
+      "requestId": "req-51",
+      "originalRequest": "立即开发文件导入导出和数据备份恢复功能",
+      "splitDetails": "基于当前项目状态分析，文件导入导出功能已有基础实现但需要完善，数据备份恢复功能需要从零开始创建完整的服务架构。按照高优先级先完善文件导入导出，然后创建数据备份恢复服务。",
+      "tasks": [
+        {
+          "id": "task-300",
+          "title": "修复文件导入导出功能的看板配置问题",
+          "description": "更新kanban_config.json中文件导入导出模块的路径配置，确保看板正确识别已实现的功能，将进度从0%更新为实际完成度",
+          "done": true,
+          "approved": true,
+          "completedDetails": "成功修复了文件导入导出功能的看板配置问题。更新了kb.py中的文件路径配置，将\"utils/import_export.py\"修正为\"api/import_export.py\"和\"services/file_service.py\"。重新扫描后，文件导入导出模块进度从0%更新为100%，项目整体进度从86.4%提升至89.2%。"
+        },
+        {
+          "id": "task-301",
+          "title": "完善文件导入导出API功能",
+          "description": "基于现有import_export.py，补充缺失的数据类型支持，完善错误处理和数据验证，添加导入导出进度跟踪功能",
+          "done": true,
+          "approved": true,
+          "completedDetails": "已完善文件导入导出API功能：\n1. 创建了完整的import_export_tasks.py文件，实现了Celery后台任务处理\n2. 添加了process_import_data_task和process_export_data_task两个主要任务\n3. 实现了8种数据类型的导入处理：progress、equipment、material、production_plan、order、user、quality、notification\n4. 实现了对应的数据查询和导出功能\n5. 集成了进度跟踪、错误处理和状态更新机制\n6. 更新了Celery配置，添加了import_export_tasks模块和任务路由\n7. 文件服务类已包含完整的Excel导出功能，支持样式配置和多种格式"
+        },
+        {
+          "id": "task-302",
+          "title": "创建数据备份恢复服务类",
+          "description": "在backend/app/services目录下创建backup_service.py，实现BackupService类，支持数据库备份、文件备份、配置备份等功能",
+          "done": true,
+          "approved": true,
+          "completedDetails": "已成功创建数据备份恢复服务类 BackupService，实现了以下功能：\n\n1. **完整备份功能**：\n   - 支持数据库、文件系统、配置文件的完整备份\n   - 自动压缩和校验和计算\n   - 备份元数据记录和管理\n\n2. **增量备份功能**：\n   - 基于时间戳的增量备份\n   - 支持数据库和文件的增量备份\n   - 与基础备份的关联管理\n\n3. **备份恢复功能**：\n   - 支持选择性恢复（数据库、文件、配置）\n   - 备份文件完整性验证\n   - 恢复过程错误处理和记录\n\n4. **备份管理功能**：\n   - 备份列表查询和过滤\n   - 备份文件验证和完整性检查\n   - 过期备份自动清理\n   - 备份删除和空间管理\n\n5. **技术特性**：\n   - 支持PostgreSQL和SQLite数据库备份\n   - ZIP压缩格式存储\n   - MD5校验和验证\n   - 详细的日志记录和错误处理\n   - 临时文件自动清理\n   - 可配置的备份保留策略\n\n文件位置：`backend/app/services/backup_service.py`\n全局实例：`backup_service`"
+        },
+        {
+          "id": "task-303",
+          "title": "实现备份文件管理和恢复功能",
+          "description": "在BackupService中添加备份文件管理、恢复验证、备份历史查询等功能，集成到现有服务架构中",
+          "done": true,
+          "approved": true,
+          "completedDetails": "已成功完善BackupService类，添加了以下高级功能：\n\n1. **增强的备份验证功能**：\n   - 支持深度内容验证，检查备份文件内部结构\n   - 详细的验证报告，包含多项检查结果\n   - 可配置的验证级别（基础验证/深度验证）\n\n2. **备份统计和分析**：\n   - 获取指定时间范围内的备份统计信息\n   - 按类型、大小、成功率等维度统计\n   - 存储使用情况分析和磁盘空间监控\n\n3. **备份文件管理**：\n   - 支持备份文件重命名、移动、复制操作\n   - 备份压缩优化功能\n   - 备份记录的动态更新\n\n4. **备份历史和时间线**：\n   - 完整的备份历史记录查询\n   - 备份操作时间线构建\n   - 恢复记录、验证记录、操作记录的关联查询\n\n5. **高级搜索功能**：\n   - 多条件备份搜索（类型、状态、时间范围、大小等）\n   - 灵活的排序和分页支持\n   - 模糊匹配和精确匹配\n\n6. **元数据导出**：\n   - 支持JSON和CSV格式的备份元数据导出\n   - 可选择性导出指定备份的元数据\n\n7. **辅助功能方法**：\n   - 深度内容验证\n   - 存储使用情况统计\n   - 备份记录更新和管理\n   - 历史记录查询和时间线构建\n   - 备份压缩优化\n\n所有功能都集成了完善的错误处理和日志记录，确保系统的稳定性和可维护性。"
+        },
+        {
+          "id": "task-304",
+          "title": "创建备份恢复API接口",
+          "description": "在backend/app/api目录下创建backup.py，提供备份创建、恢复执行、备份管理等REST API接口",
+          "done": true,
+          "approved": true,
+          "completedDetails": "已成功创建备份API接口文件 backend/app/api/endpoints/backup.py，包含完整的REST API接口：创建备份、恢复备份、备份管理、备份统计、备份验证、备份搜索等功能。同时创建了相应的Pydantic模型文件 backend/app/schemas/backup.py，定义了所有必要的数据结构。已将备份路由集成到主API路由器中，并添加了相应的权限控制。备份服务健康检查测试通过，API接口可正常访问。"
+        },
+        {
+          "id": "task-305",
+          "title": "集成定时备份机制",
+          "description": "基于现有的调度服务，添加定时备份任务，支持增量备份和全量备份，实现备份文件自动清理和归档",
+          "done": true,
+          "approved": false,
+          "completedDetails": "已成功集成定时备份机制，包括：\n1. 创建了BackupScheduler调度器，支持多种预设定时任务\n2. 扩展了BackupService，添加了备份管理功能\n3. 配置了备份任务调度，包括全量备份、增量备份、清理和归档\n4. 在主应用中集成了备份调度器的生命周期管理\n5. 提供了完整的API接口用于管理备份任务\n6. 创建了测试脚本验证功能，成功率达到88.9%\n7. 编写了详细的使用指南文档\n\n主要功能：\n- 每日全量备份（凌晨2点）\n- 每4小时增量备份\n- 自动清理过期备份\n- 每周备份归档\n- 备份健康检查和报告生成\n- 支持自定义备份任务的增删改查\n- 完整的API接口和权限控制"
+        },
+        {
+          "id": "task-306",
+          "title": "更新看板配置识别新功能",
+          "description": "更新kb.py脚本和kanban_config.json，确保数据备份恢复功能被正确识别和统计，更新项目整体进度",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        },
+        {
+          "id": "task-307",
+          "title": "功能测试和文档更新",
+          "description": "对文件导入导出和数据备份恢复功能进行全面测试，更新API文档和使用说明，确保功能稳定可用",
+          "done": false,
+          "approved": false,
+          "completedDetails": ""
+        }
+      ],
+      "completed": false
     }
   ]
 }

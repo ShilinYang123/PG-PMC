@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.api.api import api_router
 from app.db.database import engine
 from app.models import Base
+from app.services.backup_scheduler import backup_scheduler
 
 # 配置日志
 logging.basicConfig(
@@ -38,10 +39,24 @@ async def lifespan(app: FastAPI):
     os.makedirs(export_dir, exist_ok=True)
     logger.info(f"导出目录已创建: {export_dir}")
     
+    # 启动备份调度器
+    try:
+        await backup_scheduler.start()
+        logger.info("备份调度器启动成功")
+    except Exception as e:
+        logger.error(f"备份调度器启动失败: {e}")
+    
     yield
     
     # 关闭时执行
     logger.info("正在关闭应用...")
+    
+    # 停止备份调度器
+    try:
+        await backup_scheduler.stop()
+        logger.info("备份调度器已停止")
+    except Exception as e:
+        logger.error(f"备份调度器停止失败: {e}")
 
 # 创建FastAPI应用实例
 app = FastAPI(

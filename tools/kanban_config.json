@@ -349,48 +349,51 @@
         "classes": 1
       },
       "微信集成": {
-        "status": "待开发",
-        "progress": 0,
+        "status": "完成",
+        "progress": 100,
         "files": [
-          "integrations/wechat.py"
+          "services/wechat_service.py",
+          "services/wechat_auth_service.py",
+          "services/wechat_group_service.py"
         ],
-        "last_modified": null,
-        "lines": 0,
-        "functions": 0,
-        "classes": 0
+        "last_modified": "2025-07-29T23:18:55.570468",
+        "lines": 1152,
+        "functions": 30,
+        "classes": 17
       },
       "邮件系统": {
-        "status": "待开发",
-        "progress": 0,
+        "status": "完成",
+        "progress": 100,
         "files": [
-          "integrations/email.py"
+          "services/email_service.py"
         ],
-        "last_modified": null,
-        "lines": 0,
-        "functions": 0,
-        "classes": 0
+        "last_modified": "2025-07-29T22:41:32.649218",
+        "lines": 378,
+        "functions": 9,
+        "classes": 4
       },
       "短信通知": {
-        "status": "待开发",
-        "progress": 0,
+        "status": "完成",
+        "progress": 100,
         "files": [
-          "integrations/sms.py"
+          "services/sms_service.py"
         ],
-        "last_modified": null,
-        "lines": 0,
-        "functions": 0,
-        "classes": 0
+        "last_modified": "2025-07-29T22:40:12.355123",
+        "lines": 242,
+        "functions": 7,
+        "classes": 5
       },
       "文件导入导出": {
-        "status": "待开发",
-        "progress": 0,
+        "status": "完成",
+        "progress": 100,
         "files": [
-          "utils/import_export.py"
+          "api/import_export.py",
+          "services/file_service.py"
         ],
-        "last_modified": null,
-        "lines": 0,
-        "functions": 0,
-        "classes": 0
+        "last_modified": "2025-07-30T00:53:19.141501",
+        "lines": 839,
+        "functions": 9,
+        "classes": 1
       },
       "数据备份恢复": {
         "status": "待开发",
@@ -405,6 +408,6 @@
       }
     }
   },
-  "last_update": "2025-07-30T00:20:30.960945",
+  "last_update": "2025-07-30T04:48:35.253726",
   "version": "1.0"
 }

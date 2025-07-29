@@ -16,6 +16,7 @@ celery_app = Celery(
         "app.tasks.reminder_tasks",
         "app.tasks.notification_tasks",
         "app.tasks.report_tasks",
+        "app.tasks.import_export_tasks",
     ]
 )
 
@@ -42,6 +43,7 @@ celery_app.conf.update(
         "app.tasks.reminder_tasks.*": {"queue": "reminders"},
         "app.tasks.notification_tasks.*": {"queue": "notifications"},
         "app.tasks.report_tasks.*": {"queue": "reports"},
+        "app.tasks.import_export_tasks.*": {"queue": "import_export"},
     },
     
     # 工作进程设置

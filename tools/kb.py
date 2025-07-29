@@ -103,10 +103,10 @@ class ProjectKanban:
                 "催办调度器": {"status": "待检测", "progress": 0, "files": ["services/reminder_scheduler.py"], "last_modified": None},
                 "催办服务": {"status": "待检测", "progress": 0, "files": ["services/reminder_service.py"], "last_modified": None},
                 "通知服务": {"status": "待检测", "progress": 0, "files": ["services/notification_service.py"], "last_modified": None},
-                "微信集成": {"status": "待检测", "progress": 0, "files": ["integrations/wechat.py"], "last_modified": None},
-                "邮件系统": {"status": "待检测", "progress": 0, "files": ["integrations/email.py"], "last_modified": None},
-                "短信通知": {"status": "待检测", "progress": 0, "files": ["integrations/sms.py"], "last_modified": None},
-                "文件导入导出": {"status": "待检测", "progress": 0, "files": ["utils/import_export.py"], "last_modified": None},
+                "微信集成": {"status": "待检测", "progress": 0, "files": ["services/wechat_service.py", "services/wechat_auth_service.py", "services/wechat_group_service.py"], "last_modified": None},
+                "邮件系统": {"status": "待检测", "progress": 0, "files": ["services/email_service.py"], "last_modified": None},
+                "短信通知": {"status": "待检测", "progress": 0, "files": ["services/sms_service.py"], "last_modified": None},
+                "文件导入导出": {"status": "待检测", "progress": 0, "files": ["api/import_export.py", "services/file_service.py"], "last_modified": None},
                 "数据备份恢复": {"status": "待检测", "progress": 0, "files": ["utils/backup.py"], "last_modified": None}
             }
         }
