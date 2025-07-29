@@ -178,8 +178,8 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div>
-      <h1 className="page-title">仪表盘</h1>
+    <div style={{ padding: '24px' }}>
+      <h1 className="page-title">PMC生产管理仪表盘</h1>
       
       {/* 统计卡片 */}
       <Row gutter={16} style={{ marginBottom: 24 }}>

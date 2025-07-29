@@ -21,7 +21,15 @@ from ...services.scheduling_service import (
     Priority, 
     OrderStatus
 )
-from ...services.wechat_service import MessageType, Priority as WeChatPriority
+from ...services.wechat_service import WeChatService, WeChatConfig, MessageType, Priority as WeChatPriority
+
+# 初始化微信服务
+wechat_config = WeChatConfig(
+    corp_id="your_corp_id",
+    corp_secret="your_corp_secret", 
+    agent_id="your_agent_id"
+)
+wechat_service = WeChatService(wechat_config)
 
 router = APIRouter()
 
@@ -221,8 +229,9 @@ async def execute_scheduling(request: ScheduleRequest, background_tasks: Backgro
         # 发送微信通知
         if request.notify_wechat:
             try:
-                # 这里需要导入微信服务实例
-                # wechat_service.send_schedule_notification(result)
+                wechat_service.send_schedule_notification(result)
+                # 异步处理消息队列
+                background_tasks.add_task(wechat_service.process_message_queue)
                 logger.info("排产通知已加入微信发送队列")
             except Exception as e:
                 logger.warning(f"发送微信通知失败: {e}")

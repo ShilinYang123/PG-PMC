@@ -98,6 +98,22 @@ class WeChatService:
                 template="⚠️ 交期预警\n\n订单号：{{order_id}}\n产品：{{product_name}}\n交期：{{due_date}}\n剩余时间：{{remaining_days}}天\n\n请及时跟进生产进度！"
             ),
             NotificationRule(
+                rule_id="schedule_notification",
+                name="排产完成通知",
+                message_type=MessageType.SCHEDULE_NOTIFICATION,
+                trigger_conditions={"event": "schedule_completed"},
+                recipients=["@all"],
+                template="📋 排产完成通知\n\n排产时间：{{schedule_time}}\n总订单数：{{total_orders}}\n成功排产：{{scheduled_count}}\n失败订单：{{failed_count}}\n\n详情请查看系统！"
+            ),
+            NotificationRule(
+                rule_id="production_progress",
+                name="生产进度更新",
+                message_type=MessageType.PROGRESS_UPDATE,
+                trigger_conditions={"progress_threshold": 25},
+                recipients=["@all"],
+                template="📊 生产进度更新\n\n订单号：{{order_id}}\n产品：{{product_name}}\n当前进度：{{progress}}%\n预计完成：{{estimated_completion}}\n\n继续保持！"
+            ),
+            NotificationRule(
                 rule_id="due_date_warning_1day",
                 name="交期1天预警",
                 message_type=MessageType.DUE_DATE_WARNING,
@@ -323,6 +339,7 @@ class WeChatService:
         """发送排产通知"""
         data = {
             'schedule_time': schedule_result['schedule_time'].strftime('%Y-%m-%d %H:%M'),
+            'total_orders': schedule_result['total_orders'],
             'scheduled_count': schedule_result['scheduled_count'],
             'failed_count': schedule_result['failed_count']
         }
@@ -334,6 +351,27 @@ class WeChatService:
             "排产完成通知",
             data
         )
+        
+        logger.info(f"发送排产通知: 成功{schedule_result['scheduled_count']}个，失败{schedule_result['failed_count']}个")
+    
+    def send_progress_update(self, order_data: Dict):
+        """发送生产进度更新"""
+        data = {
+            'order_id': order_data['order_id'],
+            'product_name': order_data['product_name'],
+            'progress': order_data['progress'],
+            'estimated_completion': order_data.get('estimated_completion', '待确定')
+        }
+        
+        self.create_message(
+            MessageType.PROGRESS_UPDATE,
+            Priority.NORMAL,
+            ["@all"],
+            f"生产进度更新 - 订单{order_data['order_id']}",
+            data
+        )
+        
+        logger.info(f"发送进度更新: 订单{order_data['order_id']}，进度{order_data['progress']}%")
     
     def send_daily_report(self, report_data: Dict):
         """发送日报"""

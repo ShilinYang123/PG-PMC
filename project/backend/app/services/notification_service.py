@@ -18,6 +18,8 @@ from ..schemas.notification import (
 )
 from ..core.config import settings
 from ..services.wechat_service import WeChatService
+from ..services.sms_service import sms_service
+from ..services.email_service import email_service
 
 class NotificationService:
     """通知服务类"""
@@ -156,20 +158,24 @@ class NotificationService:
             if not notification.recipient_email:
                 return False
             
-            msg = MIMEMultipart()
-            msg['From'] = settings.SMTP_USER
-            msg['To'] = notification.recipient_email
-            msg['Subject'] = notification.title
+            # 使用新的邮件服务
+            import asyncio
+            from ..services.email_service import EmailMessage
             
-            msg.attach(MIMEText(notification.content, 'html', 'utf-8'))
+            message = EmailMessage(
+                to_emails=[notification.recipient_email],
+                subject=notification.title,
+                html_content=f"<html><body><h3>{notification.title}</h3><p>{notification.content}</p></body></html>",
+                text_content=notification.content
+            )
             
-            server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT)
-            server.starttls()
-            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-            server.send_message(msg)
-            server.quit()
+            # 在同步函数中运行异步代码
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(email_service.send_email(message))
+            loop.close()
             
-            return True
+            return result
             
         except Exception as e:
             print(f"Email sending failed: {e}")
@@ -196,10 +202,38 @@ class NotificationService:
             if not notification.recipient_phone:
                 return False
             
-            # TODO: 集成短信服务提供商API
-            # 这里可以集成阿里云短信、腾讯云短信等服务
-            print(f"SMS to {notification.recipient_phone}: {notification.title}")
-            return True
+            # 使用新的短信服务
+            import asyncio
+            
+            # 根据通知类型选择合适的短信模板
+            template_id = "order_reminder"  # 默认模板
+            params = {
+                "message": notification.content,
+                "title": notification.title
+            }
+            
+            if "订单" in notification.title:
+                template_id = "order_reminder"
+            elif "生产" in notification.title or "异常" in notification.title:
+                template_id = "production_alert"
+            elif "交期" in notification.title:
+                template_id = "delivery_warning"
+            elif "质量" in notification.title:
+                template_id = "quality_alert"
+            
+            # 在同步函数中运行异步代码
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(
+                sms_service.send_sms(
+                    phone=notification.recipient_phone,
+                    template_id=template_id,
+                    params=params
+                )
+            )
+            loop.close()
+            
+            return result
             
         except Exception as e:
             print(f"SMS sending failed: {e}")

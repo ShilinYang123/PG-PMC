@@ -154,7 +154,7 @@ const Scheduling = () => {
         body: JSON.stringify({
           start_date: values.start_date?.toISOString(),
           force_reschedule: values.force_reschedule || false,
-          notify_wechat: values.notify_wechat !== false
+          notify_wechat: values.notify_wechat
         }),
       });
       
