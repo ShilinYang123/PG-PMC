@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.endpoints import auth, users, orders, production_plans, materials, progress, scheduling, wechat, notifications, reminder, reminder_notifications, import_export, reports, backup
+from app.api.endpoints import auth, users, orders, production_plans, materials, bom, progress, scheduling, wechat, notifications, reminder, reminder_notifications, import_export, reports, backup
 from app.api.v1.endpoints import config
 
 api_router = APIRouter()
@@ -21,6 +21,9 @@ api_router.include_router(production_plans.router, prefix="/production-plans", t
 
 # 物料管理路由
 api_router.include_router(materials.router, prefix="/materials", tags=["物料管理"])
+
+# BOM管理路由
+api_router.include_router(bom.router, prefix="/bom", tags=["BOM管理"])
 
 # 进度跟踪路由
 api_router.include_router(progress.router, prefix="/progress", tags=["进度跟踪"])

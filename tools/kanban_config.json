@@ -9,8 +9,9 @@
         ],
         "last_modified": "2025-07-24T22:21:35.095055",
         "lines": 265,
-        "functions": 8,
-        "classes": 0
+        "functions": 10,
+        "classes": 0,
+        "file_count": 1
       },
       "设备管理模块": {
         "status": "完成",
@@ -20,8 +21,9 @@
         ],
         "last_modified": "2025-07-26T15:21:43.571252",
         "lines": 678,
-        "functions": 0,
-        "classes": 0
+        "functions": 4,
+        "classes": 0,
+        "file_count": 1
       },
       "质量管理模块": {
         "status": "完成",
@@ -31,8 +33,9 @@
         ],
         "last_modified": "2025-07-26T15:21:54.417835",
         "lines": 658,
-        "functions": 0,
-        "classes": 0
+        "functions": 4,
+        "classes": 0,
+        "file_count": 1
       },
       "物料管理模块": {
         "status": "完成",
@@ -40,10 +43,11 @@
         "files": [
           "materials.py"
         ],
-        "last_modified": "2025-07-26T15:20:53.771054",
-        "lines": 476,
-        "functions": 0,
-        "classes": 0
+        "last_modified": "2025-08-01T20:52:23.113435",
+        "lines": 755,
+        "functions": 5,
+        "classes": 0,
+        "file_count": 1
       },
       "订单管理模块": {
         "status": "完成",
@@ -53,8 +57,9 @@
         ],
         "last_modified": "2025-07-29T00:45:23.168960",
         "lines": 502,
-        "functions": 0,
-        "classes": 0
+        "functions": 4,
+        "classes": 0,
+        "file_count": 1
       },
       "生产计划模块": {
         "status": "完成",
@@ -64,8 +69,9 @@
         ],
         "last_modified": "2025-07-29T06:44:20.173573",
         "lines": 839,
-        "functions": 0,
-        "classes": 0
+        "functions": 7,
+        "classes": 0,
+        "file_count": 1
       },
       "进度跟踪模块": {
         "status": "完成",
@@ -75,8 +81,9 @@
         ],
         "last_modified": "2025-07-26T15:21:02.305093",
         "lines": 661,
-        "functions": 0,
-        "classes": 0
+        "functions": 4,
+        "classes": 0,
+        "file_count": 1
       },
       "用户管理模块": {
         "status": "完成",
@@ -86,8 +93,9 @@
         ],
         "last_modified": "2025-07-26T15:20:11.903411",
         "lines": 399,
-        "functions": 1,
-        "classes": 0
+        "functions": 4,
+        "classes": 0,
+        "file_count": 1
       },
       "催办通知API": {
         "status": "完成",
@@ -97,103 +105,113 @@
         ],
         "last_modified": "2025-07-28T00:30:22.097756",
         "lines": 408,
-        "functions": 0,
-        "classes": 5
+        "functions": 6,
+        "classes": 5,
+        "file_count": 1
       }
     },
     "前端界面模块": {
       "仪表板页面": {
-        "status": "完成",
-        "progress": 100,
+        "status": "进行中",
+        "progress": 80.0,
         "files": [
           "Dashboard/index.tsx"
         ],
         "last_modified": "2025-07-29T06:55:12.341736",
         "lines": 246,
-        "functions": 2,
-        "classes": 1
+        "functions": 6,
+        "classes": 1,
+        "file_count": 1
       },
       "订单管理页面": {
-        "status": "完成",
-        "progress": 100,
+        "status": "进行中",
+        "progress": 80.0,
         "files": [
           "OrderManagement/index.tsx"
         ],
         "last_modified": "2025-07-29T06:44:20.219052",
         "lines": 1007,
-        "functions": 19,
-        "classes": 3
+        "functions": 64,
+        "classes": 3,
+        "file_count": 1
       },
       "生产计划页面": {
-        "status": "完成",
-        "progress": 100,
+        "status": "进行中",
+        "progress": 80.0,
         "files": [
           "ProductionPlan/index.tsx"
         ],
-        "last_modified": "2025-07-29T00:36:10.926292",
-        "lines": 1064,
-        "functions": 11,
-        "classes": 1
+        "last_modified": "2025-08-01T21:01:33.488113",
+        "lines": 1080,
+        "functions": 58,
+        "classes": 1,
+        "file_count": 1
       },
       "物料管理页面": {
-        "status": "完成",
-        "progress": 100,
+        "status": "进行中",
+        "progress": 80.0,
         "files": [
           "MaterialManagement/index.tsx"
         ],
-        "last_modified": "2025-07-24T22:08:57.655990",
-        "lines": 718,
-        "functions": 13,
-        "classes": 3
+        "last_modified": "2025-08-01T20:59:18.802776",
+        "lines": 770,
+        "functions": 45,
+        "classes": 3,
+        "file_count": 1
       },
       "进度跟踪页面": {
-        "status": "完成",
-        "progress": 100,
+        "status": "进行中",
+        "progress": 80.0,
         "files": [
           "ProgressTracking/index.tsx"
         ],
-        "last_modified": "2025-07-24T22:10:56.827397",
-        "lines": 904,
-        "functions": 18,
-        "classes": 3
+        "last_modified": "2025-08-01T21:02:49.894856",
+        "lines": 828,
+        "functions": 55,
+        "classes": 3,
+        "file_count": 1
       },
       "图表组件库": {
-        "status": "开始开发",
-        "progress": 10,
+        "status": "完成",
+        "progress": 100,
         "files": [
           "components/Charts/"
         ],
-        "last_modified": "2025-07-29T00:24:37.418327",
-        "lines": 0,
-        "functions": 0,
-        "classes": 0
+        "last_modified": "2025-07-29T00:34:54.881786",
+        "lines": 4265,
+        "functions": 337,
+        "classes": 51,
+        "file_count": 21
       },
       "移动端适配": {
-        "status": "待开发",
-        "progress": 0,
+        "status": "完成",
+        "progress": 100,
         "files": [
-          "styles/mobile.css"
+          "App.css",
+          "styles/"
         ],
-        "last_modified": null,
-        "lines": 0,
-        "functions": 0,
-        "classes": 0
+        "last_modified": "2025-07-24T22:02:01.527183",
+        "lines": 95,
+        "functions": 3,
+        "classes": 0,
+        "file_count": 1
       },
       "通知组件": {
-        "status": "待开发",
-        "progress": 0,
+        "status": "完成",
+        "progress": 100,
         "files": [
-          "components/Notification/"
+          "components/Notifications/"
         ],
-        "last_modified": null,
-        "lines": 0,
-        "functions": 0,
-        "classes": 0
+        "last_modified": "2025-07-27T07:55:36.984296",
+        "lines": 1106,
+        "functions": 81,
+        "classes": 4,
+        "file_count": 3
       }
     },
     "数据模型层": {
       "订单模型": {
-        "status": "完成",
+        "status": "进行中",
         "progress": 100,
         "files": [
           "order.py"
@@ -201,7 +219,8 @@
         "last_modified": "2025-07-24T22:14:12.590332",
         "lines": 46,
         "functions": 1,
-        "classes": 3
+        "classes": 3,
+        "file_count": 1
       },
       "生产计划模型": {
         "status": "完成",
@@ -212,7 +231,8 @@
         "last_modified": "2025-07-26T15:24:40.206666",
         "lines": 91,
         "functions": 2,
-        "classes": 5
+        "classes": 5,
+        "file_count": 1
       },
       "物料模型": {
         "status": "完成",
@@ -223,7 +243,8 @@
         "last_modified": "2025-07-26T16:56:16.563653",
         "lines": 155,
         "functions": 5,
-        "classes": 8
+        "classes": 8,
+        "file_count": 1
       },
       "进度记录模型": {
         "status": "完成",
@@ -234,7 +255,8 @@
         "last_modified": "2025-07-24T22:17:03.922855",
         "lines": 152,
         "functions": 4,
-        "classes": 6
+        "classes": 6,
+        "file_count": 1
       },
       "用户模型": {
         "status": "完成",
@@ -245,7 +267,8 @@
         "last_modified": "2025-07-27T14:14:09.458192",
         "lines": 152,
         "functions": 11,
-        "classes": 5
+        "classes": 5,
+        "file_count": 1
       },
       "质量记录模型": {
         "status": "完成",
@@ -256,7 +279,8 @@
         "last_modified": "2025-07-28T00:31:18.350032",
         "lines": 153,
         "functions": 0,
-        "classes": 7
+        "classes": 7,
+        "file_count": 1
       },
       "设备模型": {
         "status": "完成",
@@ -267,7 +291,8 @@
         "last_modified": "2025-07-28T13:53:47.919074",
         "lines": 172,
         "functions": 0,
-        "classes": 9
+        "classes": 9,
+        "file_count": 1
       },
       "催办模型": {
         "status": "完成",
@@ -278,7 +303,8 @@
         "last_modified": "2025-07-27T11:35:28.329075",
         "lines": 163,
         "functions": 6,
-        "classes": 7
+        "classes": 7,
+        "file_count": 1
       },
       "通知模型": {
         "status": "完成",
@@ -289,31 +315,34 @@
         "last_modified": "2025-07-27T07:31:53.634075",
         "lines": 79,
         "functions": 0,
-        "classes": 6
+        "classes": 6,
+        "file_count": 1
       }
     },
     "系统集成模块": {
       "催办通知服务": {
         "status": "完成",
-        "progress": 100,
+        "progress": 90.0,
         "files": [
           "services/reminder_notification_service.py"
         ],
         "last_modified": "2025-07-27T11:34:18.064594",
         "lines": 542,
         "functions": 8,
-        "classes": 1
+        "classes": 1,
+        "file_count": 1
       },
       "多渠道通知服务": {
         "status": "完成",
-        "progress": 100,
+        "progress": 90.0,
         "files": [
           "services/multi_channel_notification_service.py"
         ],
         "last_modified": "2025-07-27T11:34:39.866082",
         "lines": 460,
-        "functions": 8,
-        "classes": 6
+        "functions": 9,
+        "classes": 6,
+        "file_count": 1
       },
       "催办调度器": {
         "status": "完成",
@@ -322,35 +351,38 @@
           "services/reminder_scheduler.py"
         ],
         "last_modified": "2025-07-27T11:33:38.238936",
-        "lines": 346,
+        "lines": 344,
         "functions": 15,
-        "classes": 1
+        "classes": 1,
+        "file_count": 1
       },
       "催办服务": {
         "status": "完成",
-        "progress": 100,
+        "progress": 90.0,
         "files": [
           "services/reminder_service.py"
         ],
         "last_modified": "2025-07-27T10:10:24.476041",
         "lines": 389,
         "functions": 15,
-        "classes": 1
+        "classes": 1,
+        "file_count": 1
       },
       "通知服务": {
         "status": "完成",
-        "progress": 100,
+        "progress": 90.0,
         "files": [
           "services/notification_service.py"
         ],
         "last_modified": "2025-07-29T22:42:23.720667",
         "lines": 349,
         "functions": 18,
-        "classes": 1
+        "classes": 1,
+        "file_count": 1
       },
       "微信集成": {
         "status": "完成",
-        "progress": 100,
+        "progress": 90.0,
         "files": [
           "services/wechat_service.py",
           "services/wechat_auth_service.py",
@@ -358,8 +390,9 @@
         ],
         "last_modified": "2025-07-29T23:18:55.570468",
         "lines": 1152,
-        "functions": 30,
-        "classes": 17
+        "functions": 33,
+        "classes": 17,
+        "file_count": 3
       },
       "邮件系统": {
         "status": "完成",
@@ -369,8 +402,9 @@
         ],
         "last_modified": "2025-07-29T22:41:32.649218",
         "lines": 378,
-        "functions": 9,
-        "classes": 4
+        "functions": 10,
+        "classes": 4,
+        "file_count": 1
       },
       "短信通知": {
         "status": "完成",
@@ -380,8 +414,9 @@
         ],
         "last_modified": "2025-07-29T22:40:12.355123",
         "lines": 242,
-        "functions": 7,
-        "classes": 5
+        "functions": 8,
+        "classes": 5,
+        "file_count": 1
       },
       "文件导入导出": {
         "status": "完成",
@@ -392,22 +427,26 @@
         ],
         "last_modified": "2025-07-30T00:53:19.141501",
         "lines": 839,
-        "functions": 9,
-        "classes": 1
+        "functions": 12,
+        "classes": 1,
+        "file_count": 2
       },
       "数据备份恢复": {
-        "status": "待开发",
-        "progress": 0,
+        "status": "完成",
+        "progress": 100,
         "files": [
-          "utils/backup.py"
+          "services/backup_service.py",
+          "services/backup_tasks.py",
+          "schemas/backup.py"
         ],
-        "last_modified": null,
-        "lines": 0,
-        "functions": 0,
-        "classes": 0
+        "last_modified": "2025-07-30T02:23:25.688219",
+        "lines": 1748,
+        "functions": 54,
+        "classes": 26,
+        "file_count": 3
       }
     }
   },
-  "last_update": "2025-07-30T12:56:00.302760",
+  "last_update": "2025-08-01T21:10:40.600952",
   "version": "1.0"
 }

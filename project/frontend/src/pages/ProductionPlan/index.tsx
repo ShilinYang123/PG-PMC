@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -22,7 +22,7 @@ import {
   List,
   Typography
 } from 'antd';
-import axios from 'axios';
+import { productionApi } from '../../services/api';
 import {
   PlusOutlined,
   EditOutlined,
@@ -93,57 +93,10 @@ const ProductionPlan: React.FC = () => {
     { value: 'balanced', label: '平衡策略' }
   ];
 
-  // 模拟生产计划数据
-  const [dataSource, setDataSource] = useState<ProductionPlan[]>([
-    {
-      key: '1',
-      planNo: 'PP-2024-001',
-      orderNo: 'BD400-001',
-      product: '精密零件A',
-      quantity: 1000,
-      unit: '件',
-      startDate: '2024-01-20',
-      endDate: '2024-02-10',
-      status: '进行中',
-      progress: 65,
-      workshop: '车间A',
-      operator: '张师傅',
-      priority: '高',
-      remark: '优先生产'
-    },
-    {
-      key: '2',
-      planNo: 'PP-2024-002',
-      orderNo: 'BD400-002',
-      product: '标准件B',
-      quantity: 500,
-      unit: '套',
-      startDate: '2024-02-01',
-      endDate: '2024-02-15',
-      status: '待开始',
-      progress: 0,
-      workshop: '车间B',
-      operator: '李师傅',
-      priority: '中',
-      remark: '按计划执行'
-    },
-    {
-      key: '3',
-      planNo: 'PP-2024-003',
-      orderNo: 'BD400-003',
-      product: '定制件C',
-      quantity: 200,
-      unit: '个',
-      startDate: '2024-01-15',
-      endDate: '2024-02-05',
-      status: '已完成',
-      progress: 100,
-      workshop: '车间C',
-      operator: '王师傅',
-      priority: '低',
-      remark: '提前完成'
-    }
-  ]);
+  // 生产计划数据
+  const [dataSource, setDataSource] = useState<ProductionPlan[]>([]);
+  const [planStats, setPlanStats] = useState<any>({});
+  const [dashboardData, setDashboardData] = useState<any>({});
 
   const columns: ColumnsType<ProductionPlan> = [
     {
@@ -399,36 +352,54 @@ const ProductionPlan: React.FC = () => {
     setModalVisible(true);
   };
 
-  const handleDelete = (key: string) => {
-    setDataSource(dataSource.filter(item => item.key !== key));
+  const handleDelete = async (key: string) => {
+    try {
+      await productionApi.deleteProductionPlan(parseInt(key));
+      message.success('删除生产计划成功');
+      fetchData();
+      fetchStats();
+    } catch (error) {
+      console.error('删除失败:', error);
+      message.error('删除生产计划失败');
+    }
   };
 
   const handleSubmit = async () => {
     try {
+      setLoading(true);
       const values = await form.validateFields();
       const formData = {
-        ...values,
-        startDate: values.startDate.format('YYYY-MM-DD'),
-        endDate: values.endDate.format('YYYY-MM-DD')
+        plan_number: values.planNo,
+        plan_name: values.product,
+        order_id: values.orderNo ? parseInt(values.orderNo) : null,
+        product_name: values.product,
+        product_model: values.product,
+        planned_quantity: values.quantity,
+        unit: values.unit,
+        planned_start_date: values.startDate.format('YYYY-MM-DD'),
+        planned_end_date: values.endDate.format('YYYY-MM-DD'),
+        workshop: values.workshop,
+        responsible_person: values.operator,
+        priority: values.priority,
+        remark: values.remark
       };
 
       if (editingRecord) {
-        setDataSource(dataSource.map(item => 
-          item.key === editingRecord.key 
-            ? { ...item, ...formData }
-            : item
-        ));
+        await productionApi.updateProductionPlan(parseInt(editingRecord.key), formData);
+        message.success('更新生产计划成功');
       } else {
-        const newRecord = {
-          key: Date.now().toString(),
-          ...formData
-        };
-        setDataSource([...dataSource, newRecord]);
+        await productionApi.createProductionPlan(formData);
+        message.success('创建生产计划成功');
       }
       
       setModalVisible(false);
+      fetchData();
+      fetchStats();
     } catch (error) {
-      console.error('表单验证失败:', error);
+      console.error('保存失败:', error);
+      message.error('保存生产计划失败');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -525,20 +496,68 @@ const ProductionPlan: React.FC = () => {
     }
   };
 
-  // 获取数据
+  // 获取生产计划数据
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 这里应该调用实际的API获取数据
-      // const response = await axios.get('/api/production-plans');
-      // setDataSource(response.data.data);
-      message.success('数据已刷新');
+      const response = await productionApi.getProductionPlans();
+      if (response.data.code === 200) {
+        const plans = response.data.data.map((plan: any) => ({
+          key: plan.id.toString(),
+          planNo: plan.plan_number,
+          orderNo: plan.order_number || '-',
+          product: plan.product_name,
+          quantity: plan.planned_quantity,
+          unit: plan.unit,
+          startDate: plan.planned_start_date,
+          endDate: plan.planned_end_date,
+          status: plan.status,
+          progress: plan.progress || 0,
+          workshop: plan.workshop,
+          operator: plan.responsible_person,
+          priority: plan.priority,
+          remark: plan.remark || ''
+        }));
+        setDataSource(plans);
+      }
     } catch (error) {
       console.error('获取数据失败:', error);
+      message.error('获取生产计划数据失败');
     } finally {
       setLoading(false);
     }
   };
+
+  // 获取统计数据
+  const fetchStats = async () => {
+    try {
+      const response = await productionApi.getProductionStats();
+      if (response.data.code === 200) {
+        setPlanStats(response.data.data);
+      }
+    } catch (error) {
+      console.error('获取统计数据失败:', error);
+    }
+  };
+
+  // 获取仪表板数据
+  const fetchDashboard = async () => {
+    try {
+      const response = await productionApi.getDashboard();
+      if (response.data.code === 200) {
+        setDashboardData(response.data.data);
+      }
+    } catch (error) {
+      console.error('获取仪表板数据失败:', error);
+    }
+  };
+
+  // 组件初始化
+  useEffect(() => {
+    fetchData();
+    fetchStats();
+    fetchDashboard();
+  }, []);
 
   const handleConflictAnalysis = async () => {
     setSchedulingLoading(true);
@@ -583,7 +602,7 @@ const ProductionPlan: React.FC = () => {
         <Col span={6}>
           <Card>
             <div className="stat-card">
-              <div className="stat-number">12</div>
+              <div className="stat-number">{planStats.in_progress_plans || 0}</div>
               <div className="stat-title">进行中计划</div>
             </div>
           </Card>
@@ -591,7 +610,7 @@ const ProductionPlan: React.FC = () => {
         <Col span={6}>
           <Card>
             <div className="stat-card">
-              <div className="stat-number">8</div>
+              <div className="stat-number">{planStats.confirmed_plans || 0}</div>
               <div className="stat-title">待开始计划</div>
             </div>
           </Card>
@@ -599,7 +618,7 @@ const ProductionPlan: React.FC = () => {
         <Col span={6}>
           <Card>
             <div className="stat-card">
-              <div className="stat-number">25</div>
+              <div className="stat-number">{planStats.completed_plans || 0}</div>
               <div className="stat-title">已完成计划</div>
             </div>
           </Card>
@@ -607,7 +626,7 @@ const ProductionPlan: React.FC = () => {
         <Col span={6}>
           <Card>
             <div className="stat-card">
-              <div className="stat-number">92%</div>
+              <div className="stat-number">{planStats.avg_progress ? `${planStats.avg_progress.toFixed(0)}%` : '0%'}</div>
               <div className="stat-title">平均完成率</div>
             </div>
           </Card>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -15,7 +15,8 @@ import {
   Alert,
   Badge,
   Tooltip,
-  InputNumber
+  InputNumber,
+  message
 } from 'antd';
 import {
   PlusOutlined,
@@ -28,6 +29,7 @@ import {
 } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import type { ColumnsType } from 'antd/es/table';
+import { materialApi, bomApi } from '../../services/api';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -84,85 +86,79 @@ const MaterialManagement: React.FC = () => {
   const [form] = Form.useForm();
   const [bomForm] = Form.useForm();
 
-  // 物料数据
-  const [materialData, setMaterialData] = useState<Material[]>([
-    {
-      key: '1',
-      materialCode: 'M001',
-      materialName: '钢材A',
-      specification: 'Q235 10*20*100',
-      unit: '根',
-      category: '原材料',
-      currentStock: 150,
-      safetyStock: 50,
-      unitPrice: 25.5,
-      supplier: '钢材供应商A',
-      status: '正常',
-      location: 'A区-01',
-      remark: '常用材料'
-    },
-    {
-      key: '2',
-      materialCode: 'M002',
-      materialName: '螺丝B',
-      specification: 'M6*20',
-      unit: '个',
-      category: '标准件',
-      currentStock: 20,
-      safetyStock: 100,
-      unitPrice: 0.5,
-      supplier: '标准件供应商B',
-      status: '缺货',
-      location: 'B区-05',
-      remark: '需要补货'
-    }
-  ]);
+  // 状态数据
+  const [materialData, setMaterialData] = useState<Material[]>([]);
+  const [bomData, setBomData] = useState<BOMItem[]>([]);
+  const [purchaseData, setPurchaseData] = useState<PurchaseOrder[]>([]);
+  const [materialStats, setMaterialStats] = useState<any>({});
+  const [stockAlerts, setStockAlerts] = useState<any[]>([]);
 
-  // BOM数据
-  const [bomData, setBomData] = useState<BOMItem[]>([
-    {
-      key: '1',
-      bomCode: 'BOM-001',
-      productName: '精密零件A',
-      version: 'V1.0',
-      materialCode: 'M001',
-      materialName: '钢材A',
-      quantity: 2,
-      unit: '根',
-      level: 1,
-      remark: '主要材料'
-    },
-    {
-      key: '2',
-      bomCode: 'BOM-001',
-      productName: '精密零件A',
-      version: 'V1.0',
-      materialCode: 'M002',
-      materialName: '螺丝B',
-      quantity: 8,
-      unit: '个',
-      level: 1,
-      remark: '紧固件'
-    }
-  ]);
+  // 初始化数据加载
+  useEffect(() => {
+    loadMaterialData();
+    loadBOMData();
+    loadMaterialStats();
+    loadStockAlerts();
+  }, []);
 
-  // 采购订单数据
-  const [purchaseData, setPurchaseData] = useState<PurchaseOrder[]>([
-    {
-      key: '1',
-      poNo: 'PO-2024-001',
-      supplier: '钢材供应商A',
-      materialCode: 'M001',
-      materialName: '钢材A',
-      quantity: 100,
-      unit: '根',
-      unitPrice: 25.5,
-      totalAmount: 2550,
-      orderDate: '2024-01-20',
-      expectedDate: '2024-01-30',
-      status: '已下单'
+  // 加载物料数据
+  const loadMaterialData = async () => {
+    try {
+      setLoading(true);
+      const response = await materialApi.getMaterials();
+      if (response.data) {
+        setMaterialData(response.data.map((item: any) => ({
+          ...item,
+          key: item.id || item.material_code
+        })));
+      }
+    } catch (error) {
+      console.error('加载物料数据失败:', error);
+      message.error('加载物料数据失败');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  // 加载BOM数据
+  const loadBOMData = async () => {
+    try {
+      const response = await bomApi.getBOMs();
+      if (response.data) {
+        setBomData(response.data.map((item: any) => ({
+          ...item,
+          key: item.id || item.bom_code
+        })));
+      }
+    } catch (error) {
+      console.error('加载BOM数据失败:', error);
+      message.error('加载BOM数据失败');
+    }
+  };
+
+  // 加载物料统计
+  const loadMaterialStats = async () => {
+    try {
+      const response = await materialApi.getMaterialStats();
+      if (response.data) {
+        setMaterialStats(response.data);
+      }
+    } catch (error) {
+      console.error('加载物料统计失败:', error);
+    }
+  };
+
+  // 加载库存预警
+  const loadStockAlerts = async () => {
+    try {
+      const response = await materialApi.getStockAlerts();
+      if (response.data) {
+        setStockAlerts(response.data);
+      }
+    } catch (error) {
+      console.error('加载库存预警失败:', error);
+    }
+  };
 
   // 物料表格列配置
   const materialColumns: ColumnsType<Material> = [
@@ -400,37 +396,75 @@ const MaterialManagement: React.FC = () => {
     setModalVisible(true);
   };
 
-  const handleDelete = (key: string) => {
-    setMaterialData(materialData.filter(item => item.key !== key));
+  const handleDelete = async (key: string) => {
+    try {
+      await materialApi.deleteMaterial(key);
+      message.success('删除成功');
+      loadMaterialData(); // 重新加载数据
+    } catch (error) {
+      console.error('删除失败:', error);
+      message.error('删除失败');
+    }
   };
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      setLoading(true);
       
       if (editingRecord) {
-        setMaterialData(materialData.map(item => 
-          item.key === editingRecord.key 
-            ? { ...item, ...values }
-            : item
-        ));
+        // 更新物料
+        await materialApi.updateMaterial(editingRecord.key, values);
+        message.success('更新成功');
       } else {
-        const newRecord = {
-          key: Date.now().toString(),
-          ...values
-        };
-        setMaterialData([...materialData, newRecord]);
+        // 创建物料
+        await materialApi.createMaterial(values);
+        message.success('创建成功');
       }
       
       setModalVisible(false);
+      loadMaterialData(); // 重新加载数据
+      loadMaterialStats(); // 重新加载统计数据
     } catch (error) {
-      console.error('表单验证失败:', error);
+      console.error('操作失败:', error);
+      message.error('操作失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // BOM提交处理
+  const handleBOMSubmit = async () => {
+    try {
+      const values = await bomForm.validateFields();
+      setLoading(true);
+      
+      await bomApi.createBOM(values);
+      message.success('BOM创建成功');
+      
+      setBomModalVisible(false);
+      loadBOMData(); // 重新加载BOM数据
+    } catch (error) {
+      console.error('BOM创建失败:', error);
+      message.error('BOM创建失败');
+    } finally {
+      setLoading(false);
     }
   };
 
   // 获取库存预警数量
   const getWarningCount = () => {
-    return materialData.filter(item => item.currentStock <= item.safetyStock).length;
+    return stockAlerts.filter(alert => alert.alert_type === 'low_stock' || alert.alert_type === 'out_of_stock').length;
+  };
+
+  // 获取统计数据
+  const getStatsData = () => {
+    return {
+      totalMaterials: materialStats.total_materials || materialData.length,
+      warningCount: getWarningCount(),
+      supplierCount: materialStats.supplier_count || 0,
+      totalValue: materialStats.total_inventory_value || 0
+    };
   };
 
   return (
@@ -453,7 +487,7 @@ const MaterialManagement: React.FC = () => {
         <Col span={6}>
           <Card>
             <div className="stat-card">
-              <div className="stat-number">{materialData.length}</div>
+              <div className="stat-number">{getStatsData().totalMaterials}</div>
               <div className="stat-title">物料种类</div>
             </div>
           </Card>
@@ -462,8 +496,8 @@ const MaterialManagement: React.FC = () => {
           <Card>
             <div className="stat-card">
               <div className="stat-number" style={{ color: '#ff4d4f' }}>
-                <Badge count={getWarningCount()}>
-                  {getWarningCount()}
+                <Badge count={getStatsData().warningCount}>
+                  {getStatsData().warningCount}
                 </Badge>
               </div>
               <div className="stat-title">库存预警</div>
@@ -473,7 +507,7 @@ const MaterialManagement: React.FC = () => {
         <Col span={6}>
           <Card>
             <div className="stat-card">
-              <div className="stat-number">15</div>
+              <div className="stat-number">{getStatsData().supplierCount}</div>
               <div className="stat-title">供应商数量</div>
             </div>
           </Card>
@@ -481,7 +515,7 @@ const MaterialManagement: React.FC = () => {
         <Col span={6}>
           <Card>
             <div className="stat-card">
-              <div className="stat-number">¥125,680</div>
+              <div className="stat-number">¥{getStatsData().totalValue.toLocaleString()}</div>
               <div className="stat-title">库存总值</div>
             </div>
           </Card>
@@ -739,19 +773,51 @@ const MaterialManagement: React.FC = () => {
       <Modal
         title="新增BOM"
         open={bomModalVisible}
+        onOk={handleBOMSubmit}
         onCancel={() => setBomModalVisible(false)}
         width={600}
-        footer={null}
+        confirmLoading={loading}
+        destroyOnClose
       >
         <Form form={bomForm} layout="vertical">
-          <Form.Item label="BOM编码" name="bomCode" rules={[{ required: true }]}>
+          <Form.Item label="BOM编码" name="bomCode" rules={[{ required: true, message: '请输入BOM编码' }]}>
             <Input placeholder="请输入BOM编码" />
           </Form.Item>
-          <Form.Item label="产品名称" name="productName" rules={[{ required: true }]}>
+          <Form.Item label="产品名称" name="productName" rules={[{ required: true, message: '请输入产品名称' }]}>
             <Input placeholder="请输入产品名称" />
           </Form.Item>
-          <Form.Item label="版本" name="version" rules={[{ required: true }]}>
+          <Form.Item label="版本" name="version" rules={[{ required: true, message: '请输入版本' }]}>
             <Input placeholder="请输入版本" />
+          </Form.Item>
+          <Form.Item label="物料编码" name="materialCode" rules={[{ required: true, message: '请输入物料编码' }]}>
+            <Input placeholder="请输入物料编码" />
+          </Form.Item>
+          <Form.Item label="物料名称" name="materialName" rules={[{ required: true, message: '请输入物料名称' }]}>
+            <Input placeholder="请输入物料名称" />
+          </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="用量" name="quantity" rules={[{ required: true, message: '请输入用量' }]}>
+                <InputNumber min={0} placeholder="用量" style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="单位" name="unit" rules={[{ required: true, message: '请选择单位' }]}>
+                <Select placeholder="请选择单位">
+                  <Option value="件">件</Option>
+                  <Option value="个">个</Option>
+                  <Option value="根">根</Option>
+                  <Option value="米">米</Option>
+                  <Option value="公斤">公斤</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Form.Item label="层级" name="level" rules={[{ required: true, message: '请输入层级' }]}>
+            <InputNumber min={1} placeholder="层级" style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item label="备注" name="remark">
+            <Input.TextArea rows={3} placeholder="请输入备注信息" />
           </Form.Item>
         </Form>
       </Modal>

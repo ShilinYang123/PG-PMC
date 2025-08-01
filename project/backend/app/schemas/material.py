@@ -199,6 +199,45 @@ class MaterialExport(BaseModel):
     file_type: str = Field(..., description="文件类型")
     options: Optional[Dict[str, Any]] = Field(None, description="导出选项")
 
+# 库存操作模型
+class MaterialStockIn(BaseModel):
+    """物料入库"""
+    quantity: Decimal = Field(..., gt=0, description="入库数量")
+    unit_price: Optional[Decimal] = Field(None, ge=0, description="入库单价")
+    supplier: Optional[str] = Field(None, description="供应商")
+    warehouse: Optional[str] = Field(None, description="仓库")
+    location: Optional[str] = Field(None, description="存放位置")
+    reference_number: Optional[str] = Field(None, description="参考单号")
+    remark: Optional[str] = Field(None, description="备注")
+
+class MaterialStockOut(BaseModel):
+    """物料出库"""
+    quantity: Decimal = Field(..., gt=0, description="出库数量")
+    purpose: Optional[str] = Field(None, description="出库用途")
+    department: Optional[str] = Field(None, description="领用部门")
+    recipient: Optional[str] = Field(None, description="领用人")
+    reference_number: Optional[str] = Field(None, description="参考单号")
+    remark: Optional[str] = Field(None, description="备注")
+
+class MaterialStockTransfer(BaseModel):
+    """物料调拨"""
+    from_material_id: int = Field(..., description="源物料ID")
+    to_material_id: int = Field(..., description="目标物料ID")
+    quantity: Decimal = Field(..., gt=0, description="调拨数量")
+    from_warehouse: Optional[str] = Field(None, description="源仓库")
+    to_warehouse: Optional[str] = Field(None, description="目标仓库")
+    reference_number: Optional[str] = Field(None, description="参考单号")
+    remark: Optional[str] = Field(None, description="备注")
+
+class MaterialStockCheck(BaseModel):
+    """物料盘点"""
+    actual_quantity: Decimal = Field(..., ge=0, description="实际盘点数量")
+    check_date: Optional[date] = Field(None, description="盘点日期")
+    checker: Optional[str] = Field(None, description="盘点人")
+    warehouse: Optional[str] = Field(None, description="盘点仓库")
+    location: Optional[str] = Field(None, description="盘点位置")
+    remark: Optional[str] = Field(None, description="备注")
+
 # 供应商信息
 class SupplierInfo(BaseModel):
     """供应商信息"""

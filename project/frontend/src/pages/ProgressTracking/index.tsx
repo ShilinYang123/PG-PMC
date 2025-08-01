@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -34,6 +34,7 @@ import {
 import ReactECharts from 'echarts-for-react';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
+import { progressApi } from '../../services/api';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
@@ -91,120 +92,49 @@ const ProgressTracking: React.FC = () => {
   const [form] = Form.useForm();
 
   // 进度跟踪数据
-  const [progressData, setProgressData] = useState<ProgressRecord[]>([
-    {
-      key: '1',
-      orderNo: 'ORD-2024-001',
-      productName: '精密零件A',
-      planStartDate: '2024-01-15',
-      planEndDate: '2024-02-15',
-      actualStartDate: '2024-01-15',
-      currentStage: '机加工',
-      progress: 65,
-      status: '进行中',
-      responsible: '张师傅',
-      workshop: '机加工车间',
-      priority: '高',
-      remark: '按计划进行'
-    },
-    {
-      key: '2',
-      orderNo: 'ORD-2024-002',
-      productName: '标准件B',
-      planStartDate: '2024-01-20',
-      planEndDate: '2024-02-10',
-      actualStartDate: '2024-01-22',
-      currentStage: '质检',
-      progress: 90,
-      status: '延期',
-      responsible: '李师傅',
-      workshop: '装配车间',
-      priority: '中',
-      remark: '材料延期到货'
-    },
-    {
-      key: '3',
-      orderNo: 'ORD-2024-003',
-      productName: '定制件C',
-      planStartDate: '2024-01-10',
-      planEndDate: '2024-01-25',
-      actualStartDate: '2024-01-10',
-      actualEndDate: '2024-01-24',
-      currentStage: '完成',
-      progress: 100,
-      status: '已完成',
-      responsible: '王师傅',
-      workshop: '精密车间',
-      priority: '高',
-      remark: '提前完成'
-    }
-  ]);
+  const [progressData, setProgressData] = useState<ProgressRecord[]>([]);
 
   // 阶段详情数据
-  const [stageData, setStageData] = useState<StageRecord[]>([
-    {
-      key: '1',
-      stageName: '下料',
-      planStartDate: '2024-01-15',
-      planEndDate: '2024-01-17',
-      actualStartDate: '2024-01-15',
-      actualEndDate: '2024-01-17',
-      progress: 100,
-      status: '已完成',
-      responsible: '张师傅',
-      duration: 2,
-      remark: '按时完成'
-    },
-    {
-      key: '2',
-      stageName: '机加工',
-      planStartDate: '2024-01-18',
-      planEndDate: '2024-01-28',
-      actualStartDate: '2024-01-18',
-      progress: 65,
-      status: '进行中',
-      responsible: '李师傅',
-      duration: 10,
-      remark: '正在进行'
-    },
-    {
-      key: '3',
-      stageName: '质检',
-      planStartDate: '2024-01-29',
-      planEndDate: '2024-02-02',
-      progress: 0,
-      status: '未开始',
-      responsible: '王检验员',
-      duration: 4,
-      remark: '等待前序完成'
-    }
-  ]);
+  const [stageData, setStageData] = useState<StageRecord[]>([]);
 
   // 质量检查数据
-  const [qualityData, setQualityData] = useState<QualityRecord[]>([
-    {
-      key: '1',
-      orderNo: 'ORD-2024-001',
-      stageName: '下料',
-      checkDate: '2024-01-17',
-      checkResult: '合格',
-      qualityScore: 95,
-      defectCount: 0,
-      inspector: '质检员A',
-      remark: '尺寸精度良好'
-    },
-    {
-      key: '2',
-      orderNo: 'ORD-2024-002',
-      stageName: '机加工',
-      checkDate: '2024-01-25',
-      checkResult: '不合格',
-      qualityScore: 75,
-      defectCount: 2,
-      inspector: '质检员B',
-      remark: '表面粗糙度超标'
+  const [qualityData, setQualityData] = useState<QualityRecord[]>([]);
+
+  // 数据加载函数
+  const fetchProgressData = async () => {
+    setLoading(true);
+    try {
+      const response = await progressApi.getProgressList();
+      setProgressData(response.data || []);
+    } catch (error) {
+      console.error('获取进度数据失败:', error);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  const fetchStageData = async (orderId: string) => {
+    try {
+      const response = await progressApi.getStageDetails(orderId);
+      setStageData(response.data || []);
+    } catch (error) {
+      console.error('获取阶段数据失败:', error);
+    }
+  };
+
+  const fetchQualityData = async (orderId: string) => {
+    try {
+      const response = await progressApi.getQualityRecords(orderId);
+      setQualityData(response.data || []);
+    } catch (error) {
+      console.error('获取质量数据失败:', error);
+    }
+  };
+
+  // 初始化数据
+  useEffect(() => {
+    fetchProgressData();
+  }, []);
 
   // 进度表格列配置
   const progressColumns: ColumnsType<ProgressRecord> = [

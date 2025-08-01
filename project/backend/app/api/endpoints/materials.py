@@ -9,7 +9,8 @@ from app.schemas.common import ResponseModel, PagedResponseModel, QueryParams, P
 from app.api.endpoints.auth import get_current_user, get_current_active_user
 from app.schemas.material import (
     MaterialCreate, MaterialUpdate, MaterialQuery, MaterialDetail,
-    MaterialStats, MaterialSummary, MaterialStockAlert
+    MaterialStats, MaterialSummary, MaterialStockAlert, MaterialStockIn,
+    MaterialStockOut, MaterialStockTransfer, MaterialStockCheck
 )
 from datetime import datetime, timedelta
 import logging
@@ -556,4 +557,327 @@ async def get_stock_alerts(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="获取库存预警服务异常"
+        )
+
+@router.post("/{material_id}/stock-in", response_model=ResponseModel[MaterialDetail])
+async def stock_in(
+    material_id: int,
+    stock_in_data: MaterialStockIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """物料入库"""
+    try:
+        material = db.query(Material).filter(Material.id == material_id).first()
+        if not material:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="物料不存在"
+            )
+        
+        # 更新库存
+        material.current_stock += stock_in_data.quantity
+        material.last_purchase_date = datetime.now()
+        if stock_in_data.unit_price:
+            material.last_purchase_price = stock_in_data.unit_price
+            material.unit_price = stock_in_data.unit_price  # 更新单价
+        material.updated_by = current_user.username
+        material.updated_at = datetime.now()
+        
+        db.commit()
+        db.refresh(material)
+        
+        # 计算库存状态
+        stock_status = "正常"
+        if material.current_stock <= 0:
+            stock_status = "缺货"
+        elif material.current_stock <= material.min_stock:
+            stock_status = "库存不足"
+        elif material.current_stock >= material.max_stock:
+            stock_status = "库存过多"
+        
+        material_detail = MaterialDetail(
+            id=material.id,
+            material_code=material.material_code,
+            material_name=material.material_name,
+            category=material.category,
+            specification=material.specification,
+            unit=material.unit,
+            unit_price=material.unit_price,
+            current_stock=material.current_stock,
+            min_stock=material.min_stock,
+            max_stock=material.max_stock,
+            safety_stock=material.safety_stock,
+            stock_status=stock_status,
+            supplier=material.supplier,
+            supplier_contact=material.supplier_contact,
+            lead_time=material.lead_time,
+            warehouse=material.warehouse,
+            location=material.location,
+            status=material.status,
+            last_purchase_date=material.last_purchase_date,
+            last_purchase_price=material.last_purchase_price,
+            last_usage_date=material.last_usage_date,
+            remark=material.remark,
+            created_at=material.created_at,
+            updated_at=material.updated_at,
+            created_by=material.created_by,
+            updated_by=material.updated_by
+        )
+        
+        return ResponseModel(
+            code=200,
+            message=f"物料入库成功，入库数量：{stock_in_data.quantity}",
+            data=material_detail
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"物料入库异常: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="物料入库服务异常"
+        )
+
+@router.post("/{material_id}/stock-out", response_model=ResponseModel[MaterialDetail])
+async def stock_out(
+    material_id: int,
+    stock_out_data: MaterialStockOut,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """物料出库"""
+    try:
+        material = db.query(Material).filter(Material.id == material_id).first()
+        if not material:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="物料不存在"
+            )
+        
+        # 检查库存是否充足
+        if material.current_stock < stock_out_data.quantity:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"库存不足，当前库存：{material.current_stock}，出库数量：{stock_out_data.quantity}"
+            )
+        
+        # 更新库存
+        material.current_stock -= stock_out_data.quantity
+        material.last_usage_date = datetime.now()
+        material.updated_by = current_user.username
+        material.updated_at = datetime.now()
+        
+        db.commit()
+        db.refresh(material)
+        
+        # 计算库存状态
+        stock_status = "正常"
+        if material.current_stock <= 0:
+            stock_status = "缺货"
+        elif material.current_stock <= material.min_stock:
+            stock_status = "库存不足"
+        elif material.current_stock >= material.max_stock:
+            stock_status = "库存过多"
+        
+        material_detail = MaterialDetail(
+            id=material.id,
+            material_code=material.material_code,
+            material_name=material.material_name,
+            category=material.category,
+            specification=material.specification,
+            unit=material.unit,
+            unit_price=material.unit_price,
+            current_stock=material.current_stock,
+            min_stock=material.min_stock,
+            max_stock=material.max_stock,
+            safety_stock=material.safety_stock,
+            stock_status=stock_status,
+            supplier=material.supplier,
+            supplier_contact=material.supplier_contact,
+            lead_time=material.lead_time,
+            warehouse=material.warehouse,
+            location=material.location,
+            status=material.status,
+            last_purchase_date=material.last_purchase_date,
+            last_purchase_price=material.last_purchase_price,
+            last_usage_date=material.last_usage_date,
+            remark=material.remark,
+            created_at=material.created_at,
+            updated_at=material.updated_at,
+            created_by=material.created_by,
+            updated_by=material.updated_by
+        )
+        
+        return ResponseModel(
+            code=200,
+            message=f"物料出库成功，出库数量：{stock_out_data.quantity}",
+            data=material_detail
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"物料出库异常: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="物料出库服务异常"
+        )
+
+@router.post("/transfer", response_model=ResponseModel[dict])
+async def stock_transfer(
+    transfer_data: MaterialStockTransfer,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """物料调拨"""
+    try:
+        # 获取源物料和目标物料
+        from_material = db.query(Material).filter(Material.id == transfer_data.from_material_id).first()
+        to_material = db.query(Material).filter(Material.id == transfer_data.to_material_id).first()
+        
+        if not from_material:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="源物料不存在"
+            )
+        
+        if not to_material:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="目标物料不存在"
+            )
+        
+        # 检查源物料库存是否充足
+        if from_material.current_stock < transfer_data.quantity:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"源物料库存不足，当前库存：{from_material.current_stock}，调拨数量：{transfer_data.quantity}"
+            )
+        
+        # 执行调拨
+        from_material.current_stock -= transfer_data.quantity
+        from_material.updated_by = current_user.username
+        from_material.updated_at = datetime.now()
+        
+        to_material.current_stock += transfer_data.quantity
+        to_material.updated_by = current_user.username
+        to_material.updated_at = datetime.now()
+        
+        db.commit()
+        
+        return ResponseModel(
+            code=200,
+            message=f"物料调拨成功，从 {from_material.material_name} 调拨 {transfer_data.quantity} 到 {to_material.material_name}",
+            data={
+                "from_material_id": transfer_data.from_material_id,
+                "to_material_id": transfer_data.to_material_id,
+                "quantity": transfer_data.quantity,
+                "from_current_stock": from_material.current_stock,
+                "to_current_stock": to_material.current_stock
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"物料调拨异常: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="物料调拨服务异常"
+        )
+
+@router.post("/{material_id}/stock-check", response_model=ResponseModel[MaterialDetail])
+async def stock_check(
+    material_id: int,
+    check_data: MaterialStockCheck,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """物料盘点"""
+    try:
+        material = db.query(Material).filter(Material.id == material_id).first()
+        if not material:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="物料不存在"
+            )
+        
+        # 记录盘点前库存
+        old_stock = material.current_stock
+        
+        # 更新库存为实际盘点数量
+        material.current_stock = check_data.actual_quantity
+        material.updated_by = current_user.username
+        material.updated_at = datetime.now()
+        
+        db.commit()
+        db.refresh(material)
+        
+        # 计算库存状态
+        stock_status = "正常"
+        if material.current_stock <= 0:
+            stock_status = "缺货"
+        elif material.current_stock <= material.min_stock:
+            stock_status = "库存不足"
+        elif material.current_stock >= material.max_stock:
+            stock_status = "库存过多"
+        
+        material_detail = MaterialDetail(
+            id=material.id,
+            material_code=material.material_code,
+            material_name=material.material_name,
+            category=material.category,
+            specification=material.specification,
+            unit=material.unit,
+            unit_price=material.unit_price,
+            current_stock=material.current_stock,
+            min_stock=material.min_stock,
+            max_stock=material.max_stock,
+            safety_stock=material.safety_stock,
+            stock_status=stock_status,
+            supplier=material.supplier,
+            supplier_contact=material.supplier_contact,
+            lead_time=material.lead_time,
+            warehouse=material.warehouse,
+            location=material.location,
+            status=material.status,
+            last_purchase_date=material.last_purchase_date,
+            last_purchase_price=material.last_purchase_price,
+            last_usage_date=material.last_usage_date,
+            remark=material.remark,
+            created_at=material.created_at,
+            updated_at=material.updated_at,
+            created_by=material.created_by,
+            updated_by=material.updated_by
+        )
+        
+        # 计算盘点差异
+        difference = check_data.actual_quantity - old_stock
+        difference_msg = ""
+        if difference > 0:
+            difference_msg = f"盘盈 {difference}"
+        elif difference < 0:
+            difference_msg = f"盘亏 {abs(difference)}"
+        else:
+            difference_msg = "账实相符"
+        
+        return ResponseModel(
+            code=200,
+            message=f"物料盘点完成，{difference_msg}。账面库存：{old_stock}，实际库存：{check_data.actual_quantity}",
+            data=material_detail
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"物料盘点异常: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="物料盘点服务异常"
         )

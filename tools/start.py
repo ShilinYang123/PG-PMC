@@ -12,6 +12,7 @@ import yaml
 import time
 import subprocess
 import logging
+import re
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, List, Tuple, Any, Optional
@@ -440,6 +441,7 @@ ISO格式: {date_info['date']}
         """运行前置检查"""
         self.workflow_logger.info("执行前置检查...")
         
+        # 1. 运行常规前置检查
         pre_check_script = self.tools_dir / "pre_operation_check.py"
         if pre_check_script.exists():
             if not self.run_script("pre_operation_check.py", ["report"]):
@@ -447,6 +449,16 @@ ISO格式: {date_info['date']}
                 return False
         else:
             self.workflow_logger.info("跳过前置检查（脚本不存在）")
+        
+        # 2. 运行文档日期合规性检查
+        self.workflow_logger.info("执行文档日期合规性检查...")
+        date_check_script = self.tools_dir / "check_document_dates.py"
+        if date_check_script.exists():
+            if not self.run_script("check_document_dates.py", [str(self.project_root)]):
+                self.workflow_logger.warning("发现文档日期违规问题")
+                return False
+        else:
+            self.workflow_logger.info("跳过文档日期检查（脚本不存在）")
             
         self.workflow_logger.info("[SUCCESS] 前置检查通过")
         return True

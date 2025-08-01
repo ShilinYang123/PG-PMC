@@ -1,20 +1,20 @@
 {
   "system_date_info": {
-    "timestamp": "2025-07-30T08:01:20.525398",
-    "date": "2025-07-30",
-    "datetime": "2025-07-30 08:01:20",
-    "formatted": "2025年07月30日",
+    "timestamp": "2025-08-01T20:41:03.142314",
+    "date": "2025-08-01",
+    "datetime": "2025-08-01 20:41:03",
+    "formatted": "2025年08月01日",
     "year": "2025",
-    "month": "7",
-    "day": "30",
-    "weekday": "Wednesday",
-    "weekday_cn": "周三",
-    "unix_timestamp": "1753833680"
+    "month": "8",
+    "day": "1",
+    "weekday": "Friday",
+    "weekday_cn": "周五",
+    "unix_timestamp": "1754052063"
   },
-  "last_updated": "2025-07-30T08:01:20.525398",
+  "last_updated": "2025-08-01T20:41:03.142314",
   "ai_instructions": {
-    "current_date": "2025-07-30",
-    "formatted_date": "2025年07月30日",
+    "current_date": "2025-08-01",
+    "formatted_date": "2025年08月01日",
     "usage_note": "AI应使用此文件中的日期信息，而不是训练数据中的历史日期",
     "priority": "系统当前日期优先于AI知识库中的日期信息"
   }
